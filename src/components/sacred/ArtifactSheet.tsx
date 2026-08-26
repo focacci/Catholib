@@ -12,10 +12,10 @@ export function ArtifactSheet({
   onClose: () => void;
 }) {
   const open = artifact !== null;
-  const isHaydock = artifact?.type === "haydock";
+  const isCommentary = artifact?.type === "commentary";
   const cccBody =
     artifact?.type === "catechism" ? cccParagraphFor(artifact.title) : undefined;
-  const quote = cccBody ?? (isHaydock ? undefined : artifact?.shortQuote);
+  const quote = cccBody ?? (isCommentary ? undefined : artifact?.shortQuote);
 
   return (
     <Drawer.Root
@@ -62,7 +62,7 @@ export function ArtifactSheet({
                     {artifact.subtitle && (
                       <p className="mt-1 text-base text-muted">{artifact.subtitle}</p>
                     )}
-                    {!isHaydock && (
+                    {!isCommentary && (
                       <p className="mt-2 text-xs font-medium uppercase tracking-[0.16em] text-gold-dim">
                         {ARTIFACT_LABEL[artifact.type]}
                         {artifact.year != null ? ` · ${artifact.year}` : ""}
@@ -102,7 +102,7 @@ export function ArtifactSheet({
                     )
                   )}
 
-                  {!isHaydock &&
+                  {!isCommentary &&
                     artifact.bibleRefs &&
                     artifact.bibleRefs.length > 0 && (
                       <p className="text-base text-muted">

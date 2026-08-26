@@ -14,7 +14,7 @@ export const Route = createRootRoute({
       {
         name: "description",
         content:
-          "A dual-view Catholic timeline of Sacred Scripture and the living Magisterium, drawn only from Vatican, USCCB, and Haydock sources.",
+          "A dual-view Catholic timeline of Sacred Scripture and the living Magisterium, drawn only from Vatican, USCCB, and confirmed commentary sources.",
       },
       { name: "theme-color", content: "#0a0e14" },
     ],

@@ -1478,6 +1478,34 @@ function addChapterRange(
   for (let n = 1; n <= max; n++) nums.add(n);
 }
 
+function lastIndexOfType(
+  artifacts: TimelineArtifact[],
+  type: TimelineArtifact["type"],
+): number {
+  for (let i = artifacts.length - 1; i >= 0; i--) {
+    if (artifacts[i].type === type) return i;
+  }
+  return -1;
+}
+
+function insertCommentary(
+  artifacts: TimelineArtifact[],
+  extra: TimelineArtifact[],
+) {
+  if (extra.length === 0) return;
+  const lastCommentary = lastIndexOfType(artifacts, "commentary");
+  if (lastCommentary >= 0) {
+    artifacts.splice(lastCommentary + 1, 0, ...extra);
+    return;
+  }
+  const firstArtwork = artifacts.findIndex((a) => a.type === "artwork");
+  if (firstArtwork >= 0) {
+    artifacts.splice(firstArtwork, 0, ...extra);
+    return;
+  }
+  artifacts.push(...extra);
+}
+
 function mergeChapters(
   name: string,
   abbreviation: string,
@@ -1495,15 +1523,17 @@ function mergeChapters(
       const rich = richBy.get(n);
       const artifacts = [...(rich?.artifacts ?? [])];
       const refs = { bibleRefs: [`${abbreviation} ${n}`] };
+      const extra: TimelineArtifact[] = [];
       if (haydockUrl(name, n) && !hasSource(artifacts, "haydockcommentary.com")) {
-        artifacts.push(haydockArt(name, n, refs));
+        extra.push(haydockArt(name, n, refs));
       }
       if (catenaUrl(name, n) && !hasSource(artifacts, "ecatholic2000.com/catena")) {
-        artifacts.push(catenaArt(name, n, refs));
+        extra.push(catenaArt(name, n, refs));
       }
       if (lapideUrl(name, n) && !hasSource(artifacts, "lapide.org")) {
-        artifacts.push(lapideArt(name, n, refs));
+        extra.push(lapideArt(name, n, refs));
       }
+      insertCommentary(artifacts, extra);
       return { chapter: n, heading: rich?.heading, artifacts };
     })
     .filter((c) => c.artifacts.length > 0);

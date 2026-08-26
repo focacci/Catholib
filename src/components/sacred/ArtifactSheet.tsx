@@ -62,6 +62,14 @@ export function ArtifactSheet({
                     {artifact.subtitle && (
                       <p className="mt-1 text-base text-muted">{artifact.subtitle}</p>
                     )}
+                    {artifact.location && (
+                      <p className="mt-2 text-base text-muted">
+                        <span className="mr-2 text-xs font-medium uppercase tracking-[0.16em] text-gold-dim">
+                          Place
+                        </span>
+                        {artifact.location}
+                      </p>
+                    )}
                     {!isCommentary && (
                       <p className="mt-2 text-xs font-medium uppercase tracking-[0.16em] text-gold-dim">
                         {ARTIFACT_LABEL[artifact.type]}

@@ -31,6 +31,8 @@ export interface TimelineArtifact {
   sourceUrl: string;
   bibleRefs?: string[];
   year?: number | string;
+  /** Place where an event occurred, when that is known. */
+  location?: string;
   imageUrl?: string;
   imageCredit?: string;
 }

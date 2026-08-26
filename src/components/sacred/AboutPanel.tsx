@@ -10,6 +10,11 @@ const SOURCES = [
     note: "Catechism, conciliar constitutions, encyclicals, and papal audiences. Used in the Bible and Church views.",
   },
   {
+    name: "Catholic Encyclopedia (New Advent)",
+    href: "https://www.newadvent.org/cathen/",
+    note: "Public-domain Catholic Encyclopedia articles. Saint, pope, and event cards in the Church view link to confirmed encyclopedia pages.",
+  },
+  {
     name: "United States Conference of Catholic Bishops",
     href: "https://bible.usccb.org/",
     note: "New American Bible Revised Edition, chapter by chapter. Used in the Bible view.",
@@ -43,11 +48,12 @@ function AboutCopy() {
         Sacred Timeline is a curated prototype with three views. Bible
         follows the canon, with sample chapters from the USCCB and
         commentary from Haydock, the Catena Aurea, and Cornelius a Lapide.
-        Church follows the history of the Church, with
-        events, popes, saints, and magisterial texts from the Holy See.
-        Missal is a static catalog of the 1962 Roman Missal: Today, the
-        Ordo Missae, the Temporale, the Sanctorale, the Commons, and
-        Votive Masses, each card opening a confirmed page on Missale Meum.
+        Church follows the history of the Church, with encyclopedia
+        articles for events, popes, and saints, and magisterial texts from
+        the Holy See. Missal is a static catalog of the 1962 Roman Missal:
+        Today, the Ordo Missae, the Temporale, the Sanctorale, the
+        Commons, and Votive Masses, each card opening a confirmed page on
+        Missale Meum.
       </p>
       <p className="mt-3 text-base leading-relaxed text-muted">
         The dataset stays limited to approved sources. No paraphrase of

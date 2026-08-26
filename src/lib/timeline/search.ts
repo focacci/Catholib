@@ -26,6 +26,7 @@ function artifactMatches(a: TimelineArtifact, q: string, filter: FilterId): bool
     a.subtitle ?? "",
     a.shortQuote ?? "",
     a.imageCredit ?? "",
+    a.location ?? "",
     ...(a.bibleRefs ?? []),
     String(a.year ?? ""),
     a.type,

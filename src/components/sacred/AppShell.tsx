@@ -1,31 +1,43 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { BookOpen, Church, Info, Search, X } from "lucide-react";
+import {
+  BookOpen,
+  CalendarDays,
+  ChevronDown,
+  Church,
+  Info,
+  ListFilter,
+  Search,
+  X,
+} from "lucide-react";
 import { BIBLE_BOOKS } from "@/lib/timeline/bible";
+import { periodBadgeStyle, periodForBook } from "@/lib/timeline/bible-periods";
 import { CHURCH_ENTRIES } from "@/lib/timeline/church";
+import { missalJumpItems } from "@/lib/timeline/missal";
 import { collectHits } from "@/lib/timeline/search";
 import { useTimeline } from "@/lib/timeline/store";
-import { FILTERS, type BibleBook } from "@/lib/timeline/types";
+import {
+  VIEW_FILTERS,
+  VIEW_LABEL,
+  type BibleBook,
+  type FilterChip,
+  type FilterId,
+  type ViewMode,
+} from "@/lib/timeline/types";
+import { useIsDesktop } from "@/lib/media";
 import { cn } from "@/lib/utils";
 import { AboutPanel } from "./AboutPanel";
 import { ArtifactSheet } from "./ArtifactSheet";
 import { BibleView } from "./BibleView";
 import { ChurchView } from "./ChurchView";
-
-function CrossMark({ className }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className={className}
-      aria-hidden
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-    >
-      <path d="M12 3v18M8 8h8" strokeLinecap="round" />
-    </svg>
-  );
-}
+import { MissalView } from "./MissalView";
 
 const CHURCH_JUMPS = (() => {
   const seen = new Set<string>();
@@ -40,30 +52,38 @@ const CHURCH_JUMPS = (() => {
   return items;
 })();
 
+const MISSAL_JUMPS = missalJumpItems();
+
+const VIEWS: { id: ViewMode; label: string; Icon: typeof BookOpen }[] = [
+  { id: "bible", label: "Bible", Icon: BookOpen },
+  { id: "church", label: "Church", Icon: Church },
+  { id: "missal", label: "Missal", Icon: CalendarDays },
+];
+
 function BibleJumpGrid({ onPick }: { onPick: (book: BibleBook) => void }) {
   const ot = BIBLE_BOOKS.filter((b) => b.testament === "OT");
   const nt = BIBLE_BOOKS.filter((b) => b.testament === "NT");
   const group = (label: string, books: BibleBook[]) => (
     <div>
-      <p className="px-1 pb-1.5 pt-2 font-serif text-[10px] uppercase tracking-[0.16em] text-gold-dim">
+      <p className="px-1 pb-1.5 pt-2 font-serif text-xs uppercase tracking-[0.16em] text-gold-dim">
         {label}
       </p>
       <div className="grid grid-cols-6 gap-1 sm:grid-cols-8">
         {books.map((book) => {
           const populated = book.populatedChapters.length > 0;
+          const period = periodForBook(book.name);
           return (
             <button
               key={book.name}
               type="button"
               onClick={() => onPick(book)}
               className={cn(
-                "flex h-11 items-center justify-center rounded-sm font-serif text-xs",
-                populated
-                  ? "bg-gold-soft text-gold shadow-[var(--shadow-border)]"
-                  : "text-muted hover:bg-gold-soft hover:text-fg",
+                "flex h-11 items-center justify-center rounded-sm font-serif text-sm font-semibold",
+                populated ? "opacity-100" : "opacity-40 hover:opacity-80",
               )}
+              style={periodBadgeStyle(book.name)}
               aria-label={book.name}
-              title={book.name}
+              title={`${book.name} · ${period.label}`}
             >
               {book.abbreviation}
             </button>
@@ -80,19 +100,112 @@ function BibleJumpGrid({ onPick }: { onPick: (book: BibleBook) => void }) {
   );
 }
 
-function ChurchJumpList({ onPick }: { onPick: (id: string) => void }) {
+function SectionJumpList({
+  items,
+  onPick,
+}: {
+  items: { id: string; label: string }[];
+  onPick: (id: string) => void;
+}) {
   return (
     <div className="max-h-[min(24rem,50dvh)] overflow-y-auto py-1">
-      {CHURCH_JUMPS.map((opt) => (
+      {items.map((opt) => (
         <button
           key={opt.id}
           type="button"
           onClick={() => onPick(opt.id)}
-          className="flex h-12 w-full items-center px-4 text-left text-sm text-fg hover:bg-gold-soft"
+          className="flex h-12 w-full items-center px-4 text-left text-base text-fg hover:bg-gold-soft"
         >
           {opt.label}
         </button>
       ))}
+    </div>
+  );
+}
+
+function FilterMenu({
+  filters,
+  value,
+  open,
+  onOpenChange,
+  onChange,
+}: {
+  filters: FilterChip[];
+  value: FilterId;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onChange: (id: FilterId) => void;
+}) {
+  const rootRef = useRef<HTMLDivElement>(null);
+  const current = filters.find((f) => f.id === value) ?? filters[0];
+
+  useEffect(() => {
+    if (!open) return;
+    const onDoc = (e: PointerEvent) => {
+      if (!rootRef.current?.contains(e.target as Node)) onOpenChange(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onOpenChange(false);
+    };
+    document.addEventListener("pointerdown", onDoc);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onDoc);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open, onOpenChange]);
+
+  return (
+    <div ref={rootRef} className="relative shrink-0">
+      <button
+        type="button"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label={`Filter: ${current.label}`}
+        onClick={() => onOpenChange(!open)}
+        className={cn(
+          "flex h-10 max-w-[8.5rem] items-center gap-1 rounded-md border px-2 text-sm font-medium",
+          value !== "all"
+            ? "border-gold bg-gold text-bg"
+            : "border-line-strong bg-elevated text-muted",
+        )}
+      >
+        <ListFilter className="size-3.5 shrink-0" strokeWidth={1.75} />
+        <span className="min-w-0 truncate">{current.label}</span>
+        <ChevronDown
+          className={cn("size-3.5 shrink-0 transition-transform", open && "rotate-180")}
+          strokeWidth={1.75}
+        />
+      </button>
+      {open && (
+        <ul
+          role="listbox"
+          aria-label="Filter artifacts"
+          className="absolute right-0 z-30 mt-1 min-w-[10.5rem] overflow-hidden rounded-md bg-elevated py-1 shadow-[var(--shadow-border)]"
+        >
+          {filters.map((f) => (
+            <li key={f.id}>
+              <button
+                type="button"
+                role="option"
+                aria-selected={f.id === value}
+                className={cn(
+                  "flex h-11 w-full items-center px-3 text-left text-base",
+                  f.id === value
+                    ? "bg-gold-soft text-gold"
+                    : "text-fg hover:bg-gold-soft",
+                )}
+                onClick={() => {
+                  onChange(f.id);
+                  onOpenChange(false);
+                }}
+              >
+                {f.label}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
@@ -106,26 +219,87 @@ export function AppShell() {
   const setQuery = useTimeline((s) => s.setQuery);
   const selected = useTimeline((s) => s.selected);
   const closeArtifact = useTimeline((s) => s.closeArtifact);
+  const isDesktop = useIsDesktop();
   const aboutOpen = useTimeline((s) => s.aboutOpen);
   const setAboutOpen = useTimeline((s) => s.setAboutOpen);
   const expandBook = useTimeline((s) => s.expandBook);
 
   const scrollRef = useRef<HTMLElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
+  const shellRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
+  const lastScrollRef = useRef(0);
+  const chromeOffsetRef = useRef(0);
+  const headerHRef = useRef(96);
   const [jumpOpen, setJumpOpen] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [headerH, setHeaderH] = useState(96);
+
+  const applyChrome = (offset: number) => {
+    const h = headerHRef.current;
+    const next = Math.max(0, Math.min(h, offset));
+    chromeOffsetRef.current = next;
+    const header = headerRef.current;
+    const shell = shellRef.current;
+    if (header) {
+      header.style.transform = next ? `translate3d(0, ${-next}px, 0)` : "";
+      const hidden = h > 0 && next >= h - 0.5;
+      header.toggleAttribute("inert", hidden);
+      header.style.pointerEvents = hidden ? "none" : "";
+    }
+    shell?.style.setProperty("--chrome-h", `${Math.max(0, h - next)}px`);
+  };
 
   const hits = useMemo(() => collectHits(query, filter), [query, filter]);
-  const bibleHits = hits.filter((h) => h.view === "bible").length;
-  const churchHits = hits.filter((h) => h.view === "church").length;
-  const otherCount = view === "bible" ? churchHits : bibleHits;
+  const hitCounts = useMemo(() => {
+    const counts: Record<ViewMode, number> = { bible: 0, church: 0, missal: 0 };
+    for (const h of hits) counts[h.view] += 1;
+    return counts;
+  }, [hits]);
+  const otherViews = (["bible", "church", "missal"] as const).filter(
+    (id) => id !== view && hitCounts[id] > 0,
+  );
+
+  useLayoutEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+    const update = () => {
+      const h = el.offsetHeight;
+      headerHRef.current = h;
+      setHeaderH(h);
+      applyChrome(Math.min(chromeOffsetRef.current, h));
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: 0 });
+    lastScrollRef.current = 0;
+    applyChrome(0);
+    setFilterOpen(false);
+    setJumpOpen(false);
   }, [view]);
 
   useEffect(() => {
-    setJumpOpen(false);
-  }, [view]);
+    if (isDesktop) closeArtifact();
+  }, [isDesktop, closeArtifact]);
+
+  const onScroll = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const y = Math.max(0, el.scrollTop);
+    const delta = y - lastScrollRef.current;
+    lastScrollRef.current = y;
+    const h = headerHRef.current;
+    const prev = chromeOffsetRef.current;
+    const next =
+      y < 1 ? 0 : Math.min(Math.max(prev + delta, 0), Math.min(h, y));
+    if (prev < 1 && next > 1) setFilterOpen(false);
+    applyChrome(next);
+  };
 
   const jumpToBook = (book: BibleBook) => {
     setJumpOpen(false);
@@ -137,11 +311,11 @@ export function AppShell() {
     });
   };
 
-  const jumpToEra = (id: string) => {
+  const jumpToAnchor = (prefix: string, id: string) => {
     setJumpOpen(false);
     requestAnimationFrame(() => {
       document
-        .getElementById(`era-${id}`)
+        .getElementById(`${prefix}-${id}`)
         ?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
   };
@@ -156,124 +330,101 @@ export function AppShell() {
   };
 
   return (
-    <div className="relative flex h-dvh flex-col overflow-hidden bg-bg text-fg">
-      <header className="relative z-20 shrink-0 border-b border-line bg-bg pt-[env(safe-area-inset-top)]">
-        <div className="flex items-center gap-3 px-4 py-3">
-          <span className="flex size-9 items-center justify-center rounded-md bg-elevated text-gold shadow-[var(--shadow-border)]">
-            <CrossMark className="size-5" />
-          </span>
-          <div className="min-w-0 flex-1">
-            <h1 className="font-serif text-xl font-semibold leading-none tracking-tight text-fg">
-              Sacred Timeline
-            </h1>
-            <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-gold-dim">
-              Scripture and Magisterium
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => setAboutOpen(true)}
-            className="flex size-11 items-center justify-center rounded-md text-muted hover:text-fg"
-            aria-label="About and sources"
-          >
-            <Info className="size-5" strokeWidth={1.75} />
-          </button>
-        </div>
-
-        <div className="px-4 pb-3">
+    <div
+      ref={shellRef}
+      className="relative flex h-dvh flex-col overflow-hidden bg-bg text-fg"
+      style={{ "--chrome-h": `${headerH}px` } as CSSProperties}
+    >
+      <header
+        ref={headerRef}
+        className="absolute inset-x-0 top-0 z-20 border-b border-line bg-bg pt-[env(safe-area-inset-top)] will-change-transform"
+      >
+        <div className="px-3 pt-2">
           <div
             role="tablist"
             aria-label="Timeline view"
-            className="grid grid-cols-2 rounded-md bg-elevated p-1"
-            style={{ boxShadow: "0 0 0 1px color-mix(in oklab, var(--color-gold) 30%, transparent)" }}
+            className="grid grid-cols-3 rounded-md bg-elevated p-0.5"
+            style={{
+              boxShadow:
+                "0 0 0 1px color-mix(in oklab, var(--color-gold) 30%, transparent)",
+            }}
           >
-            <button
-              type="button"
-              role="tab"
-              aria-selected={view === "bible"}
-              onClick={() => setView("bible")}
-              className={cn(
-                "flex min-h-11 items-center justify-center gap-2 rounded-sm font-medium transition-colors duration-150",
-                view === "bible" ? "bg-gold text-bg" : "text-muted",
-              )}
-            >
-              <BookOpen className="size-4" strokeWidth={1.75} />
-              Bible
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={view === "church"}
-              onClick={() => setView("church")}
-              className={cn(
-                "flex min-h-11 items-center justify-center gap-2 rounded-sm font-medium transition-colors duration-150",
-                view === "church" ? "bg-gold text-bg" : "text-muted",
-              )}
-            >
-              <Church className="size-4" strokeWidth={1.75} />
-              Church
-            </button>
+            {VIEWS.map(({ id, label, Icon }) => (
+              <button
+                key={id}
+                type="button"
+                role="tab"
+                aria-selected={view === id}
+                onClick={() => setView(id)}
+                className={cn(
+                  "flex h-10 items-center justify-center gap-1 rounded-sm text-base font-medium transition-colors duration-150",
+                  view === id ? "bg-gold text-bg" : "text-muted",
+                )}
+              >
+                <Icon className="size-3.5 shrink-0" strokeWidth={1.75} />
+                {label}
+              </button>
+            ))}
           </div>
         </div>
 
-        <div className="px-4 pb-3">
-          <label className="relative block">
-            <span className="sr-only">Search Scripture and Magisterium</span>
-            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-subtle" />
+        <div className="flex items-center gap-2 px-3 pt-2 pb-2">
+          <button
+            type="button"
+            onClick={() => setAboutOpen(true)}
+            className="flex size-10 shrink-0 items-center justify-center rounded-md text-muted hover:text-fg"
+            aria-label="About and sources"
+          >
+            <Info className="size-4" strokeWidth={1.75} />
+          </button>
+          <label className="relative min-w-0 flex-1">
+            <span className="sr-only">Search Scripture, Magisterium, and Missal</span>
+            <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-subtle" />
             <input
               ref={searchRef}
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search titles, quotes, saints…"
-              className="h-11 w-full rounded-md border border-line-strong bg-elevated pr-11 pl-10 text-sm text-fg outline-none placeholder:text-subtle focus:border-gold"
+              className="h-10 w-full rounded-md border border-line-strong bg-elevated pr-9 pl-8 text-base text-fg outline-none placeholder:text-subtle focus:border-gold"
             />
             {query && (
               <button
                 type="button"
                 onClick={() => setQuery("")}
-                className="absolute top-1/2 right-1 flex size-9 -translate-y-1/2 items-center justify-center text-muted"
+                className="absolute top-1/2 right-0.5 flex size-8 -translate-y-1/2 items-center justify-center text-muted"
                 aria-label="Clear search"
               >
-                <X className="size-4" />
+                <X className="size-3.5" />
               </button>
             )}
           </label>
-        </div>
-
-        <div className="scrollbar-none flex gap-2 overflow-x-auto px-4 pb-3">
-          {FILTERS.map((f) => (
-            <button
-              key={f.id}
-              type="button"
-              onClick={() => setFilter(f.id)}
-              className={cn(
-                "h-11 shrink-0 rounded-full px-4 text-sm font-medium whitespace-nowrap transition-colors duration-150",
-                filter === f.id
-                  ? "bg-gold text-bg"
-                  : "border border-line-strong bg-elevated text-muted",
-              )}
-            >
-              {f.label}
-            </button>
-          ))}
+          <FilterMenu
+            filters={VIEW_FILTERS[view]}
+            value={filter}
+            open={filterOpen}
+            onOpenChange={setFilterOpen}
+            onChange={setFilter}
+          />
         </div>
 
         {query.trim() && (
-          <p className="px-4 pb-3 text-xs text-muted">
-            {view === "bible" ? bibleHits : churchHits} in this view
-            {otherCount > 0 && (
-              <>
+          <p className="px-3 pb-2 text-sm text-muted">
+            {hitCounts[view] === 0
+              ? `No matches in ${VIEW_LABEL[view]}`
+              : `${hitCounts[view]} in ${VIEW_LABEL[view]}`}
+            {otherViews.map((id) => (
+              <span key={id}>
                 {" · "}
                 <button
                   type="button"
                   className="text-gold underline-offset-2 hover:underline"
-                  onClick={() => setView(view === "bible" ? "church" : "bible")}
+                  onClick={() => setView(id)}
                 >
-                  {otherCount} in {view === "bible" ? "Church" : "Bible"}
+                  {hitCounts[id]} in {VIEW_LABEL[id]}
                 </button>
-              </>
-            )}
+              </span>
+            ))}
           </p>
         )}
       </header>
@@ -281,8 +432,10 @@ export function AppShell() {
       <main
         ref={scrollRef}
         id="timeline-scroll"
+        onScroll={onScroll}
         className="relative min-h-0 flex-1 overflow-y-auto"
       >
+        <div aria-hidden className="shrink-0" style={{ height: headerH }} />
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={view}
@@ -292,14 +445,21 @@ export function AppShell() {
             transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
             className="mx-auto w-full max-w-xl"
           >
-            {view === "bible" ? <BibleView /> : <ChurchView />}
+            {view === "bible" ? (
+              <BibleView />
+            ) : view === "church" ? (
+              <ChurchView />
+            ) : (
+              <MissalView />
+            )}
           </motion.div>
         </AnimatePresence>
       </main>
 
       {view === "bible" && (
         <div
-          className="pointer-events-none absolute top-[220px] right-1 bottom-24 hidden w-3 md:block"
+          className="pointer-events-none absolute right-1 bottom-24 hidden w-3 md:block"
+          style={{ top: "calc(var(--chrome-h, 0px) + 8px)" }}
           aria-hidden
         >
           <div className="pointer-events-auto flex h-full flex-col">
@@ -328,15 +488,21 @@ export function AppShell() {
                 transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
                 className={cn(
                   "absolute bottom-14 overflow-hidden rounded-lg bg-elevated shadow-[var(--shadow-border)]",
-                  view === "bible"
-                    ? "inset-x-0"
-                    : "left-1/2 w-64 -translate-x-1/2",
+                  view === "bible" ? "inset-x-0" : "left-1/2 w-72 -translate-x-1/2",
                 )}
               >
                 {view === "bible" ? (
                   <BibleJumpGrid onPick={jumpToBook} />
+                ) : view === "church" ? (
+                  <SectionJumpList
+                    items={CHURCH_JUMPS}
+                    onPick={(id) => jumpToAnchor("era", id)}
+                  />
                 ) : (
-                  <ChurchJumpList onPick={jumpToEra} />
+                  <SectionJumpList
+                    items={MISSAL_JUMPS}
+                    onPick={(id) => jumpToAnchor("missal", id)}
+                  />
                 )}
               </motion.div>
             )}
@@ -345,7 +511,7 @@ export function AppShell() {
             <button
               type="button"
               onClick={() => setJumpOpen((v) => !v)}
-              className="flex h-12 min-w-32 items-center justify-center rounded-full bg-elevated px-5 font-serif text-base text-gold shadow-[var(--shadow-border)]"
+              className="flex h-12 min-w-32 items-center justify-center rounded-full bg-elevated px-5 font-serif text-lg text-gold shadow-[var(--shadow-border)]"
             >
               Jump to…
             </button>
@@ -353,7 +519,9 @@ export function AppShell() {
         </div>
       </div>
 
-      <ArtifactSheet artifact={selected} onClose={closeArtifact} />
+      {!isDesktop && (
+        <ArtifactSheet artifact={selected} onClose={closeArtifact} />
+      )}
       <AboutPanel open={aboutOpen} onOpenChange={setAboutOpen} />
     </div>
   );

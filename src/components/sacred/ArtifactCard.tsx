@@ -1,6 +1,6 @@
 import { ARTIFACT_LABEL, type TimelineArtifact } from "@/lib/timeline/types";
+import { isDesktopViewport } from "@/lib/media";
 import { cn } from "@/lib/utils";
-import { TYPE_ICON } from "./icons";
 
 export function ArtifactCard({
   artifact,
@@ -11,52 +11,56 @@ export function ArtifactCard({
   context?: string;
   onOpen: (artifact: TimelineArtifact) => void;
 }) {
-  const Icon = TYPE_ICON[artifact.type];
+  const description = artifact.subtitle ?? context;
+
   return (
-    <button
-      type="button"
-      onClick={() => onOpen(artifact)}
+    <a
+      href={artifact.sourceUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={(e) => {
+        if (isDesktopViewport()) return;
+        e.preventDefault();
+        onOpen(artifact);
+      }}
       className={cn(
-        "group flex w-full min-h-11 items-start gap-3 rounded-lg border border-line bg-elevated px-3 py-3 text-left",
-        "transition-[border-color,transform,background-color] duration-150 ease-out",
-        "active:scale-[0.96] hover:border-line-strong",
+        "group block w-full overflow-hidden rounded-lg border border-line bg-elevated text-left no-underline",
+        "md:transition-[border-color,box-shadow,transform] md:duration-200 md:ease-out",
+        "md:hover:border-line-strong md:hover:shadow-[0_10px_28px_#00000050]",
       )}
     >
-      {artifact.imageUrl ? (
-        <img
-          src={artifact.imageUrl}
-          alt=""
-          className="mt-0.5 size-11 shrink-0 rounded-sm object-cover outline outline-1 -outline-offset-1 outline-fg/15"
-          onError={(e) => {
-            e.currentTarget.style.display = "none";
-          }}
-        />
-      ) : (
-        <span
-          className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-sm bg-gold-soft text-gold"
-          aria-hidden
-        >
-          <Icon className="size-4" strokeWidth={1.75} />
-        </span>
-      )}
-      <span className="min-w-0 flex-1">
-        <span className="flex items-center gap-2">
-          <span className="truncate font-serif text-base font-semibold leading-snug text-fg">
+      <span className="flex flex-col md:transition-transform md:duration-200 md:ease-out md:group-hover:-translate-y-0.5">
+        {artifact.imageUrl ? (
+          <img
+            src={artifact.imageUrl}
+            alt=""
+            className="block h-auto w-full md:transition-[filter] md:duration-200 md:ease-out md:group-hover:brightness-110"
+            onError={(e) => {
+              e.currentTarget.style.display = "none";
+            }}
+          />
+        ) : null}
+        <span className="flex flex-col gap-1 px-3 py-2.5">
+          <span className="block w-full font-serif text-lg font-semibold leading-snug text-fg">
             {artifact.title}
           </span>
-          <span className="shrink-0 rounded-full border border-line px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-gold-dim">
-            {ARTIFACT_LABEL[artifact.type]}
+          {description ? (
+            <span className="block w-full line-clamp-2 text-sm leading-snug text-muted">
+              {description}
+            </span>
+          ) : null}
+          <span className="mt-1 flex items-end justify-between gap-2">
+            <span className="shrink-0 rounded-full border border-line px-2 py-0.5 text-xs font-medium uppercase tracking-wider text-gold-dim">
+              {ARTIFACT_LABEL[artifact.type]}
+            </span>
+            {artifact.year != null && (
+              <span className="shrink-0 font-serif text-sm tabular-nums text-gold-dim">
+                {artifact.year}
+              </span>
+            )}
           </span>
         </span>
-        <span className="mt-0.5 block truncate text-sm text-muted">
-          {artifact.subtitle ?? context ?? artifact.year ?? "Approved source"}
-        </span>
       </span>
-      {artifact.year != null && (
-        <span className="shrink-0 pt-0.5 font-serif text-sm tabular-nums text-gold-dim">
-          {artifact.year}
-        </span>
-      )}
-    </button>
+    </a>
   );
 }

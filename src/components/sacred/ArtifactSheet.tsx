@@ -5,6 +5,11 @@ import { cccParagraphFor } from "@/lib/timeline/ccc";
 import { showModernPlace } from "@/lib/timeline/place";
 import { ARTIFACT_LABEL, type TimelineArtifact } from "@/lib/timeline/types";
 
+/** Host + path, so ellipsis keeps the domain and clips the end of the path. */
+function sourceUrlCaption(url: string): string {
+  return url.replace(/^https?:\/\//i, "");
+}
+
 export function ArtifactSheet({
   artifact,
   onClose,
@@ -129,15 +134,23 @@ export function ArtifactSheet({
                       </p>
                     )}
 
-                  <a
-                    href={artifact.sourceUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex min-h-12 items-center justify-center gap-2 rounded-md bg-gold px-4 font-medium text-bg"
-                  >
-                    Go to source
-                    <ArrowUpRight className="size-4" strokeWidth={2} />
-                  </a>
+                  <div className="min-w-0">
+                    <a
+                      href={artifact.sourceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex min-h-12 items-center justify-center gap-2 rounded-md bg-gold px-4 font-medium text-bg"
+                    >
+                      Go to source
+                      <ArrowUpRight className="size-4" strokeWidth={2} />
+                    </a>
+                    <p
+                      className="mt-1.5 w-full truncate text-center text-xs text-gold"
+                      title={artifact.sourceUrl}
+                    >
+                      {sourceUrlCaption(artifact.sourceUrl)}
+                    </p>
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>

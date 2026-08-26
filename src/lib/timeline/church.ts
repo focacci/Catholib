@@ -21,6 +21,8 @@ const GAUDIUM_ET_SPES =
   "https://www.vatican.va/archive/hist_councils/ii_vatican_council/documents/vat-ii_const_19651207_gaudium-et-spes_en.html";
 const SACROSANCTUM =
   "https://www.vatican.va/archive/hist_councils/ii_vatican_council/documents/vat-ii_const_19631204_sacrosanctum-concilium_en.html";
+const VATICAN_II =
+  "https://www.vatican.va/archive/hist_councils/ii_vatican_council/index.htm";
 const FIDES_ET_RATIO =
   "https://www.vatican.va/content/john-paul-ii/en/encyclicals/documents/hf_jp-ii_enc_14091998_fides-et-ratio.html";
 const REDEMPTOR_HOMINIS =
@@ -1413,6 +1415,18 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
     era: "Twentieth century",
     title: "Second Vatican Council",
     artifacts: [
+      a({
+        id: "ch-vii-event",
+        type: "event",
+        title: "Second Vatican Council",
+        subtitle: "1962–1965",
+        year: 1962,
+        location: place(
+          "St. Peter's Basilica, Vatican City",
+          "St. Peter's Basilica, Vatican City",
+        ),
+        sourceUrl: VATICAN_II,
+      }),
       a({
         id: "ch-vii-dv",
         type: "papal",

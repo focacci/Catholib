@@ -5,7 +5,10 @@ import { eventPlaceHaystack, showModernPlace } from "./place.ts";
 import type { TimelineArtifact } from "./types.ts";
 
 const CATHEN = /^https:\/\/www\.newadvent\.org\/cathen\/[0-9a-z]+\.htm$/;
+const HOLY_SEE = /^https:\/\/www\.vatican\.va\//;
 const PERSON_OR_EVENT = new Set(["saint", "pope", "event"]);
+/** Events after the 1913 Catholic Encyclopedia, sourced from the Holy See. */
+const POST_ENCYCLOPEDIA_EVENTS = new Set(["ch-vii-event"]);
 
 function eventCards(): TimelineArtifact[] {
   return CHURCH_ENTRIES.flatMap((entry) =>
@@ -26,6 +29,14 @@ describe("Church encyclopedia sources", () => {
       for (const artifact of entry.artifacts) {
         if (!PERSON_OR_EVENT.has(artifact.type)) continue;
         count += 1;
+        if (POST_ENCYCLOPEDIA_EVENTS.has(artifact.id)) {
+          assert.match(
+            artifact.sourceUrl,
+            HOLY_SEE,
+            `${artifact.id} (${artifact.type}) is after the encyclopedia and should source to vatican.va`,
+          );
+          continue;
+        }
         assert.match(
           artifact.sourceUrl,
           CATHEN,
@@ -34,6 +45,18 @@ describe("Church encyclopedia sources", () => {
       }
     }
     assert.ok(count > 0, "expected saint, pope, and event cards");
+  });
+
+  it("adds an event card for the Second Vatican Council from the Holy See", () => {
+    const artifact = eventById("ch-vii-event");
+    assert.equal(artifact.title, "Second Vatican Council");
+    assert.match(artifact.sourceUrl, HOLY_SEE);
+    assert.match(artifact.sourceUrl, /ii_vatican_council/);
+    const place = artifact.location;
+    assert.ok(place);
+    assert.match(place.then, /St\. Peter's Basilica/i);
+    assert.match(place.then, /Vatican City/i);
+    assert.equal(showModernPlace(place), false);
   });
 
   it("records historic and present-day names for every event card", () => {
@@ -92,9 +115,12 @@ describe("Church encyclopedia sources", () => {
   it("omits a redundant Now line when the historic name already locates the place", () => {
     const pentecost = eventById("ch-pentecost-event").location;
     const assumption = eventById("ch-assump-event").location;
+    const vaticanII = eventById("ch-vii-event").location;
     assert.ok(pentecost);
     assert.ok(assumption);
+    assert.ok(vaticanII);
     assert.equal(showModernPlace(pentecost), false);
     assert.equal(showModernPlace(assumption), false);
+    assert.equal(showModernPlace(vaticanII), false);
   });
 });

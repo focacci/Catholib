@@ -51,10 +51,15 @@ export function ArtifactCard({
             </span>
           ) : null}
           {artifact.location ? (
-            <span className="block w-full text-sm leading-snug text-muted">
-              <span className="block">{artifact.location.then}</span>
+            <span className="flex w-full flex-col gap-0.5 text-sm leading-snug text-muted">
+              <span>{artifact.location.then}</span>
               {showModernPlace(artifact.location) ? (
-                <span className="block text-subtle">now {artifact.location.now}</span>
+                <span className="text-subtle">
+                  <span className="mr-1.5 text-xs font-medium uppercase tracking-[0.16em] text-gold-dim">
+                    now
+                  </span>
+                  {artifact.location.now}
+                </span>
               ) : null}
             </span>
           ) : null}

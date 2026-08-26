@@ -28,10 +28,7 @@ describe("Catechism cards", () => {
       assert.ok(num, `${artifact.id} title should be CCC <number>`);
       used.add(num);
       const body = CCC_PARAGRAPH[num];
-      assert.ok(
-        body && body.length > 40,
-        `${artifact.id} is missing the official CCC ${num} text`,
-      );
+      assert.ok(body && body.length > 40, `${artifact.id} is missing the official CCC ${num} text`);
       assert.equal(
         artifact.sourceUrl,
         cccUrl(num),

@@ -12,7 +12,7 @@ const SOURCES = [
   {
     name: "Catholic Encyclopedia (New Advent)",
     href: "https://www.newadvent.org/cathen/",
-    note: "Public-domain Catholic Encyclopedia articles. Saint, pope, and event cards in the Church view link to confirmed encyclopedia pages.",
+    note: "Public-domain Catholic Encyclopedia articles. Saint, pope, and event cards in the Church view link to confirmed encyclopedia pages when those articles exist. Later events, including the Second Vatican Council, link to the Holy See.",
   },
   {
     name: "United States Conference of Catholic Bishops",

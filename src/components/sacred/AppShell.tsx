@@ -372,10 +372,10 @@ export function AppShell() {
           <button
             type="button"
             onClick={() => setAboutOpen(true)}
-            className="flex size-10 shrink-0 items-center justify-center rounded-md text-muted hover:text-fg"
+            className="flex size-11 shrink-0 items-center justify-center rounded-md text-gold hover:bg-gold-soft"
             aria-label="About and sources"
           >
-            <Info className="size-4" strokeWidth={1.75} />
+            <Info className="size-5" strokeWidth={1.75} />
           </button>
           <label className="relative min-w-0 flex-1">
             <span className="sr-only">Search Scripture, Magisterium, and Missal</span>

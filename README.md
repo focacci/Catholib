@@ -1,13 +1,14 @@
-# Catholib — Sacred Timeline
+# Catholib
 
-A mobile-first Catholic web app for reading Scripture and the living Magisterium on one vertical timeline.
+A mobile-first Catholic web app for reading Scripture, the living Magisterium, and the 1962 Roman Missal on one vertical timeline.
 
-Two views:
+Three views:
 
 - **Bible** — all 73 books of the Catholic canon, with Haydock, Catena Aurea, and Cornelius a Lapide commentary on confirmed chapters and richer Catechism, papal, and artwork notes on high-value chapters.
 - **Church** — councils, popes, saints, and documents from Pentecost to the present, with saint, pope, and event cards sourced from the Catholic Encyclopedia.
+- **Missal** — a static catalog of the 1962 Roman Missal. Cards open confirmed pages on Missale Meum.
 
-Every textual artifact links to an original page on [vatican.va](https://www.vatican.va/), [newadvent.org/cathen](https://www.newadvent.org/cathen/), [bible.usccb.org](https://bible.usccb.org/), [haydockcommentary.com](https://haydockcommentary.com/), [ecatholic2000.com/catena](https://www.ecatholic2000.com/catena/), [lapide.org](https://lapide.org), or [missalemeum.com](https://www.missalemeum.com/en). This is a curated prototype: some chapters remain sparsely annotated until a verified source exists.
+Every textual artifact links to an original page on [vatican.va](https://www.vatican.va/), [newadvent.org/cathen](https://www.newadvent.org/cathen/), [bible.usccb.org](https://bible.usccb.org/), [haydockcommentary.com](https://haydockcommentary.com/), [ecatholic2000.com/catena](https://www.ecatholic2000.com/catena/), [lapide.org](https://lapide.org), or [missalemeum.com](https://www.missalemeum.com/en). If a working source URL cannot be confirmed, the artifact is omitted.
 
 ## Run locally
 

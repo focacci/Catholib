@@ -45,15 +45,14 @@ function AboutCopy() {
   return (
     <>
       <p className="text-base leading-relaxed text-muted">
-        Sacred Timeline is a curated prototype with three views. Bible
-        follows the canon, with sample chapters from the USCCB and
-        commentary from Haydock, the Catena Aurea, and Cornelius a Lapide.
-        Church follows the history of the Church, with encyclopedia
-        articles for events, popes, and saints, and magisterial texts from
-        the Holy See. Missal is a static catalog of the 1962 Roman Missal:
-        Today, the Ordo Missae, the Temporale, the Sanctorale, the
-        Commons, and Votive Masses, each card opening a confirmed page on
-        Missale Meum.
+        Catholib has three views. Bible follows the canon, with sample
+        chapters from the USCCB and commentary from Haydock, the Catena
+        Aurea, and Cornelius a Lapide. Church follows the history of the
+        Church, with encyclopedia articles for events, popes, and saints,
+        and magisterial texts from the Holy See. Missal is a static catalog
+        of the 1962 Roman Missal: Today, the Ordo Missae, the Temporale,
+        the Sanctorale, the Commons, and Votive Masses, each card opening a
+        confirmed page on Missale Meum.
       </p>
       <p className="mt-3 text-base leading-relaxed text-muted">
         The dataset stays limited to approved sources. No paraphrase of
@@ -81,8 +80,8 @@ function AboutCopy() {
       <p className="mt-5 text-sm leading-relaxed text-subtle">
         Artwork is the sole exception to the approved-source list:
         well-known public-domain historical works, attributed via
-        Wikimedia Commons. This prototype is not an official publication
-        of the Holy See or the USCCB.
+        Wikimedia Commons. Catholib is not an official publication of the
+        Holy See or the USCCB.
       </p>
     </>
   );
@@ -108,7 +107,7 @@ export function AboutPanel({
                 About and sources
               </Dialog.Title>
               <Dialog.Description className="sr-only">
-                Editorial notes and approved sources for Sacred Timeline.
+                Editorial notes and approved sources for Catholib.
               </Dialog.Description>
               <Dialog.Close
                 className="flex size-11 items-center justify-center rounded-md text-muted hover:text-fg"
@@ -137,7 +136,7 @@ export function AboutPanel({
               About and sources
             </Drawer.Title>
             <Drawer.Description className="sr-only">
-              Editorial notes and approved sources for Sacred Timeline.
+              Editorial notes and approved sources for Catholib.
             </Drawer.Description>
             <button
               type="button"

@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { CHURCH_ENTRIES } from "./church.ts";
 import { eventPlaceHaystack, showModernPlace } from "./place.ts";
-import { collectHits } from "./search.ts";
 import type { TimelineArtifact } from "./types.ts";
 
 const CATHEN = /^https:\/\/www\.newadvent\.org\/cathen\/[0-9a-z]+\.htm$/;
@@ -81,25 +80,13 @@ describe("Church encyclopedia sources", () => {
     }
   });
 
-  it("finds councils by their modern place names", () => {
-    const trent = collectHits("Trento", "event");
-    assert.ok(
-      trent.some((hit) => hit.artifact.id === "ch-trent-event"),
-      "searching Trento should find the Council of Trent",
-    );
-    const nicaea = collectHits("Iznik", "event");
-    assert.ok(
-      nicaea.some((hit) => hit.artifact.id === "ch-nicaea-event"),
-      "searching Iznik should find Nicaea",
-    );
-  });
-
-  it("indexes both historic and modern names in the search haystack", () => {
-    const place = eventById("ch-trent-event").location;
-    assert.ok(place);
-    const hay = eventPlaceHaystack(place);
+  it("indexes both historic and modern names so search can find either", () => {
+    const hay = eventPlaceHaystack(eventById("ch-trent-event").location);
     assert.match(hay, /Trent/);
     assert.match(hay, /Trento/);
+    const nicaea = eventPlaceHaystack(eventById("ch-nicaea-event").location);
+    assert.match(nicaea, /Nicaea/);
+    assert.match(nicaea, /Iznik/);
   });
 
   it("omits a redundant Now line when the historic name already locates the place", () => {

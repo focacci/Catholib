@@ -1,4 +1,4 @@
-import type { ChurchEntry, TimelineArtifact } from "./types";
+import type { ChurchEntry, EventPlace, TimelineArtifact } from "./types";
 
 const ENG = (id: string) => `https://www.vatican.va/archive/ENG0015/__${id}.HTM`;
 
@@ -82,6 +82,10 @@ function a(partial: TimelineArtifact): TimelineArtifact {
   return partial;
 }
 
+function place(then: string, now: string): EventPlace {
+  return { then, now };
+}
+
 function wiki(file: string): string {
   return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(file)}?width=640`;
 }
@@ -99,7 +103,10 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "Pentecost",
         subtitle: "The sending of the Holy Spirit",
         year: 33,
-        location: "Jerusalem",
+        location: place(
+          "Jerusalem, in the Roman province of Judea",
+          "Jerusalem",
+        ),
         sourceUrl: cathen("15614b"),
         bibleRefs: ["Acts 2:1–4"],
       }),
@@ -291,7 +298,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "First Council of Nicaea",
         subtitle: "The consubstantial Son",
         year: 325,
-        location: "Nicaea",
+        location: place("Nicaea, in Bithynia", "Iznik, northwestern Turkey"),
         sourceUrl: cathen("11044a"),
       }),
       a({
@@ -366,7 +373,10 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "First Council of Constantinople",
         subtitle: "The divinity of the Holy Spirit",
         year: 381,
-        location: "Constantinople",
+        location: place(
+          "Constantinople, capital of the Eastern Roman Empire",
+          "Istanbul, Turkey",
+        ),
         sourceUrl: cathen("04308a"),
       }),
       a({
@@ -538,7 +548,10 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "Council of Ephesus",
         subtitle: "Mary, Mother of God",
         year: 431,
-        location: "Ephesus",
+        location: place(
+          "Ephesus, in the Roman province of Asia",
+          "ruins near Selcuk, western Turkey",
+        ),
         sourceUrl: cathen("05491a"),
       }),
       a({
@@ -595,7 +608,10 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "Council of Chalcedon",
         subtitle: "True God and true man",
         year: 451,
-        location: "Chalcedon",
+        location: place(
+          "Chalcedon, in Bithynia, across the Bosporus from Constantinople",
+          "Kadikoy, on the Asian side of Istanbul, Turkey",
+        ),
         sourceUrl: cathen("03555a"),
       }),
       a({
@@ -670,7 +686,10 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "Second Council of Constantinople",
         subtitle: "One of the Holy Trinity",
         year: 553,
-        location: "Constantinople",
+        location: place(
+          "Constantinople, Eastern Roman Empire",
+          "Istanbul, Turkey",
+        ),
         sourceUrl: cathen("04308b"),
       }),
       a({
@@ -719,7 +738,10 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "Third Council of Constantinople",
         subtitle: "Two wills of Christ",
         year: 681,
-        location: "Constantinople",
+        location: place(
+          "Constantinople, Eastern Roman Empire",
+          "Istanbul, Turkey",
+        ),
         sourceUrl: cathen("04310a"),
       }),
       a({
@@ -792,7 +814,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "Second Council of Nicaea",
         subtitle: "The veneration of holy images",
         year: 787,
-        location: "Nicaea",
+        location: place("Nicaea, in Bithynia", "Iznik, northwestern Turkey"),
         sourceUrl: cathen("11045a"),
       }),
       a({
@@ -841,7 +863,10 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "Fourth Lateran Council",
         subtitle: "1215",
         year: 1215,
-        location: "Basilica of St. John Lateran, Rome",
+        location: place(
+          "Basilica of St. John Lateran, Rome, in the Papal States",
+          "Archbasilica of St. John Lateran, Rome, Italy",
+        ),
         sourceUrl: cathen("09018a"),
       }),
       a({
@@ -1010,7 +1035,10 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "Council of Florence",
         subtitle: "The procession of the Holy Spirit",
         year: 1439,
-        location: "Ferrara and Florence",
+        location: place(
+          "Ferrara, then Florence, in northern Italy",
+          "Ferrara and Florence, Italy",
+        ),
         sourceUrl: cathen("06111a"),
       }),
       a({
@@ -1035,7 +1063,10 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "Council of Trent",
         subtitle: "1545–1563",
         year: 1545,
-        location: "Trent",
+        location: place(
+          "Trent, in the Prince-Bishopric of Trent (Holy Roman Empire)",
+          "Trento, in Trentino-Alto Adige, Italy",
+        ),
         sourceUrl: cathen("15030c"),
       }),
       a({
@@ -1140,7 +1171,10 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "Ineffabilis Deus",
         subtitle: "Pius IX, 8 December 1854",
         year: 1854,
-        location: "St. Peter's Basilica, Rome",
+        location: place(
+          "St. Peter's Basilica, Rome, in the Papal States",
+          "St. Peter's Basilica, Vatican City",
+        ),
         sourceUrl: cathen("07674d"),
       }),
       a({
@@ -1167,7 +1201,10 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "First Vatican Council",
         subtitle: "Pastor Aeternus — 18 July 1870",
         year: 1870,
-        location: "St. Peter's Basilica, Vatican",
+        location: place(
+          "St. Peter's Basilica, Rome",
+          "St. Peter's Basilica, Vatican City",
+        ),
         sourceUrl: cathen("15303a"),
       }),
       a({
@@ -1330,7 +1367,10 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "Munificentissimus Deus",
         subtitle: "Pius XII, 1 November 1950",
         year: 1950,
-        location: "St. Peter's Basilica, Vatican",
+        location: place(
+          "St. Peter's Basilica, Vatican City",
+          "St. Peter's Basilica, Vatican City",
+        ),
         sourceUrl: cathen("02006b"),
       }),
       a({

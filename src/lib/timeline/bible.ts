@@ -1,46 +1,8 @@
-import { catenaUrl, CATENA_SLUG } from "./catena";
-import { haydockUrl, HAYDOCK_SLUG } from "./haydock";
-import { lapideUrl, LAPIDE_SLUG } from "./lapide";
+import { catenaUrl, CATENA_SLUG } from "./catena.ts";
+import { cccUrl } from "./ccc.ts";
+import { haydockUrl, HAYDOCK_SLUG } from "./haydock.ts";
+import { lapideUrl, LAPIDE_SLUG } from "./lapide.ts";
 import type { BibleBook, PopulatedChapter, TimelineArtifact } from "./types";
-
-const ENG = (id: string) => `https://www.vatican.va/archive/ENG0015/__${id}.HTM`;
-
-const CCC_CREATOR = ENG("P19");
-const CCC_MAN = ENG("P1B");
-const CCC_FALL = ENG("P1C");
-const CCC_KNOW_GOD = ENG("PA");
-const CCC_REVELATION = ENG("PG");
-const CCC_FULLNESS = ENG("PH");
-const CCC_FAITH = ENG("PV");
-const CCC_FATHER = ENG("P17");
-const CCC_TRUE_GOD = ENG("P1J");
-const CCC_VIRGIN = ENG("P1K");
-const CCC_PASSION = ENG("P1M");
-const CCC_RESURRECTION = ENG("P1S");
-const CCC_ASCENSION = ENG("P1T");
-const CCC_SPIRIT_PROMISE = ENG("P22");
-const CCC_SPIRIT_FULLNESS = ENG("P23");
-const CCC_SPIRIT_LAST = ENG("P24");
-const CCC_CHURCH_PLAN = ENG("P27");
-const CCC_HIERARCHY = ENG("P2A");
-const CCC_BODY = ENG("P2G");
-const CCC_NEW_EARTH = ENG("P2Q");
-const CCC_EUCHARIST = ENG("P3W");
-const CCC_BEATITUDES = ENG("P5I");
-const CCC_VIRTUES = ENG("P64");
-const CCC_NEW_LAW = ENG("P6W");
-const CCC_JUSTIFICATION = ENG("P6Y");
-const CCC_DECALOGUE = ENG("P78");
-const CCC_LOVE_GOD = ENG("P7A");
-const CCC_OT_PRAYER = ENG("P91");
-const CCC_OUR_FATHER = ENG("P9V");
-const CCC_MARKS = ENG("P29");
-const CCC_BRIDE = ENG("P28");
-const CCC_MATRIMONY = ENG("P51");
-const CCC_CONTEMPLATIVE = ENG("P9M");
-const CCC_PETITION = ENG("P97");
-const CCC_PENANCE = ENG("P46");
-const CCC_PRAISE = ENG("P9A");
 
 const DEI_VERBUM =
   "https://www.vatican.va/archive/hist_councils/ii_vatican_council/documents/vat-ii_const_19651118_dei-verbum_en.html";
@@ -144,9 +106,7 @@ const genesis1: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 289",
     subtitle: "The first three chapters of Genesis",
-    shortQuote:
-      "Among all the Scriptural texts about creation, the first three chapters of Genesis occupy a unique place.",
-    sourceUrl: CCC_CREATOR,
+    sourceUrl: cccUrl(289),
     bibleRefs: ["Gn 1:1–2:4"],
     year: 1992,
   }),
@@ -155,9 +115,7 @@ const genesis1: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 290",
     subtitle: "“In the beginning God created”",
-    shortQuote:
-      "“In the beginning God created the heavens and the earth”: three things are affirmed in these first words of Scripture: the eternal God gave a beginning to all that exists outside of himself; he alone is Creator (the verb “create” — Hebrew bara — always has God for its subject).",
-    sourceUrl: CCC_CREATOR,
+    sourceUrl: cccUrl(290),
     bibleRefs: ["Gn 1:1"],
     year: 1992,
   }),
@@ -166,8 +124,6 @@ const genesis1: TimelineArtifact[] = [
     type: "papal",
     title: "Laudato Si’ 65",
     subtitle: "Pope Francis, 24 May 2015",
-    shortQuote:
-      "The creation accounts in the book of Genesis contain, in their own symbolic and narrative language, profound teachings about human existence and its historical reality. They suggest that human life is grounded in three fundamental and closely intertwined relationships: with God, with our neighbour and with the earth itself.",
     sourceUrl: LAUDATO_SI,
     bibleRefs: ["Gn 1", "Gn 2"],
     year: 2015,
@@ -177,8 +133,6 @@ const genesis1: TimelineArtifact[] = [
     type: "papal",
     title: "Dei Verbum 3",
     subtitle: "Second Vatican Council, 18 November 1965",
-    shortQuote:
-      "God, who through the Word creates all things (see John 1:3) and keeps them in existence, gives men an enduring witness to Himself in created realities (see Rom. 1:19-20).",
     sourceUrl: DEI_VERBUM,
     bibleRefs: ["Gn 1", "Jn 1:3"],
     year: 1965,
@@ -195,7 +149,8 @@ const genesis1: TimelineArtifact[] = [
     type: "artwork",
     title: "The Creation of Adam",
     subtitle: "Michelangelo Buonarroti, Sistine Chapel, c. 1511–1512",
-    sourceUrl: "https://commons.wikimedia.org/wiki/File:Michelangelo_-_Creation_of_Adam_(cropped).jpg",
+    sourceUrl:
+      "https://commons.wikimedia.org/wiki/File:Michelangelo_-_Creation_of_Adam_(cropped).jpg",
     imageUrl: wiki("Michelangelo_-_Creation_of_Adam_(cropped).jpg"),
     imageCredit:
       "Michelangelo Buonarroti, The Creation of Adam, Sistine Chapel ceiling, c. 1511–1512. Public domain, via Wikimedia Commons.",
@@ -210,7 +165,7 @@ const genesis2: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 369",
     subtitle: "Man and woman created",
-    sourceUrl: CCC_MAN,
+    sourceUrl: cccUrl(369),
     bibleRefs: ["Gn 2:7", "Gn 2:21–24"],
     year: 1992,
   }),
@@ -219,7 +174,7 @@ const genesis2: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 375",
     subtitle: "Original holiness and justice",
-    sourceUrl: CCC_MAN,
+    sourceUrl: cccUrl(375),
     bibleRefs: ["Gn 2"],
     year: 1992,
   }),
@@ -240,9 +195,7 @@ const genesis3: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 390",
     subtitle: "The account of the fall",
-    shortQuote:
-      "The account of the fall in Genesis 3 uses figurative language, but affirms a primeval event, a deed that took place at the beginning of the history of man. Revelation gives us the certainty of faith that the whole of human history is marked by the original fault freely committed by our first parents.",
-    sourceUrl: CCC_FALL,
+    sourceUrl: cccUrl(390),
     bibleRefs: ["Gn 3"],
     year: 1992,
   }),
@@ -251,9 +204,7 @@ const genesis3: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 397",
     subtitle: "Man, tempted by the devil",
-    shortQuote:
-      "Man, tempted by the devil, let his trust in his Creator die in his heart and, abusing his freedom, disobeyed God’s command. This is what man’s first sin consisted of.",
-    sourceUrl: CCC_FALL,
+    sourceUrl: cccUrl(397),
     bibleRefs: ["Gn 3:1–11"],
     year: 1992,
   }),
@@ -262,8 +213,6 @@ const genesis3: TimelineArtifact[] = [
     type: "papal",
     title: "Dei Verbum 3",
     subtitle: "Second Vatican Council — the promise after the fall",
-    shortQuote:
-      "Then after their fall His promise of redemption aroused in them the hope of being saved (see Gen. 3:15) and from that time on He ceaselessly kept the human race in His care.",
     sourceUrl: DEI_VERBUM,
     bibleRefs: ["Gn 3:15"],
     year: 1965,
@@ -296,7 +245,7 @@ const genesis12: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 59",
     subtitle: "God calls Abram",
-    sourceUrl: CCC_REVELATION,
+    sourceUrl: cccUrl(59),
     bibleRefs: ["Gn 12:1–3"],
     year: 1992,
   }),
@@ -305,7 +254,7 @@ const genesis12: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 145",
     subtitle: "The faith of Abraham",
-    sourceUrl: CCC_FAITH,
+    sourceUrl: cccUrl(145),
     bibleRefs: ["Gn 12:1–4", "Heb 11:8"],
     year: 1992,
   }),
@@ -317,7 +266,7 @@ const genesis15: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 146",
     subtitle: "Abraham believed God",
-    sourceUrl: CCC_FAITH,
+    sourceUrl: cccUrl(146),
     bibleRefs: ["Gn 15:6", "Rom 4:3"],
     year: 1992,
   }),
@@ -329,7 +278,7 @@ const genesis22: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 2572",
     subtitle: "Abraham’s trial of faith",
-    sourceUrl: CCC_OT_PRAYER,
+    sourceUrl: cccUrl(2572),
     bibleRefs: ["Gn 22:1–18"],
     year: 1992,
   }),
@@ -338,7 +287,8 @@ const genesis22: TimelineArtifact[] = [
     type: "artwork",
     title: "The Sacrifice of Isaac",
     subtitle: "Caravaggio, c. 1603",
-    sourceUrl: "https://commons.wikimedia.org/wiki/File:Sacrifice_of_Isaac-Caravaggio_(c._1603).jpg",
+    sourceUrl:
+      "https://commons.wikimedia.org/wiki/File:Sacrifice_of_Isaac-Caravaggio_(c._1603).jpg",
     imageUrl: wiki("Sacrifice_of_Isaac-Caravaggio_(c._1603).jpg"),
     imageCredit:
       "Caravaggio, The Sacrifice of Isaac, c. 1603. Uffizi Gallery. Public domain, via Wikimedia Commons.",
@@ -353,7 +303,7 @@ const exodus3: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 205",
     subtitle: "God reveals his name",
-    sourceUrl: CCC_FATHER,
+    sourceUrl: cccUrl(205),
     bibleRefs: ["Ex 3:13–15"],
     year: 1992,
   }),
@@ -362,7 +312,7 @@ const exodus3: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 2575",
     subtitle: "Prayer of Moses",
-    sourceUrl: CCC_OT_PRAYER,
+    sourceUrl: cccUrl(2575),
     bibleRefs: ["Ex 3:1–6"],
     year: 1992,
   }),
@@ -374,7 +324,7 @@ const exodus12: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 1363",
     subtitle: "The Passover memorial",
-    sourceUrl: CCC_EUCHARIST,
+    sourceUrl: cccUrl(1363),
     bibleRefs: ["Ex 12"],
     year: 1992,
   }),
@@ -383,7 +333,7 @@ const exodus12: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 1334",
     subtitle: "The unleavened bread of the Exodus",
-    sourceUrl: CCC_EUCHARIST,
+    sourceUrl: cccUrl(1334),
     bibleRefs: ["Ex 12:1–14"],
     year: 1992,
   }),
@@ -395,7 +345,7 @@ const exodus20: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 2056",
     subtitle: "The Decalogue — “ten words”",
-    sourceUrl: CCC_DECALOGUE,
+    sourceUrl: cccUrl(2056),
     bibleRefs: ["Ex 20:1–17"],
     year: 1992,
   }),
@@ -404,7 +354,7 @@ const exodus20: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 2084",
     subtitle: "The first commandment",
-    sourceUrl: CCC_LOVE_GOD,
+    sourceUrl: cccUrl(2084),
     bibleRefs: ["Ex 20:2–5"],
     year: 1992,
   }),
@@ -429,7 +379,7 @@ const deut5: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 2056",
     subtitle: "The Decalogue given again",
-    sourceUrl: CCC_DECALOGUE,
+    sourceUrl: cccUrl(2056),
     bibleRefs: ["Dt 5:6–21"],
     year: 1992,
   }),
@@ -441,7 +391,7 @@ const deut6: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 201",
     subtitle: "Hear, O Israel",
-    sourceUrl: CCC_FATHER,
+    sourceUrl: cccUrl(201),
     bibleRefs: ["Dt 6:4–5"],
     year: 1992,
   }),
@@ -450,7 +400,7 @@ const deut6: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 2083",
     subtitle: "You shall love the Lord your God",
-    sourceUrl: CCC_LOVE_GOD,
+    sourceUrl: cccUrl(2083),
     bibleRefs: ["Dt 6:5"],
     year: 1992,
   }),
@@ -462,7 +412,7 @@ const psalm1: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 2585",
     subtitle: "The Psalms, school of prayer",
-    sourceUrl: CCC_OT_PRAYER,
+    sourceUrl: cccUrl(2585),
     bibleRefs: ["Ps 1"],
     year: 1992,
   }),
@@ -474,7 +424,7 @@ const psalm22: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 603",
     subtitle: "“My God, my God, why have you forsaken me?”",
-    sourceUrl: CCC_PASSION,
+    sourceUrl: cccUrl(603),
     bibleRefs: ["Ps 22:1", "Mk 15:34"],
     year: 1992,
   }),
@@ -486,7 +436,7 @@ const psalm23: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 2579",
     subtitle: "David the shepherd, man of prayer",
-    sourceUrl: CCC_OT_PRAYER,
+    sourceUrl: cccUrl(2579),
     bibleRefs: ["Ps 23"],
     year: 1992,
   }),
@@ -498,7 +448,7 @@ const psalm110: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 447",
     subtitle: "Jesus and Psalm 110",
-    sourceUrl: CCC_TRUE_GOD,
+    sourceUrl: cccUrl(447),
     bibleRefs: ["Ps 110:1"],
     year: 1992,
   }),
@@ -507,7 +457,7 @@ const psalm110: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 659",
     subtitle: "Seated at the right hand of the Father",
-    sourceUrl: CCC_ASCENSION,
+    sourceUrl: cccUrl(659),
     bibleRefs: ["Ps 110:1"],
     year: 1992,
   }),
@@ -519,9 +469,7 @@ const isaiah7: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 497",
     subtitle: "The virginal conception and Isaiah 7:14",
-    shortQuote:
-      "The Gospel accounts understand the virginal conception of Jesus as a divine work that surpasses all human understanding and possibility. The Church sees here the fulfilment of the divine promise given through the prophet Isaiah: “Behold, a virgin shall conceive and bear a son.”",
-    sourceUrl: CCC_VIRGIN,
+    sourceUrl: cccUrl(497),
     bibleRefs: ["Is 7:14", "Mt 1:23"],
     year: 1992,
   }),
@@ -530,8 +478,6 @@ const isaiah7: TimelineArtifact[] = [
     type: "papal",
     title: "Redemptoris Mater 2",
     subtitle: "St. John Paul II, 25 March 1987",
-    shortQuote:
-      "“Behold, a virgin shall conceive and bear a son, and his name shall be called Emmanuel” (Is. 7:14).",
     sourceUrl: REDEMPTORIS_MATER,
     bibleRefs: ["Is 7:14"],
     year: 1987,
@@ -561,7 +507,7 @@ const isaiah9: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 712",
     subtitle: "The characteristics of the awaited Messiah",
-    sourceUrl: CCC_SPIRIT_PROMISE,
+    sourceUrl: cccUrl(712),
     bibleRefs: ["Is 9:5–6"],
     year: 1992,
   }),
@@ -573,7 +519,7 @@ const isaiah53: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 601",
     subtitle: "The Servant who is put to death",
-    sourceUrl: CCC_PASSION,
+    sourceUrl: cccUrl(601),
     bibleRefs: ["Is 53:11"],
     year: 1992,
   }),
@@ -582,7 +528,7 @@ const isaiah53: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 713",
     subtitle: "The Servant songs",
-    sourceUrl: CCC_SPIRIT_PROMISE,
+    sourceUrl: cccUrl(713),
     bibleRefs: ["Is 53"],
     year: 1992,
   }),
@@ -594,7 +540,7 @@ const wisdom2: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 601",
     subtitle: "The righteous one",
-    sourceUrl: CCC_PASSION,
+    sourceUrl: cccUrl(601),
     bibleRefs: ["Wis 2:12–20"],
     year: 1992,
   }),
@@ -606,9 +552,7 @@ const matthew5: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 1716",
     subtitle: "The Beatitudes",
-    shortQuote:
-      "The Beatitudes are at the heart of Jesus’ preaching. They take up the promises made to the chosen people since Abraham. The Beatitudes fulfill the promises by ordering them no longer merely to the possession of a territory, but to the Kingdom of heaven.",
-    sourceUrl: CCC_BEATITUDES,
+    sourceUrl: cccUrl(1716),
     bibleRefs: ["Mt 5:3–12"],
     year: 1992,
   }),
@@ -617,9 +561,7 @@ const matthew5: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 1965",
     subtitle: "The New Law and the Sermon on the Mount",
-    shortQuote:
-      "The New Law or the Law of the Gospel is the perfection here on earth of the divine law, natural and revealed. It is the work of Christ and is expressed particularly in the Sermon on the Mount.",
-    sourceUrl: CCC_NEW_LAW,
+    sourceUrl: cccUrl(1965),
     bibleRefs: ["Mt 5–7"],
     year: 1992,
   }),
@@ -650,7 +592,7 @@ const matthew6: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 2759",
     subtitle: "The Lord’s Prayer",
-    sourceUrl: CCC_OUR_FATHER,
+    sourceUrl: cccUrl(2759),
     bibleRefs: ["Mt 6:9–13"],
     year: 1992,
   }),
@@ -662,7 +604,7 @@ const matthew16: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 424",
     subtitle: "“You are the Christ”",
-    sourceUrl: CCC_TRUE_GOD,
+    sourceUrl: cccUrl(424),
     bibleRefs: ["Mt 16:16"],
     year: 1992,
   }),
@@ -671,7 +613,7 @@ const matthew16: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 881",
     subtitle: "The office of Peter",
-    sourceUrl: CCC_HIERARCHY,
+    sourceUrl: cccUrl(881),
     bibleRefs: ["Mt 16:18–19"],
     year: 1992,
   }),
@@ -696,7 +638,7 @@ const matthew28: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 849",
     subtitle: "The missionary mandate",
-    sourceUrl: CCC_MARKS,
+    sourceUrl: cccUrl(849),
     bibleRefs: ["Mt 28:19–20"],
     year: 1992,
   }),
@@ -717,7 +659,7 @@ const luke1: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 148",
     subtitle: "The Virgin Mary’s faith",
-    sourceUrl: CCC_FAITH,
+    sourceUrl: cccUrl(148),
     bibleRefs: ["Lk 1:37–38"],
     year: 1992,
   }),
@@ -726,7 +668,7 @@ const luke1: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 490",
     subtitle: "Full of grace",
-    sourceUrl: CCC_VIRGIN,
+    sourceUrl: cccUrl(490),
     bibleRefs: ["Lk 1:28"],
     year: 1992,
   }),
@@ -759,7 +701,7 @@ const luke15: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 1439",
     subtitle: "The prodigal son",
-    sourceUrl: CCC_PENANCE,
+    sourceUrl: cccUrl(1439),
     bibleRefs: ["Lk 15:11–32"],
     year: 1992,
   }),
@@ -793,7 +735,7 @@ const luke22: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 610",
     subtitle: "The Last Supper",
-    sourceUrl: CCC_PASSION,
+    sourceUrl: cccUrl(610),
     bibleRefs: ["Lk 22:19–20"],
     year: 1992,
   }),
@@ -827,7 +769,7 @@ const luke23: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 616",
     subtitle: "The unique sacrifice of the Cross",
-    sourceUrl: CCC_PASSION,
+    sourceUrl: cccUrl(616),
     bibleRefs: ["Lk 23:33–46"],
     year: 1992,
   }),
@@ -851,9 +793,7 @@ const john1: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 241",
     subtitle: "The Word",
-    shortQuote:
-      "For this reason the apostles confess Jesus to be the Word: “In the beginning was the Word, and the Word was with God, and the Word was God.”",
-    sourceUrl: CCC_FATHER,
+    sourceUrl: cccUrl(241),
     bibleRefs: ["Jn 1:1"],
     year: 1992,
   }),
@@ -862,8 +802,6 @@ const john1: TimelineArtifact[] = [
     type: "papal",
     title: "Dei Verbum 4",
     subtitle: "Second Vatican Council — the eternal Word",
-    shortQuote:
-      "For He sent His Son, the eternal Word, who enlightens all men, so that He might dwell among men and tell them of the innermost being of God (see John 1:1-18).",
     sourceUrl: DEI_VERBUM,
     bibleRefs: ["Jn 1:1–18"],
     year: 1965,
@@ -904,7 +842,7 @@ const john6: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 1338",
     subtitle: "The multiplication of the loaves",
-    sourceUrl: CCC_EUCHARIST,
+    sourceUrl: cccUrl(1338),
     bibleRefs: ["Jn 6:1–15"],
     year: 1992,
   }),
@@ -913,7 +851,7 @@ const john6: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 1374",
     subtitle: "The Real Presence",
-    sourceUrl: CCC_EUCHARIST,
+    sourceUrl: cccUrl(1374),
     bibleRefs: ["Jn 6:51–58"],
     year: 1992,
   }),
@@ -943,7 +881,7 @@ const john19: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 607",
     subtitle: "The desire of Jesus for the Cross",
-    sourceUrl: CCC_PASSION,
+    sourceUrl: cccUrl(607),
     bibleRefs: ["Jn 19:17–30"],
     year: 1992,
   }),
@@ -952,7 +890,7 @@ const john19: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 726",
     subtitle: "“Woman, behold, your son”",
-    sourceUrl: CCC_SPIRIT_FULLNESS,
+    sourceUrl: cccUrl(726),
     bibleRefs: ["Jn 19:25–27"],
     year: 1992,
   }),
@@ -964,7 +902,7 @@ const john20: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 640",
     subtitle: "The empty tomb",
-    sourceUrl: CCC_RESURRECTION,
+    sourceUrl: cccUrl(640),
     bibleRefs: ["Jn 20:1–10"],
     year: 1992,
   }),
@@ -973,7 +911,7 @@ const john20: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 448",
     subtitle: "“My Lord and my God!”",
-    sourceUrl: CCC_TRUE_GOD,
+    sourceUrl: cccUrl(448),
     bibleRefs: ["Jn 20:28"],
     year: 1992,
   }),
@@ -985,7 +923,7 @@ const acts2: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 731",
     subtitle: "On the day of Pentecost",
-    sourceUrl: CCC_SPIRIT_LAST,
+    sourceUrl: cccUrl(731),
     bibleRefs: ["Acts 2:1–4"],
     year: 1992,
   }),
@@ -994,7 +932,7 @@ const acts2: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 767",
     subtitle: "The Spirit sent on the day of Pentecost",
-    sourceUrl: CCC_CHURCH_PLAN,
+    sourceUrl: cccUrl(767),
     bibleRefs: ["Acts 2"],
     year: 1992,
   }),
@@ -1027,7 +965,7 @@ const romans1: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 32",
     subtitle: "God known through created things",
-    sourceUrl: CCC_KNOW_GOD,
+    sourceUrl: cccUrl(32),
     bibleRefs: ["Rom 1:19–20"],
     year: 1992,
   }),
@@ -1039,7 +977,7 @@ const romans5: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 402",
     subtitle: "All die in Adam",
-    sourceUrl: CCC_FALL,
+    sourceUrl: cccUrl(402),
     bibleRefs: ["Rom 5:12–21"],
     year: 1992,
   }),
@@ -1048,7 +986,7 @@ const romans5: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 1992",
     subtitle: "Justification",
-    sourceUrl: CCC_JUSTIFICATION,
+    sourceUrl: cccUrl(1992),
     bibleRefs: ["Rom 5:1–11"],
     year: 1992,
   }),
@@ -1060,7 +998,7 @@ const romans8: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 2630",
     subtitle: "The Spirit helps us in our weakness",
-    sourceUrl: CCC_PETITION,
+    sourceUrl: cccUrl(2630),
     bibleRefs: ["Rom 8:26"],
     year: 1992,
   }),
@@ -1072,7 +1010,7 @@ const cor13: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 1826",
     subtitle: "If I have not charity",
-    sourceUrl: CCC_VIRTUES,
+    sourceUrl: cccUrl(1826),
     bibleRefs: ["1 Cor 13:1–13"],
     year: 1992,
   }),
@@ -1093,7 +1031,7 @@ const cor15: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 655",
     subtitle: "Christ’s Resurrection, source of ours",
-    sourceUrl: CCC_RESURRECTION,
+    sourceUrl: cccUrl(655),
     bibleRefs: ["1 Cor 15:20–28"],
     year: 1992,
   }),
@@ -1102,7 +1040,7 @@ const cor15: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 988",
     subtitle: "The resurrection of the body",
-    sourceUrl: CCC_BODY,
+    sourceUrl: cccUrl(988),
     bibleRefs: ["1 Cor 15"],
     year: 1992,
   }),
@@ -1114,7 +1052,7 @@ const heb1: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 65",
     subtitle: "God has spoken by a Son",
-    sourceUrl: CCC_FULLNESS,
+    sourceUrl: cccUrl(65),
     bibleRefs: ["Heb 1:1–2"],
     year: 1992,
   }),
@@ -1126,7 +1064,7 @@ const heb11: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 147",
     subtitle: "The Old Testament is filled with witnesses of faith",
-    sourceUrl: CCC_FAITH,
+    sourceUrl: cccUrl(147),
     bibleRefs: ["Heb 11"],
     year: 1992,
   }),
@@ -1138,7 +1076,7 @@ const rev1: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 2642",
     subtitle: "The songs of the heavenly liturgy",
-    sourceUrl: CCC_PRAISE,
+    sourceUrl: cccUrl(2642),
     bibleRefs: ["Rev 1"],
     year: 1992,
   }),
@@ -1150,9 +1088,7 @@ const revelation21: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 1044",
     subtitle: "The heavenly Jerusalem",
-    shortQuote:
-      "In this new universe, the heavenly Jerusalem, God will have his dwelling among men. “He will wipe away every tear from their eyes, and death shall be no more, neither shall there be mourning nor crying nor pain any more, for the former things have passed away.”",
-    sourceUrl: CCC_NEW_EARTH,
+    sourceUrl: cccUrl(1044),
     bibleRefs: ["Rev 21:1–4"],
     year: 1992,
   }),
@@ -1161,9 +1097,7 @@ const revelation21: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 1042",
     subtitle: "Hope of the new heaven and the new earth",
-    shortQuote:
-      "At the end of time, the Kingdom of God will come in its fullness. After the universal judgment, the righteous will reign for ever with Christ, glorified in body and soul. The universe itself will be renewed.",
-    sourceUrl: CCC_NEW_EARTH,
+    sourceUrl: cccUrl(1042),
     bibleRefs: ["Rev 21:1"],
     year: 1992,
   }),
@@ -1201,7 +1135,7 @@ const rev22: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 1060",
     subtitle: "“Come, Lord Jesus!”",
-    sourceUrl: CCC_NEW_EARTH,
+    sourceUrl: cccUrl(1060),
     bibleRefs: ["Rev 22:20"],
     year: 1992,
   }),
@@ -1213,9 +1147,7 @@ const song1: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 2709",
     subtitle: "Contemplative prayer seeks him “whom my soul loves”",
-    shortQuote:
-      "Contemplative prayer seeks him “whom my soul loves.” It is Jesus, and in him, the Father. We seek him, because to desire him is always the beginning of love, and we seek him in that pure faith which causes us to be born of him and to live in him.",
-    sourceUrl: CCC_CONTEMPLATIVE,
+    sourceUrl: cccUrl(2709),
     bibleRefs: ["Sg 1:7"],
     year: 1992,
   }),
@@ -1224,8 +1156,6 @@ const song1: TimelineArtifact[] = [
     type: "papal",
     title: "Deus Caritas Est 6",
     subtitle: "Pope Benedict XVI, 25 December 2005",
-    shortQuote:
-      "Here we can find a first, important indication in the Song of Songs, an Old Testament book well known to the mystics. According to the interpretation generally held today, the poems contained in this book were originally love-songs, perhaps intended for a Jewish wedding feast and meant to exalt conjugal love.",
     sourceUrl: DEUS_CARITAS,
     bibleRefs: ["Sg 1"],
     year: 2005,
@@ -1251,9 +1181,7 @@ const song2: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 796",
     subtitle: "The Church is the Bride of Christ",
-    shortQuote:
-      "The unity of Christ and the Church, head and members of one Body, also implies the distinction of the two within a personal relationship. This aspect is often expressed by the image of bridegroom and bride. The theme of Christ as Bridegroom of the Church was prepared for by the prophets and announced by John the Baptist.",
-    sourceUrl: CCC_BRIDE,
+    sourceUrl: cccUrl(796),
     bibleRefs: ["Sg 2:16"],
     year: 1992,
   }),
@@ -1262,8 +1190,7 @@ const song2: TimelineArtifact[] = [
     type: "artwork",
     title: "The Beloved (The Bride)",
     subtitle: "Dante Gabriel Rossetti, 1865–1866",
-    sourceUrl:
-      "https://commons.wikimedia.org/wiki/File:The_Beloved_D-G-Rossetti-1866.jpg",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:The_Beloved_D-G-Rossetti-1866.jpg",
     imageUrl: wiki("The_Beloved_D-G-Rossetti-1866.jpg"),
     imageCredit:
       "Dante Gabriel Rossetti, The Beloved (The Bride), 1865–1866. Tate Britain. Public domain, via Wikimedia Commons. The painting illustrates “My beloved is mine, and I am his” (Song of Solomon 2:16).",
@@ -1278,9 +1205,7 @@ const song3: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 2709",
     subtitle: "“I sought him whom my soul loves”",
-    shortQuote:
-      "What is contemplative prayer? St. Teresa answers: “Contemplative prayer [oracion mental] in my opinion is nothing else than a close sharing between friends; it means taking time frequently to be alone with him who we know loves us.” Contemplative prayer seeks him “whom my soul loves.”",
-    sourceUrl: CCC_CONTEMPLATIVE,
+    sourceUrl: cccUrl(2709),
     bibleRefs: ["Sg 3:1–4", "Sg 1:7"],
     year: 1992,
   }),
@@ -1292,9 +1217,7 @@ const song8: TimelineArtifact[] = [
     type: "catechism",
     title: "CCC 1611",
     subtitle: "A love “strong as death”",
-    shortQuote:
-      "Tradition has always seen in the Song of Solomon a unique expression of human love, a pure reflection of God’s love — a love “strong as death” that “many waters cannot quench.”",
-    sourceUrl: CCC_MATRIMONY,
+    sourceUrl: cccUrl(1611),
     bibleRefs: ["Sg 8:6–7"],
     year: 1992,
   }),
@@ -1303,8 +1226,6 @@ const song8: TimelineArtifact[] = [
     type: "papal",
     title: "Deus Caritas Est 10",
     subtitle: "Pope Benedict XVI — the Song in the canon",
-    shortQuote:
-      "We can thus see how the reception of the Song of Songs in the canon of sacred Scripture was soon explained by the idea that these love songs ultimately describe God’s relation to man and man’s relation to God. Thus the Song of Songs became, both in Christian and Jewish literature, a source of mystical knowledge and experience, an expression of the essence of biblical faith: that man can indeed enter into union with God — his primordial aspiration.",
     sourceUrl: DEUS_CARITAS,
     bibleRefs: ["Sg 8:6–7"],
     year: 2005,
@@ -1392,81 +1313,82 @@ const NT: BookSeed[] = [
   ["Revelation", "Rev", "revelation", 22],
 ];
 
-const RICH: Record<string, { chapter: number; heading: string; artifacts: TimelineArtifact[] }[]> = {
-  Genesis: [
-    { chapter: 1, heading: "The Story of Creation", artifacts: genesis1 },
-    { chapter: 2, heading: "The Garden of Eden", artifacts: genesis2 },
-    { chapter: 3, heading: "The Fall of Man", artifacts: genesis3 },
-    { chapter: 12, heading: "The Call of Abram", artifacts: genesis12 },
-    { chapter: 15, heading: "The Covenant with Abram", artifacts: genesis15 },
-    { chapter: 22, heading: "The Testing of Abraham", artifacts: genesis22 },
-  ],
-  Exodus: [
-    { chapter: 3, heading: "The Burning Bush", artifacts: exodus3 },
-    { chapter: 12, heading: "The Passover", artifacts: exodus12 },
-    { chapter: 20, heading: "The Ten Commandments", artifacts: exodus20 },
-  ],
-  Deuteronomy: [
-    { chapter: 5, heading: "The Decalogue Repeated", artifacts: deut5 },
-    { chapter: 6, heading: "The Great Commandment", artifacts: deut6 },
-  ],
-  Psalms: [
-    { chapter: 1, heading: "The Two Ways", artifacts: psalm1 },
-    { chapter: 22, heading: "My God, My God", artifacts: psalm22 },
-    { chapter: 23, heading: "The Lord Is My Shepherd", artifacts: psalm23 },
-    { chapter: 51, heading: "The Miserere", artifacts: [] },
-    { chapter: 110, heading: "Sit at My Right Hand", artifacts: psalm110 },
-  ],
-  Isaiah: [
-    { chapter: 7, heading: "The Sign of Emmanuel", artifacts: isaiah7 },
-    { chapter: 9, heading: "A Child Is Born", artifacts: isaiah9 },
-    { chapter: 53, heading: "The Suffering Servant", artifacts: isaiah53 },
-  ],
-  Wisdom: [{ chapter: 2, heading: "The Just One", artifacts: wisdom2 }],
-  "Song of Songs": [
-    { chapter: 1, heading: "The Bride’s Longing", artifacts: song1 },
-    { chapter: 2, heading: "My Beloved Is Mine", artifacts: song2 },
-    { chapter: 3, heading: "Whom My Soul Loves", artifacts: song3 },
-    { chapter: 8, heading: "Love Strong as Death", artifacts: song8 },
-  ],
-  Matthew: [
-    { chapter: 5, heading: "The Sermon on the Mount", artifacts: matthew5 },
-    { chapter: 6, heading: "The Lord’s Prayer", artifacts: matthew6 },
-    { chapter: 16, heading: "Peter’s Confession", artifacts: matthew16 },
-    { chapter: 28, heading: "The Great Commission", artifacts: matthew28 },
-  ],
-  Luke: [
-    { chapter: 1, heading: "The Annunciation", artifacts: luke1 },
-    { chapter: 15, heading: "The Prodigal Son", artifacts: luke15 },
-    { chapter: 22, heading: "The Last Supper", artifacts: luke22 },
-    { chapter: 23, heading: "The Crucifixion", artifacts: luke23 },
-  ],
-  John: [
-    { chapter: 1, heading: "The Word Became Flesh", artifacts: john1 },
-    { chapter: 6, heading: "The Bread of Life", artifacts: john6 },
-    { chapter: 19, heading: "The Passion according to John", artifacts: john19 },
-    { chapter: 20, heading: "The Resurrection", artifacts: john20 },
-  ],
-  "Acts of the Apostles": [{ chapter: 2, heading: "Pentecost", artifacts: acts2 }],
-  Romans: [
-    { chapter: 1, heading: "The Gospel and the Nations", artifacts: romans1 },
-    { chapter: 5, heading: "Adam and Christ", artifacts: romans5 },
-    { chapter: 8, heading: "Life in the Spirit", artifacts: romans8 },
-  ],
-  "1 Corinthians": [
-    { chapter: 13, heading: "The Way of Love", artifacts: cor13 },
-    { chapter: 15, heading: "The Resurrection of the Dead", artifacts: cor15 },
-  ],
-  Hebrews: [
-    { chapter: 1, heading: "God Has Spoken by a Son", artifacts: heb1 },
-    { chapter: 11, heading: "The Cloud of Witnesses", artifacts: heb11 },
-  ],
-  Revelation: [
-    { chapter: 1, heading: "The Revelation of Jesus Christ", artifacts: rev1 },
-    { chapter: 21, heading: "The New Heaven and the New Earth", artifacts: revelation21 },
-    { chapter: 22, heading: "Come, Lord Jesus", artifacts: rev22 },
-  ],
-};
+const RICH: Record<string, { chapter: number; heading: string; artifacts: TimelineArtifact[] }[]> =
+  {
+    Genesis: [
+      { chapter: 1, heading: "The Story of Creation", artifacts: genesis1 },
+      { chapter: 2, heading: "The Garden of Eden", artifacts: genesis2 },
+      { chapter: 3, heading: "The Fall of Man", artifacts: genesis3 },
+      { chapter: 12, heading: "The Call of Abram", artifacts: genesis12 },
+      { chapter: 15, heading: "The Covenant with Abram", artifacts: genesis15 },
+      { chapter: 22, heading: "The Testing of Abraham", artifacts: genesis22 },
+    ],
+    Exodus: [
+      { chapter: 3, heading: "The Burning Bush", artifacts: exodus3 },
+      { chapter: 12, heading: "The Passover", artifacts: exodus12 },
+      { chapter: 20, heading: "The Ten Commandments", artifacts: exodus20 },
+    ],
+    Deuteronomy: [
+      { chapter: 5, heading: "The Decalogue Repeated", artifacts: deut5 },
+      { chapter: 6, heading: "The Great Commandment", artifacts: deut6 },
+    ],
+    Psalms: [
+      { chapter: 1, heading: "The Two Ways", artifacts: psalm1 },
+      { chapter: 22, heading: "My God, My God", artifacts: psalm22 },
+      { chapter: 23, heading: "The Lord Is My Shepherd", artifacts: psalm23 },
+      { chapter: 51, heading: "The Miserere", artifacts: [] },
+      { chapter: 110, heading: "Sit at My Right Hand", artifacts: psalm110 },
+    ],
+    Isaiah: [
+      { chapter: 7, heading: "The Sign of Emmanuel", artifacts: isaiah7 },
+      { chapter: 9, heading: "A Child Is Born", artifacts: isaiah9 },
+      { chapter: 53, heading: "The Suffering Servant", artifacts: isaiah53 },
+    ],
+    Wisdom: [{ chapter: 2, heading: "The Just One", artifacts: wisdom2 }],
+    "Song of Songs": [
+      { chapter: 1, heading: "The Bride’s Longing", artifacts: song1 },
+      { chapter: 2, heading: "My Beloved Is Mine", artifacts: song2 },
+      { chapter: 3, heading: "Whom My Soul Loves", artifacts: song3 },
+      { chapter: 8, heading: "Love Strong as Death", artifacts: song8 },
+    ],
+    Matthew: [
+      { chapter: 5, heading: "The Sermon on the Mount", artifacts: matthew5 },
+      { chapter: 6, heading: "The Lord’s Prayer", artifacts: matthew6 },
+      { chapter: 16, heading: "Peter’s Confession", artifacts: matthew16 },
+      { chapter: 28, heading: "The Great Commission", artifacts: matthew28 },
+    ],
+    Luke: [
+      { chapter: 1, heading: "The Annunciation", artifacts: luke1 },
+      { chapter: 15, heading: "The Prodigal Son", artifacts: luke15 },
+      { chapter: 22, heading: "The Last Supper", artifacts: luke22 },
+      { chapter: 23, heading: "The Crucifixion", artifacts: luke23 },
+    ],
+    John: [
+      { chapter: 1, heading: "The Word Became Flesh", artifacts: john1 },
+      { chapter: 6, heading: "The Bread of Life", artifacts: john6 },
+      { chapter: 19, heading: "The Passion according to John", artifacts: john19 },
+      { chapter: 20, heading: "The Resurrection", artifacts: john20 },
+    ],
+    "Acts of the Apostles": [{ chapter: 2, heading: "Pentecost", artifacts: acts2 }],
+    Romans: [
+      { chapter: 1, heading: "The Gospel and the Nations", artifacts: romans1 },
+      { chapter: 5, heading: "Adam and Christ", artifacts: romans5 },
+      { chapter: 8, heading: "Life in the Spirit", artifacts: romans8 },
+    ],
+    "1 Corinthians": [
+      { chapter: 13, heading: "The Way of Love", artifacts: cor13 },
+      { chapter: 15, heading: "The Resurrection of the Dead", artifacts: cor15 },
+    ],
+    Hebrews: [
+      { chapter: 1, heading: "God Has Spoken by a Son", artifacts: heb1 },
+      { chapter: 11, heading: "The Cloud of Witnesses", artifacts: heb11 },
+    ],
+    Revelation: [
+      { chapter: 1, heading: "The Revelation of Jesus Christ", artifacts: rev1 },
+      { chapter: 21, heading: "The New Heaven and the New Earth", artifacts: revelation21 },
+      { chapter: 22, heading: "Come, Lord Jesus", artifacts: rev22 },
+    ],
+  };
 
 function addChapterRange(
   nums: Set<number>,
@@ -1478,20 +1400,14 @@ function addChapterRange(
   for (let n = 1; n <= max; n++) nums.add(n);
 }
 
-function lastIndexOfType(
-  artifacts: TimelineArtifact[],
-  type: TimelineArtifact["type"],
-): number {
+function lastIndexOfType(artifacts: TimelineArtifact[], type: TimelineArtifact["type"]): number {
   for (let i = artifacts.length - 1; i >= 0; i--) {
     if (artifacts[i].type === type) return i;
   }
   return -1;
 }
 
-function insertCommentary(
-  artifacts: TimelineArtifact[],
-  extra: TimelineArtifact[],
-) {
+function insertCommentary(artifacts: TimelineArtifact[], extra: TimelineArtifact[]) {
   if (extra.length === 0) return;
   const lastCommentary = lastIndexOfType(artifacts, "commentary");
   if (lastCommentary >= 0) {

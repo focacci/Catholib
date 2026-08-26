@@ -1,7 +1,7 @@
 export type ArtifactType =
   | "catechism"
   | "papal"
-  | "haydock"
+  | "commentary"
   | "artwork"
   | "event"
   | "pope"
@@ -72,7 +72,7 @@ export const VIEW_FILTERS: Record<ViewMode, FilterChip[]> = {
     { id: "all", label: "All" },
     { id: "catechism", label: "Catechism" },
     { id: "papal", label: "Papal" },
-    { id: "haydock", label: "Haydock" },
+    { id: "commentary", label: "Commentary" },
     { id: "artwork", label: "Artwork" },
   ],
   church: [
@@ -96,7 +96,7 @@ export const FILTERS: FilterChip[] = [
   { id: "all", label: "All" },
   { id: "catechism", label: "Catechism" },
   { id: "papal", label: "Papal" },
-  { id: "haydock", label: "Haydock" },
+  { id: "commentary", label: "Commentary" },
   { id: "artwork", label: "Artwork" },
   { id: "event", label: "Event" },
   { id: "pope", label: "Pope" },
@@ -109,7 +109,7 @@ export const FILTERS: FilterChip[] = [
 export const ARTIFACT_LABEL: Record<ArtifactType, string> = {
   catechism: "Catechism",
   papal: "Papal",
-  haydock: "Haydock",
+  commentary: "Commentary",
   artwork: "Artwork",
   event: "Event",
   pope: "Pope",

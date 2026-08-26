@@ -1,4 +1,6 @@
+import { catenaUrl, CATENA_SLUG } from "./catena";
 import { haydockUrl, HAYDOCK_SLUG } from "./haydock";
+import { lapideUrl, LAPIDE_SLUG } from "./lapide";
 import type { BibleBook, PopulatedChapter, TimelineArtifact } from "./types";
 
 const ENG = (id: string) => `https://www.vatican.va/archive/ENG0015/__${id}.HTM`;
@@ -71,6 +73,10 @@ function wiki(file: string, width = 640): string {
   return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(file)}?width=${width}`;
 }
 
+function bookKey(book: string): string {
+  return book.replace(/\s+/g, "-").toLowerCase();
+}
+
 function haydockArt(
   book: string,
   chapter: number,
@@ -79,8 +85,8 @@ function haydockArt(
   const url = haydockUrl(book, chapter);
   if (!url) throw new Error(`No confirmed Haydock URL for ${book} ${chapter}`);
   return art({
-    id: extra?.id ?? `hd-${book.replace(/\s+/g, "-").toLowerCase()}-${chapter}`,
-    type: "haydock",
+    id: extra?.id ?? `hd-${bookKey(book)}-${chapter}`,
+    type: "commentary",
     title: extra?.title ?? `Haydock on ${book} ${chapter}`,
     subtitle: "Haydock’s Catholic Bible Commentary, 1859",
     sourceUrl: url,
@@ -88,6 +94,48 @@ function haydockArt(
     year: 1859,
     shortQuote: extra?.shortQuote,
   });
+}
+
+function catenaArt(
+  book: string,
+  chapter: number,
+  extra?: Partial<TimelineArtifact>,
+): TimelineArtifact {
+  const url = catenaUrl(book, chapter);
+  if (!url) throw new Error(`No confirmed Catena Aurea URL for ${book} ${chapter}`);
+  return art({
+    id: extra?.id ?? `ca-${bookKey(book)}-${chapter}`,
+    type: "commentary",
+    title: extra?.title ?? `Catena Aurea on ${book} ${chapter}`,
+    subtitle: "St. Thomas Aquinas, Catena Aurea",
+    sourceUrl: url,
+    bibleRefs: extra?.bibleRefs,
+    year: 1841,
+    shortQuote: extra?.shortQuote,
+  });
+}
+
+function lapideArt(
+  book: string,
+  chapter: number,
+  extra?: Partial<TimelineArtifact>,
+): TimelineArtifact {
+  const url = lapideUrl(book, chapter);
+  if (!url) throw new Error(`No confirmed Lapide URL for ${book} ${chapter}`);
+  return art({
+    id: extra?.id ?? `cl-${bookKey(book)}-${chapter}`,
+    type: "commentary",
+    title: extra?.title ?? `Cornelius a Lapide on ${book} ${chapter}`,
+    subtitle: "Cornelius a Lapide, Commentaria in Scripturam Sacram",
+    sourceUrl: url,
+    bibleRefs: extra?.bibleRefs,
+    year: 1632,
+    shortQuote: extra?.shortQuote,
+  });
+}
+
+function hasSource(artifacts: TimelineArtifact[], domain: string): boolean {
+  return artifacts.some((a) => a.sourceUrl.includes(domain));
 }
 
 const genesis1: TimelineArtifact[] = [
@@ -1420,6 +1468,16 @@ const RICH: Record<string, { chapter: number; heading: string; artifacts: Timeli
   ],
 };
 
+function addChapterRange(
+  nums: Set<number>,
+  spec: { max: number } | undefined,
+  totalChapters: number,
+) {
+  if (!spec) return;
+  const max = Math.min(spec.max, totalChapters);
+  for (let n = 1; n <= max; n++) nums.add(n);
+}
+
 function mergeChapters(
   name: string,
   abbreviation: string,
@@ -1427,20 +1485,24 @@ function mergeChapters(
 ): PopulatedChapter[] {
   const richList = RICH[name] ?? [];
   const richBy = new Map(richList.map((c) => [c.chapter, c]));
-  const spec = HAYDOCK_SLUG[name];
   const nums = new Set<number>(richList.map((c) => c.chapter));
-  if (spec) {
-    const max = Math.min(spec.max, totalChapters);
-    for (let n = 1; n <= max; n++) nums.add(n);
-  }
+  addChapterRange(nums, HAYDOCK_SLUG[name], totalChapters);
+  addChapterRange(nums, CATENA_SLUG[name], totalChapters);
+  addChapterRange(nums, LAPIDE_SLUG[name], totalChapters);
   return [...nums]
     .sort((a, b) => a - b)
     .map((n) => {
       const rich = richBy.get(n);
       const artifacts = [...(rich?.artifacts ?? [])];
-      const hasHaydock = artifacts.some((a) => a.type === "haydock");
-      if (spec && n <= spec.max && !hasHaydock) {
-        artifacts.push(haydockArt(name, n, { bibleRefs: [`${abbreviation} ${n}`] }));
+      const refs = { bibleRefs: [`${abbreviation} ${n}`] };
+      if (haydockUrl(name, n) && !hasSource(artifacts, "haydockcommentary.com")) {
+        artifacts.push(haydockArt(name, n, refs));
+      }
+      if (catenaUrl(name, n) && !hasSource(artifacts, "ecatholic2000.com/catena")) {
+        artifacts.push(catenaArt(name, n, refs));
+      }
+      if (lapideUrl(name, n) && !hasSource(artifacts, "lapide.org")) {
+        artifacts.push(lapideArt(name, n, refs));
       }
       return { chapter: n, heading: rich?.heading, artifacts };
     })

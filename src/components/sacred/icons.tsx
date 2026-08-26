@@ -16,7 +16,7 @@ import type { ArtifactType } from "@/lib/timeline/types";
 export const TYPE_ICON: Record<ArtifactType, LucideIcon> = {
   catechism: BookOpen,
   papal: ScrollText,
-  haydock: Feather,
+  commentary: Feather,
   artwork: Frame,
   event: Landmark,
   pope: KeyRound,
@@ -29,7 +29,7 @@ export const TYPE_ICON: Record<ArtifactType, LucideIcon> = {
 export const TYPE_TONE: Record<ArtifactType, string> = {
   catechism: "text-gold",
   papal: "text-gold",
-  haydock: "text-fg",
+  commentary: "text-fg",
   artwork: "text-muted",
   event: "text-gold",
   pope: "text-gold",

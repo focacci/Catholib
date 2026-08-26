@@ -20,6 +20,16 @@ const SOURCES = [
     note: "Public-domain Douay-Rheims commentary, sourced exclusively from haydockcommentary.com. Used in the Bible view.",
   },
   {
+    name: "Catena Aurea",
+    href: "https://www.ecatholic2000.com/catena/",
+    note: "St. Thomas Aquinas’s Golden Chain on the four Gospels, sourced exclusively from ecatholic2000.com. Used in the Bible view.",
+  },
+  {
+    name: "Cornelius a Lapide",
+    href: "https://lapide.org",
+    note: "Public-domain Commentaria in Scripturam Sacram, sourced exclusively from lapide.org. Used in the Bible view. Job and Psalms are omitted; Lapide never published those books.",
+  },
+  {
     name: "Missale Meum",
     href: "https://www.missalemeum.com/en",
     note: "1962 Roman Missal. Sole source for the Missal view. Cards link to confirmed Missale Meum pages; proper texts remain there. This app does not calculate the liturgical year.",
@@ -31,8 +41,9 @@ function AboutCopy() {
     <>
       <p className="text-base leading-relaxed text-muted">
         Sacred Timeline is a curated prototype with three views. Bible
-        follows the canon, with sample chapters from the USCCB and the
-        Haydock commentary. Church follows the history of the Church, with
+        follows the canon, with sample chapters from the USCCB and
+        commentary from Haydock, the Catena Aurea, and Cornelius a Lapide.
+        Church follows the history of the Church, with
         events, popes, saints, and magisterial texts from the Holy See.
         Missal is a static catalog of the 1962 Roman Missal: Today, the
         Ordo Missae, the Temporale, the Sanctorale, the Commons, and

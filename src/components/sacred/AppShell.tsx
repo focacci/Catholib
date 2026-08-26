@@ -385,7 +385,7 @@ export function AppShell() {
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search titles, quotes, saints…"
+              placeholder="Search"
               className="h-10 w-full rounded-md border border-line-strong bg-elevated pr-9 pl-8 text-base text-fg outline-none placeholder:text-subtle focus:border-gold"
             />
             {query && (

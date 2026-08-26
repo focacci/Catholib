@@ -1,5 +1,7 @@
 import { BIBLE_BOOKS } from "./bible";
 import { CHURCH_ENTRIES } from "./church";
+import { missalSections } from "./missal";
+import { MISSAL_KIND_LABEL } from "./types";
 import type { FilterId, TimelineArtifact, ViewMode } from "./types";
 
 export interface SearchHit {
@@ -74,6 +76,27 @@ export function collectHits(query: string, filter: FilterId): SearchHit[] {
     }
   }
 
+  for (const section of missalSections()) {
+    const sectionHit =
+      Boolean(q) &&
+      matchesQuery(
+        `${section.title} ${section.subtitle ?? ""} ${section.kind} ${MISSAL_KIND_LABEL[section.kind]}`,
+        q,
+      );
+    for (const a of section.artifacts) {
+      if (filter !== "all" && a.type !== filter) continue;
+      if (q && !sectionHit && !artifactMatches(a, q, filter)) continue;
+      if (!q && filter === "all") continue;
+      hits.push({
+        id: a.id,
+        view: "missal",
+        artifact: a,
+        context: section.title,
+        entryId: section.id,
+      });
+    }
+  }
+
   return hits;
 }
 
@@ -84,6 +107,22 @@ export function filterArtifacts(
 ): TimelineArtifact[] {
   const q = query.trim().toLowerCase();
   return artifacts.filter((a) => artifactMatches(a, q, filter));
+}
+
+/** Filter by type, then by query; if the section itself matches, keep the type-filtered list. */
+export function sectionArtifactsForQuery(
+  artifacts: TimelineArtifact[],
+  query: string,
+  filter: FilterId,
+  sectionHaystack: string,
+): TimelineArtifact[] {
+  const q = query.trim().toLowerCase();
+  const typed = artifacts.filter((a) => filter === "all" || a.type === filter);
+  if (!q) return typed;
+  const hits = typed.filter((a) => artifactMatches(a, q, "all"));
+  if (hits.length > 0) return hits;
+  if (matchesQuery(sectionHaystack, q)) return typed;
+  return [];
 }
 
 export function bookMatchesSearch(

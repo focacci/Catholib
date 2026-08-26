@@ -150,11 +150,15 @@ export default defineConfig(({ command, isPreview }) => ({
     host: "0.0.0.0",
     port: 8080,
     strictPort: true,
+    // Intella OS Apps iframes Catholib via Tailscale Serve; Vite 6+
+    // rejects unknown Host headers unless they are allowlisted.
+    allowedHosts: [".ts.net", "macintosh.tail5981df.ts.net"],
   },
   preview: {
     host: "127.0.0.1",
     port: 8081,
     strictPort: true,
+    allowedHosts: [".ts.net", "macintosh.tail5981df.ts.net"],
   },
   resolve: { tsconfigPaths: true },
   plugins: [

@@ -33,6 +33,9 @@ const CCC_LOVE_GOD = ENG("P7A");
 const CCC_OT_PRAYER = ENG("P91");
 const CCC_OUR_FATHER = ENG("P9V");
 const CCC_MARKS = ENG("P29");
+const CCC_BRIDE = ENG("P28");
+const CCC_MATRIMONY = ENG("P51");
+const CCC_CONTEMPLATIVE = ENG("P9M");
 const CCC_PETITION = ENG("P97");
 const CCC_PENANCE = ENG("P46");
 const CCC_PRAISE = ENG("P9A");
@@ -1156,6 +1159,110 @@ const rev22: TimelineArtifact[] = [
   }),
 ];
 
+const song1: TimelineArtifact[] = [
+  art({
+    id: "sg1-ccc-2709",
+    type: "catechism",
+    title: "CCC 2709",
+    subtitle: "Contemplative prayer seeks him “whom my soul loves”",
+    shortQuote:
+      "Contemplative prayer seeks him “whom my soul loves.” It is Jesus, and in him, the Father. We seek him, because to desire him is always the beginning of love, and we seek him in that pure faith which causes us to be born of him and to live in him.",
+    sourceUrl: CCC_CONTEMPLATIVE,
+    bibleRefs: ["Sg 1:7"],
+    year: 1992,
+  }),
+  art({
+    id: "sg1-deus-caritas",
+    type: "papal",
+    title: "Deus Caritas Est 6",
+    subtitle: "Pope Benedict XVI, 25 December 2005",
+    shortQuote:
+      "Here we can find a first, important indication in the Song of Songs, an Old Testament book well known to the mystics. According to the interpretation generally held today, the poems contained in this book were originally love-songs, perhaps intended for a Jewish wedding feast and meant to exalt conjugal love.",
+    sourceUrl: DEUS_CARITAS,
+    bibleRefs: ["Sg 1"],
+    year: 2005,
+  }),
+  art({
+    id: "sg1-artwork",
+    type: "artwork",
+    title: "The Bridegroom and the Bride",
+    subtitle: "Julius Schnorr von Carolsfeld, Die Bibel in Bildern, 1860",
+    sourceUrl:
+      "https://commons.wikimedia.org/wiki/File:Schnorr_von_Carolsfeld_Bibel_in_Bildern_1860_138.png",
+    imageUrl: wiki("Schnorr_von_Carolsfeld_Bibel_in_Bildern_1860_138.png"),
+    imageCredit:
+      "Julius Schnorr von Carolsfeld, illustration for the Song of Songs, Die Bibel in Bildern, 1860. Public domain, via Wikimedia Commons.",
+    bibleRefs: ["Sg 1"],
+    year: 1860,
+  }),
+];
+
+const song2: TimelineArtifact[] = [
+  art({
+    id: "sg2-ccc-796",
+    type: "catechism",
+    title: "CCC 796",
+    subtitle: "The Church is the Bride of Christ",
+    shortQuote:
+      "The unity of Christ and the Church, head and members of one Body, also implies the distinction of the two within a personal relationship. This aspect is often expressed by the image of bridegroom and bride. The theme of Christ as Bridegroom of the Church was prepared for by the prophets and announced by John the Baptist.",
+    sourceUrl: CCC_BRIDE,
+    bibleRefs: ["Sg 2:16"],
+    year: 1992,
+  }),
+  art({
+    id: "sg2-artwork",
+    type: "artwork",
+    title: "The Beloved (The Bride)",
+    subtitle: "Dante Gabriel Rossetti, 1865–1866",
+    sourceUrl:
+      "https://commons.wikimedia.org/wiki/File:The_Beloved_D-G-Rossetti-1866.jpg",
+    imageUrl: wiki("The_Beloved_D-G-Rossetti-1866.jpg"),
+    imageCredit:
+      "Dante Gabriel Rossetti, The Beloved (The Bride), 1865–1866. Tate Britain. Public domain, via Wikimedia Commons. The painting illustrates “My beloved is mine, and I am his” (Song of Solomon 2:16).",
+    bibleRefs: ["Sg 2:16"],
+    year: 1866,
+  }),
+];
+
+const song3: TimelineArtifact[] = [
+  art({
+    id: "sg3-ccc-2709",
+    type: "catechism",
+    title: "CCC 2709",
+    subtitle: "“I sought him whom my soul loves”",
+    shortQuote:
+      "What is contemplative prayer? St. Teresa answers: “Contemplative prayer [oracion mental] in my opinion is nothing else than a close sharing between friends; it means taking time frequently to be alone with him who we know loves us.” Contemplative prayer seeks him “whom my soul loves.”",
+    sourceUrl: CCC_CONTEMPLATIVE,
+    bibleRefs: ["Sg 3:1–4", "Sg 1:7"],
+    year: 1992,
+  }),
+];
+
+const song8: TimelineArtifact[] = [
+  art({
+    id: "sg8-ccc-1611",
+    type: "catechism",
+    title: "CCC 1611",
+    subtitle: "A love “strong as death”",
+    shortQuote:
+      "Tradition has always seen in the Song of Solomon a unique expression of human love, a pure reflection of God’s love — a love “strong as death” that “many waters cannot quench.”",
+    sourceUrl: CCC_MATRIMONY,
+    bibleRefs: ["Sg 8:6–7"],
+    year: 1992,
+  }),
+  art({
+    id: "sg8-deus-caritas",
+    type: "papal",
+    title: "Deus Caritas Est 10",
+    subtitle: "Pope Benedict XVI — the Song in the canon",
+    shortQuote:
+      "We can thus see how the reception of the Song of Songs in the canon of sacred Scripture was soon explained by the idea that these love songs ultimately describe God’s relation to man and man’s relation to God. Thus the Song of Songs became, both in Christian and Jewish literature, a source of mystical knowledge and experience, an expression of the essence of biblical faith: that man can indeed enter into union with God — his primordial aspiration.",
+    sourceUrl: DEUS_CARITAS,
+    bibleRefs: ["Sg 8:6–7"],
+    year: 2005,
+  }),
+];
+
 type BookSeed = [name: string, abbreviation: string, slug: string, chapters: number];
 
 const OT: BookSeed[] = [
@@ -1268,6 +1375,12 @@ const RICH: Record<string, { chapter: number; heading: string; artifacts: Timeli
     { chapter: 53, heading: "The Suffering Servant", artifacts: isaiah53 },
   ],
   Wisdom: [{ chapter: 2, heading: "The Just One", artifacts: wisdom2 }],
+  "Song of Songs": [
+    { chapter: 1, heading: "The Bride’s Longing", artifacts: song1 },
+    { chapter: 2, heading: "My Beloved Is Mine", artifacts: song2 },
+    { chapter: 3, heading: "Whom My Soul Loves", artifacts: song3 },
+    { chapter: 8, heading: "Love Strong as Death", artifacts: song8 },
+  ],
   Matthew: [
     { chapter: 5, heading: "The Sermon on the Mount", artifacts: matthew5 },
     { chapter: 6, heading: "The Lord’s Prayer", artifacts: matthew6 },

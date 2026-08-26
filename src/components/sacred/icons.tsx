@@ -1,7 +1,9 @@
 import {
+  BookMarked,
   BookOpen,
-  Church,
+  CalendarDays,
   Feather,
+  Flame,
   Frame,
   Heart,
   KeyRound,
@@ -19,6 +21,9 @@ export const TYPE_ICON: Record<ArtifactType, LucideIcon> = {
   event: Landmark,
   pope: KeyRound,
   saint: Heart,
+  ordo: BookMarked,
+  proper: CalendarDays,
+  votive: Flame,
 };
 
 export const TYPE_TONE: Record<ArtifactType, string> = {
@@ -29,4 +34,7 @@ export const TYPE_TONE: Record<ArtifactType, string> = {
   event: "text-gold",
   pope: "text-gold",
   saint: "text-fg",
+  ordo: "text-gold",
+  proper: "text-gold",
+  votive: "text-fg",
 };

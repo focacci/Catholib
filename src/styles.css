@@ -14,16 +14,16 @@
   --color-line-strong: color-mix(in oklab, #d4b37a 40%, transparent);
   --color-danger: #c45c4a;
 
-  --font-sans: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
-  --font-serif: "Cormorant Garamond", "Iowan Old Style", "Palatino Linotype", serif;
+  --font-sans: "Nunito Sans", "Segoe UI", system-ui, sans-serif;
+  --font-serif: "Literata", "Iowan Old Style", "Palatino Linotype", serif;
 
-  --text-xs: 0.75rem;
-  --text-sm: 0.875rem;
-  --text-base: 1rem;
-  --text-lg: 1.125rem;
-  --text-xl: 1.375rem;
-  --text-2xl: 1.75rem;
-  --text-3xl: 2.25rem;
+  --text-xs: 0.8125rem;
+  --text-sm: 0.9375rem;
+  --text-base: 1.0625rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.5rem;
+  --text-2xl: 1.875rem;
+  --text-3xl: 2.375rem;
 
   --radius-xs: 4px;
   --radius-sm: 8px;
@@ -35,6 +35,9 @@
   --shadow-sheet: 0 -12px 40px #00000080;
 
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+  --rail-x: 10px;
+  --rail-pad: 1.25rem;
 }
 
 @layer base {
@@ -51,7 +54,8 @@
     background: var(--color-bg);
     color: var(--color-fg);
     font-family: var(--font-sans);
-    line-height: 1.5;
+    font-size: 1.0625rem;
+    line-height: 1.55;
   }
 
   h1,

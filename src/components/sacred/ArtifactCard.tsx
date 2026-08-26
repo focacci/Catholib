@@ -49,6 +49,11 @@ export function ArtifactCard({
               {description}
             </span>
           ) : null}
+          {artifact.location ? (
+            <span className="block w-full text-sm leading-snug text-muted">
+              {artifact.location}
+            </span>
+          ) : null}
           <span className="mt-1 flex items-end justify-between gap-2">
             <span className="shrink-0 rounded-full border border-line px-2 py-0.5 text-xs font-medium uppercase tracking-wider text-gold-dim">
               {ARTIFACT_LABEL[artifact.type]}

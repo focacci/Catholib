@@ -73,6 +73,11 @@ const ECCLESIA_DE_EUCH =
 const AUD = (year: number, date: string) =>
   `https://www.vatican.va/content/benedict-xvi/en/audiences/${year}/documents/hf_ben-xvi_aud_${date}.html`;
 
+/** Confirmed Catholic Encyclopedia article. Omit rather than guess a slug. */
+function cathen(id: string): string {
+  return `https://www.newadvent.org/cathen/${id}.htm`;
+}
+
 function a(partial: TimelineArtifact): TimelineArtifact {
   return partial;
 }
@@ -94,7 +99,8 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "Pentecost",
         subtitle: "The sending of the Holy Spirit",
         year: 33,
-        sourceUrl: "https://bible.usccb.org/bible/acts/2",
+        location: "Jerusalem",
+        sourceUrl: cathen("15614b"),
         bibleRefs: ["Acts 2:1–4"],
       }),
       a({
@@ -139,7 +145,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "St. Peter",
         subtitle: "Martyrdom at Rome, c. 64–67",
         year: 64,
-        sourceUrl: CCC_HIERARCHY,
+        sourceUrl: cathen("11744a"),
       }),
       a({
         id: "ch-peter-ccc",
@@ -164,7 +170,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "St. Paul",
         subtitle: "Martyrdom at Rome, c. 64–67",
         year: 67,
-        sourceUrl: "https://bible.usccb.org/bible/acts/9",
+        sourceUrl: cathen("11567b"),
         bibleRefs: ["Acts 9:1–22"],
       }),
       a({
@@ -189,7 +195,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "St. Clement of Rome",
         subtitle: "Pope — d. c. 99",
         year: 99,
-        sourceUrl: AUD(2007, "20070307"),
+        sourceUrl: cathen("04012c"),
       }),
       a({
         id: "ch-clement-papal",
@@ -213,7 +219,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "St. Ignatius of Antioch",
         subtitle: "Bishop and martyr — d. c. 107",
         year: 107,
-        sourceUrl: AUD(2007, "20070314"),
+        sourceUrl: cathen("07644a"),
       }),
       a({
         id: "ch-ignatius-papal",
@@ -237,7 +243,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "St. Justin Martyr",
         subtitle: "Philosopher and martyr — d. c. 165",
         year: 165,
-        sourceUrl: AUD(2007, "20070321"),
+        sourceUrl: cathen("08580c"),
       }),
       a({
         id: "ch-justin-papal",
@@ -261,7 +267,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "St. Irenaeus of Lyons",
         subtitle: "Doctor of the Church — d. c. 202",
         year: 202,
-        sourceUrl: AUD(2007, "20070328"),
+        sourceUrl: cathen("08130b"),
       }),
       a({
         id: "ch-irenaeus-papal",
@@ -285,7 +291,8 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "First Council of Nicaea",
         subtitle: "The consubstantial Son",
         year: 325,
-        sourceUrl: CCC_SON,
+        location: "Nicaea",
+        sourceUrl: cathen("11044a"),
       }),
       a({
         id: "ch-nicaea-ccc",
@@ -311,7 +318,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "St. Athanasius of Alexandria",
         subtitle: "Doctor of the Church — d. 373",
         year: 373,
-        sourceUrl: AUD(2007, "20070620"),
+        sourceUrl: cathen("02035a"),
       }),
       a({
         id: "ch-athanasius-papal",
@@ -335,7 +342,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "St. Basil the Great",
         subtitle: "Doctor of the Church — d. 379",
         year: 379,
-        sourceUrl: AUD(2007, "20070704"),
+        sourceUrl: cathen("02330b"),
       }),
       a({
         id: "ch-basil-papal",
@@ -359,7 +366,8 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "First Council of Constantinople",
         subtitle: "The divinity of the Holy Spirit",
         year: 381,
-        sourceUrl: CCC_TRINITY,
+        location: "Constantinople",
+        sourceUrl: cathen("04308a"),
       }),
       a({
         id: "ch-const1-ccc",
@@ -383,7 +391,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "St. Gregory of Nazianzus",
         subtitle: "Doctor of the Church — d. 390",
         year: 390,
-        sourceUrl: AUD(2007, "20070808"),
+        sourceUrl: cathen("07010b"),
       }),
       a({
         id: "ch-gregnaz-papal",
@@ -407,7 +415,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "St. Ambrose of Milan",
         subtitle: "Doctor of the Church — d. 397",
         year: 397,
-        sourceUrl: AUD(2007, "20071024"),
+        sourceUrl: cathen("01383c"),
       }),
       a({
         id: "ch-ambrose-papal",
@@ -431,7 +439,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "St. John Chrysostom",
         subtitle: "Doctor of the Church — d. 407",
         year: 407,
-        sourceUrl: AUD(2007, "20070919"),
+        sourceUrl: cathen("08452b"),
       }),
       a({
         id: "ch-chrysostom-papal",
@@ -455,7 +463,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "St. Jerome",
         subtitle: "Doctor of the Church — d. 420",
         year: 420,
-        sourceUrl: AUD(2007, "20071107"),
+        sourceUrl: cathen("08341a"),
       }),
       a({
         id: "ch-jerome-papal",
@@ -487,7 +495,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "St. Augustine of Hippo",
         subtitle: "Doctor of the Church — d. 430",
         year: 430,
-        sourceUrl: AUD(2008, "20080116"),
+        sourceUrl: cathen("02084a"),
       }),
       a({
         id: "ch-augustine-papal",
@@ -530,7 +538,8 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "Council of Ephesus",
         subtitle: "Mary, Mother of God",
         year: 431,
-        sourceUrl: CCC_SON,
+        location: "Ephesus",
+        sourceUrl: cathen("05491a"),
       }),
       a({
         id: "ch-ephesus-ccc",
@@ -562,7 +571,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "St. Cyril of Alexandria",
         subtitle: "Doctor of the Church — d. 444",
         year: 444,
-        sourceUrl: AUD(2007, "20071003"),
+        sourceUrl: cathen("04592b"),
       }),
       a({
         id: "ch-cyril-papal",
@@ -586,7 +595,8 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "Council of Chalcedon",
         subtitle: "True God and true man",
         year: 451,
-        sourceUrl: CCC_SON,
+        location: "Chalcedon",
+        sourceUrl: cathen("03555a"),
       }),
       a({
         id: "ch-chalcedon-ccc",
@@ -612,7 +622,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "St. Leo the Great",
         subtitle: "Pope — d. 461",
         year: 461,
-        sourceUrl: AUD(2008, "20080305"),
+        sourceUrl: cathen("09154b"),
       }),
       a({
         id: "ch-leo-papal",
@@ -636,7 +646,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "St. Benedict of Nursia",
         subtitle: "Patron of Europe — d. c. 547",
         year: 547,
-        sourceUrl: AUD(2008, "20080409"),
+        sourceUrl: cathen("02467b"),
       }),
       a({
         id: "ch-benedict-papal",
@@ -660,7 +670,8 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "Second Council of Constantinople",
         subtitle: "One of the Holy Trinity",
         year: 553,
-        sourceUrl: CCC_SON,
+        location: "Constantinople",
+        sourceUrl: cathen("04308b"),
       }),
       a({
         id: "ch-const2-ccc",
@@ -684,7 +695,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "St. Gregory the Great",
         subtitle: "Pope and Doctor — d. 604",
         year: 604,
-        sourceUrl: AUD(2008, "20080528"),
+        sourceUrl: cathen("06780a"),
       }),
       a({
         id: "ch-greggreat-papal",
@@ -708,7 +719,8 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "Third Council of Constantinople",
         subtitle: "Two wills of Christ",
         year: 681,
-        sourceUrl: CCC_SON,
+        location: "Constantinople",
+        sourceUrl: cathen("04310a"),
       }),
       a({
         id: "ch-const3-ccc",
@@ -732,7 +744,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "St. Bede the Venerable",
         subtitle: "Doctor of the Church — d. 735",
         year: 735,
-        sourceUrl: AUD(2009, "20090218"),
+        sourceUrl: cathen("02384a"),
       }),
       a({
         id: "ch-bede-papal",
@@ -756,7 +768,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "St. John Damascene",
         subtitle: "Doctor of the Church — d. c. 749",
         year: 749,
-        sourceUrl: AUD(2009, "20090506"),
+        sourceUrl: cathen("08459b"),
       }),
       a({
         id: "ch-damascene-papal",
@@ -780,7 +792,8 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "Second Council of Nicaea",
         subtitle: "The veneration of holy images",
         year: 787,
-        sourceUrl: CCC_IMAGES,
+        location: "Nicaea",
+        sourceUrl: cathen("11045a"),
       }),
       a({
         id: "ch-nicaea2-ccc",
@@ -804,7 +817,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "Sts. Cyril and Methodius",
         subtitle: "Apostles of the Slavs",
         year: 885,
-        sourceUrl: SLAVORUM,
+        sourceUrl: cathen("04592a"),
       }),
       a({
         id: "ch-cyrilmeth-papal",
@@ -828,7 +841,8 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "Fourth Lateran Council",
         subtitle: "1215",
         year: 1215,
-        sourceUrl: CCC_EUCHARIST,
+        location: "Basilica of St. John Lateran, Rome",
+        sourceUrl: cathen("09018a"),
       }),
       a({
         id: "ch-lat4-ccc",
@@ -852,7 +866,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "St. Dominic",
         subtitle: "Founder of the Order of Preachers — d. 1221",
         year: 1221,
-        sourceUrl: AUD(2010, "20100203"),
+        sourceUrl: cathen("05106a"),
       }),
       a({
         id: "ch-dominic-papal",
@@ -876,7 +890,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "St. Francis of Assisi",
         subtitle: "d. 3 October 1226",
         year: 1226,
-        sourceUrl: AUD(2010, "20100127"),
+        sourceUrl: cathen("06221a"),
       }),
       a({
         id: "ch-francis-papal",
@@ -908,7 +922,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "St. Bonaventure",
         subtitle: "Seraphic Doctor — d. 1274",
         year: 1274,
-        sourceUrl: AUD(2010, "20100303"),
+        sourceUrl: cathen("02648c"),
       }),
       a({
         id: "ch-bonaventure-papal",
@@ -932,7 +946,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "St. Thomas Aquinas",
         subtitle: "Angelic Doctor — d. 1274",
         year: 1274,
-        sourceUrl: FIDES_ET_RATIO,
+        sourceUrl: cathen("14663b"),
       }),
       a({
         id: "ch-aquinas-fr",
@@ -972,7 +986,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "St. Catherine of Siena",
         subtitle: "Doctor of the Church — d. 1380",
         year: 1380,
-        sourceUrl: AUD(2010, "20101124"),
+        sourceUrl: cathen("03447a"),
       }),
       a({
         id: "ch-catherine-papal",
@@ -996,7 +1010,8 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "Council of Florence",
         subtitle: "The procession of the Holy Spirit",
         year: 1439,
-        sourceUrl: CCC_TRINITY,
+        location: "Ferrara and Florence",
+        sourceUrl: cathen("06111a"),
       }),
       a({
         id: "ch-florence-ccc",
@@ -1020,7 +1035,8 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "Council of Trent",
         subtitle: "1545–1563",
         year: 1545,
-        sourceUrl: CCC_TRADITION,
+        location: "Trent",
+        sourceUrl: cathen("15030c"),
       }),
       a({
         id: "ch-trent-ccc-82",
@@ -1052,7 +1068,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "St. Teresa of Jesus",
         subtitle: "Doctor of the Church — d. 1582",
         year: 1582,
-        sourceUrl: AUD(2011, "20110202"),
+        sourceUrl: cathen("14515b"),
       }),
       a({
         id: "ch-teresa-papal",
@@ -1076,7 +1092,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "St. John of the Cross",
         subtitle: "Doctor of the Church — d. 1591",
         year: 1591,
-        sourceUrl: AUD(2011, "20110216"),
+        sourceUrl: cathen("08480a"),
       }),
       a({
         id: "ch-jcross-papal",
@@ -1100,7 +1116,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "St. Francis de Sales",
         subtitle: "Doctor of the Church — d. 1622",
         year: 1622,
-        sourceUrl: AUD(2011, "20110302"),
+        sourceUrl: cathen("06220a"),
       }),
       a({
         id: "ch-fsales-papal",
@@ -1124,7 +1140,8 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "Ineffabilis Deus",
         subtitle: "Pius IX, 8 December 1854",
         year: 1854,
-        sourceUrl: CCC_VIRGIN,
+        location: "St. Peter's Basilica, Rome",
+        sourceUrl: cathen("07674d"),
       }),
       a({
         id: "ch-ic-ccc",
@@ -1150,7 +1167,8 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "First Vatican Council",
         subtitle: "Pastor Aeternus — 18 July 1870",
         year: 1870,
-        sourceUrl: CCC_HIERARCHY,
+        location: "St. Peter's Basilica, Vatican",
+        sourceUrl: cathen("15303a"),
       }),
       a({
         id: "ch-vi-ccc",
@@ -1176,7 +1194,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "Leo XIII",
         subtitle: "1878–1903",
         year: 1878,
-        sourceUrl: RERUM_NOVARUM,
+        sourceUrl: cathen("09169a"),
       }),
       a({
         id: "ch-leo13-rn",
@@ -1208,7 +1226,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "St. Thérèse of the Child Jesus",
         subtitle: "Doctor of the Church — d. 1897",
         year: 1897,
-        sourceUrl: AUD(2011, "20110406"),
+        sourceUrl: cathen("17721a"),
       }),
       a({
         id: "ch-therese-papal",
@@ -1232,7 +1250,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "St. Pius X",
         subtitle: "1903–1914",
         year: 1903,
-        sourceUrl: PASCENDI,
+        sourceUrl: cathen("12137a"),
       }),
       a({
         id: "ch-piusx-pascendi",
@@ -1250,14 +1268,6 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
     era: "Twentieth century",
     title: "Pius XI — Quas Primas",
     artifacts: [
-      a({
-        id: "ch-piusxi-pope",
-        type: "pope",
-        title: "Pius XI",
-        subtitle: "1922–1939",
-        year: 1922,
-        sourceUrl: QUAS_PRIMAS,
-      }),
       a({
         id: "ch-piusxi-qp",
         type: "papal",
@@ -1306,14 +1316,6 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         year: 1943,
         sourceUrl: DIVINO_AFFLANTE,
       }),
-      a({
-        id: "ch-das-event",
-        type: "event",
-        title: "On promoting biblical studies",
-        subtitle: "Encyclical of Pius XII",
-        year: 1943,
-        sourceUrl: DIVINO_AFFLANTE,
-      }),
     ],
   },
   {
@@ -1328,7 +1330,8 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "Munificentissimus Deus",
         subtitle: "Pius XII, 1 November 1950",
         year: 1950,
-        sourceUrl: MUNIFICENTISSIMUS,
+        location: "St. Peter's Basilica, Vatican",
+        sourceUrl: cathen("02006b"),
       }),
       a({
         id: "ch-assump-papal",
@@ -1355,14 +1358,6 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
     title: "St. John XXIII — Pacem in Terris",
     artifacts: [
       a({
-        id: "ch-jxxiii-pope",
-        type: "pope",
-        title: "St. John XXIII",
-        subtitle: "1958–1963",
-        year: 1958,
-        sourceUrl: PACEM_IN_TERRIS,
-      }),
-      a({
         id: "ch-jxxiii-pacem",
         type: "papal",
         title: "Pacem in Terris",
@@ -1378,14 +1373,6 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
     era: "Twentieth century",
     title: "Second Vatican Council",
     artifacts: [
-      a({
-        id: "ch-vii-event",
-        type: "event",
-        title: "Second Vatican Council",
-        subtitle: "1962–1965",
-        year: 1965,
-        sourceUrl: DEI_VERBUM,
-      }),
       a({
         id: "ch-vii-dv",
         type: "papal",
@@ -1429,14 +1416,6 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
     title: "St. Paul VI — Humanae Vitae",
     artifacts: [
       a({
-        id: "ch-pvi-pope",
-        type: "pope",
-        title: "St. Paul VI",
-        subtitle: "1963–1978",
-        year: 1963,
-        sourceUrl: HUMANAE_VITAE,
-      }),
-      a({
         id: "ch-pvi-hv",
         type: "papal",
         title: "Humanae Vitae",
@@ -1460,14 +1439,6 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
     era: "Contemporary",
     title: "St. John Paul II",
     artifacts: [
-      a({
-        id: "ch-jp2-pope",
-        type: "pope",
-        title: "St. John Paul II",
-        subtitle: "1978–2005",
-        year: 1978,
-        sourceUrl: REDEMPTOR_HOMINIS,
-      }),
       a({
         id: "ch-jp2-rh",
         type: "papal",
@@ -1525,14 +1496,6 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
     title: "Benedict XVI",
     artifacts: [
       a({
-        id: "ch-bxvi-pope",
-        type: "pope",
-        title: "Benedict XVI",
-        subtitle: "2005–2013",
-        year: 2005,
-        sourceUrl: DEUS_CARITAS,
-      }),
-      a({
         id: "ch-bxvi-dce",
         type: "papal",
         title: "Deus Caritas Est",
@@ -1564,14 +1527,6 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
     era: "Contemporary",
     title: "Francis",
     artifacts: [
-      a({
-        id: "ch-francis-pope",
-        type: "pope",
-        title: "Francis",
-        subtitle: "2013–2025",
-        year: 2013,
-        sourceUrl: EVANGELII_GAUDIUM,
-      }),
       a({
         id: "ch-francis-lf",
         type: "papal",

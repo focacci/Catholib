@@ -2,6 +2,7 @@ import { Drawer } from "vaul";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowUpRight, X } from "lucide-react";
 import { cccParagraphFor } from "@/lib/timeline/ccc";
+import { showModernPlace } from "@/lib/timeline/place";
 import { ARTIFACT_LABEL, type TimelineArtifact } from "@/lib/timeline/types";
 
 export function ArtifactSheet({
@@ -63,12 +64,22 @@ export function ArtifactSheet({
                       <p className="mt-1 text-base text-muted">{artifact.subtitle}</p>
                     )}
                     {artifact.location && (
-                      <p className="mt-2 text-base text-muted">
-                        <span className="mr-2 text-xs font-medium uppercase tracking-[0.16em] text-gold-dim">
-                          Place
-                        </span>
-                        {artifact.location}
-                      </p>
+                      <div className="mt-2 text-base text-muted">
+                        <p>
+                          <span className="mr-2 text-xs font-medium uppercase tracking-[0.16em] text-gold-dim">
+                            {showModernPlace(artifact.location) ? "Then" : "Place"}
+                          </span>
+                          {artifact.location.then}
+                        </p>
+                        {showModernPlace(artifact.location) ? (
+                          <p className="mt-1">
+                            <span className="mr-2 text-xs font-medium uppercase tracking-[0.16em] text-gold-dim">
+                              Now
+                            </span>
+                            {artifact.location.now}
+                          </p>
+                        ) : null}
+                      </div>
                     )}
                     {!isCommentary && (
                       <p className="mt-2 text-xs font-medium uppercase tracking-[0.16em] text-gold-dim">

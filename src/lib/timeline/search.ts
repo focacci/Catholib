@@ -1,6 +1,7 @@
 import { BIBLE_BOOKS } from "./bible";
 import { CHURCH_ENTRIES } from "./church";
 import { missalSections } from "./missal";
+import { eventPlaceHaystack } from "./place";
 import { MISSAL_KIND_LABEL } from "./types";
 import type { FilterId, TimelineArtifact, ViewMode } from "./types";
 
@@ -26,7 +27,7 @@ function artifactMatches(a: TimelineArtifact, q: string, filter: FilterId): bool
     a.subtitle ?? "",
     a.shortQuote ?? "",
     a.imageCredit ?? "",
-    a.location ?? "",
+    eventPlaceHaystack(a.location),
     ...(a.bibleRefs ?? []),
     String(a.year ?? ""),
     a.type,

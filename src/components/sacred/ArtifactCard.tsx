@@ -1,5 +1,6 @@
 import { ARTIFACT_LABEL, type TimelineArtifact } from "@/lib/timeline/types";
 import { isDesktopViewport } from "@/lib/media";
+import { showModernPlace } from "@/lib/timeline/place";
 import { cn } from "@/lib/utils";
 
 export function ArtifactCard({
@@ -51,7 +52,10 @@ export function ArtifactCard({
           ) : null}
           {artifact.location ? (
             <span className="block w-full text-sm leading-snug text-muted">
-              {artifact.location}
+              <span className="block">{artifact.location.then}</span>
+              {showModernPlace(artifact.location) ? (
+                <span className="block text-subtle">now {artifact.location.now}</span>
+              ) : null}
             </span>
           ) : null}
           <span className="mt-1 flex items-end justify-between gap-2">

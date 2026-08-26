@@ -22,6 +22,14 @@ export type MissalSectionKind =
   | "common"
   | "votive";
 
+/** Historic and present-day names for where an event took place. */
+export interface EventPlace {
+  /** Name and region as they were known at the time. */
+  then: string;
+  /** Present-day name and country. */
+  now: string;
+}
+
 export interface TimelineArtifact {
   id: string;
   type: ArtifactType;
@@ -31,8 +39,8 @@ export interface TimelineArtifact {
   sourceUrl: string;
   bibleRefs?: string[];
   year?: number | string;
-  /** Place where an event occurred, when that is known. */
-  location?: string;
+  /** Place where an event occurred, with historic and modern names. */
+  location?: EventPlace;
   imageUrl?: string;
   imageCredit?: string;
 }

@@ -1,17 +1,5 @@
+import { cccUrl } from "./ccc.ts";
 import type { ChurchEntry, EventPlace, TimelineArtifact } from "./types";
-
-const ENG = (id: string) => `https://www.vatican.va/archive/ENG0015/__${id}.HTM`;
-
-const CCC_SON = ENG("P1J");
-const CCC_VIRGIN = ENG("P1K");
-const CCC_SPIRIT_LAST = ENG("P24");
-const CCC_HIERARCHY = ENG("P2A");
-const CCC_MARY = ENG("P2C");
-const CCC_TRINITY = ENG("P17");
-const CCC_IMAGES = ENG("P7F");
-const CCC_TRADITION = ENG("PL");
-const CCC_EUCHARIST = ENG("P3W");
-const CCC_BODY_CHURCH = ENG("P28");
 
 const DEI_VERBUM =
   "https://www.vatican.va/archive/hist_councils/ii_vatican_council/documents/vat-ii_const_19651118_dei-verbum_en.html";
@@ -21,8 +9,7 @@ const GAUDIUM_ET_SPES =
   "https://www.vatican.va/archive/hist_councils/ii_vatican_council/documents/vat-ii_const_19651207_gaudium-et-spes_en.html";
 const SACROSANCTUM =
   "https://www.vatican.va/archive/hist_councils/ii_vatican_council/documents/vat-ii_const_19631204_sacrosanctum-concilium_en.html";
-const VATICAN_II =
-  "https://www.vatican.va/archive/hist_councils/ii_vatican_council/index.htm";
+const VATICAN_II = "https://www.vatican.va/archive/hist_councils/ii_vatican_council/index.htm";
 const FIDES_ET_RATIO =
   "https://www.vatican.va/content/john-paul-ii/en/encyclicals/documents/hf_jp-ii_enc_14091998_fides-et-ratio.html";
 const REDEMPTOR_HOMINIS =
@@ -105,10 +92,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "Pentecost",
         subtitle: "The sending of the Holy Spirit",
         year: 33,
-        location: place(
-          "Jerusalem, in the Roman province of Judea",
-          "Jerusalem",
-        ),
+        location: place("Jerusalem, in the Roman province of Judea", "Jerusalem"),
         sourceUrl: cathen("15614b"),
         bibleRefs: ["Acts 2:1–4"],
       }),
@@ -117,7 +101,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         type: "catechism",
         title: "CCC 731",
         subtitle: "The Spirit sent on the day of Pentecost",
-        sourceUrl: CCC_SPIRIT_LAST,
+        sourceUrl: cccUrl(731),
         bibleRefs: ["Acts 2"],
         year: 1992,
       }),
@@ -161,7 +145,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         type: "catechism",
         title: "CCC 881",
         subtitle: "The office of Peter",
-        sourceUrl: CCC_HIERARCHY,
+        sourceUrl: cccUrl(881),
         bibleRefs: ["Mt 16:18–19"],
         year: 1992,
       }),
@@ -308,9 +292,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         type: "catechism",
         title: "CCC 465",
         subtitle: "Homoousios with the Father",
-        shortQuote:
-          "The first ecumenical council of Nicaea in 325 confessed in its Creed that the Son of God is “begotten, not made, of the same substance (homoousios) as the Father”, and condemned Arius.",
-        sourceUrl: CCC_SON,
+        sourceUrl: cccUrl(465),
         year: 325,
       }),
     ],
@@ -375,10 +357,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "First Council of Constantinople",
         subtitle: "The divinity of the Holy Spirit",
         year: 381,
-        location: place(
-          "Constantinople, capital of the Eastern Roman Empire",
-          "Istanbul, Turkey",
-        ),
+        location: place("Constantinople, capital of the Eastern Roman Empire", "Istanbul, Turkey"),
         sourceUrl: cathen("04308a"),
       }),
       a({
@@ -386,7 +365,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         type: "catechism",
         title: "CCC 245",
         subtitle: "The Spirit confessed at Constantinople (381)",
-        sourceUrl: CCC_TRINITY,
+        sourceUrl: cccUrl(245),
         year: 381,
       }),
     ],
@@ -531,7 +510,8 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "Saint Augustine",
         subtitle: "Philippe de Champaigne, c. 1645–1650",
         year: 1645,
-        sourceUrl: "https://commons.wikimedia.org/wiki/File:Saint_Augustine_by_Philippe_de_Champaigne.jpg",
+        sourceUrl:
+          "https://commons.wikimedia.org/wiki/File:Saint_Augustine_by_Philippe_de_Champaigne.jpg",
         imageUrl: wiki("Saint_Augustine_by_Philippe_de_Champaigne.jpg"),
         imageCredit:
           "Philippe de Champaigne, Saint Augustine, c. 1645–1650. Los Angeles County Museum of Art. Public domain, via Wikimedia Commons.",
@@ -561,7 +541,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         type: "catechism",
         title: "CCC 466",
         subtitle: "Theotokos",
-        sourceUrl: CCC_SON,
+        sourceUrl: cccUrl(466),
         year: 431,
       }),
       a({
@@ -569,7 +549,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         type: "catechism",
         title: "CCC 495",
         subtitle: "Mother of God",
-        sourceUrl: CCC_VIRGIN,
+        sourceUrl: cccUrl(495),
         year: 431,
       }),
     ],
@@ -621,9 +601,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         type: "catechism",
         title: "CCC 467",
         subtitle: "Two natures, without confusion",
-        shortQuote:
-          "The Council of Chalcedon (451) confessed: “following the holy Fathers, we unanimously teach and confess one and the same Son, our Lord Jesus Christ: the same perfect in divinity and perfect in humanity, the same truly God and truly man.”",
-        sourceUrl: CCC_SON,
+        sourceUrl: cccUrl(467),
         year: 451,
       }),
     ],
@@ -688,10 +666,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "Second Council of Constantinople",
         subtitle: "One of the Holy Trinity",
         year: 553,
-        location: place(
-          "Constantinople, Eastern Roman Empire",
-          "Istanbul, Turkey",
-        ),
+        location: place("Constantinople, Eastern Roman Empire", "Istanbul, Turkey"),
         sourceUrl: cathen("04308b"),
       }),
       a({
@@ -699,7 +674,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         type: "catechism",
         title: "CCC 468",
         subtitle: "The second council of Constantinople",
-        sourceUrl: CCC_SON,
+        sourceUrl: cccUrl(468),
         year: 553,
       }),
     ],
@@ -740,10 +715,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "Third Council of Constantinople",
         subtitle: "Two wills of Christ",
         year: 681,
-        location: place(
-          "Constantinople, Eastern Roman Empire",
-          "Istanbul, Turkey",
-        ),
+        location: place("Constantinople, Eastern Roman Empire", "Istanbul, Turkey"),
         sourceUrl: cathen("04310a"),
       }),
       a({
@@ -751,7 +723,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         type: "catechism",
         title: "CCC 475",
         subtitle: "Human will and divine will",
-        sourceUrl: CCC_SON,
+        sourceUrl: cccUrl(475),
         year: 681,
       }),
     ],
@@ -824,7 +796,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         type: "catechism",
         title: "CCC 2131",
         subtitle: "Nicaea II and the icons",
-        sourceUrl: CCC_IMAGES,
+        sourceUrl: cccUrl(2131),
         year: 787,
       }),
     ],
@@ -876,7 +848,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         type: "catechism",
         title: "CCC 1376",
         subtitle: "Transubstantiation",
-        sourceUrl: CCC_EUCHARIST,
+        sourceUrl: cccUrl(1376),
         year: 1215,
       }),
     ],
@@ -1037,10 +1009,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "Council of Florence",
         subtitle: "The procession of the Holy Spirit",
         year: 1439,
-        location: place(
-          "Ferrara, then Florence, in northern Italy",
-          "Ferrara and Florence, Italy",
-        ),
+        location: place("Ferrara, then Florence, in northern Italy", "Ferrara and Florence, Italy"),
         sourceUrl: cathen("06111a"),
       }),
       a({
@@ -1048,7 +1017,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         type: "catechism",
         title: "CCC 248",
         subtitle: "The Latin tradition and the Filioque",
-        sourceUrl: CCC_TRINITY,
+        sourceUrl: cccUrl(248),
         year: 1439,
       }),
     ],
@@ -1076,7 +1045,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         type: "catechism",
         title: "CCC 82",
         subtitle: "Scripture and Tradition",
-        sourceUrl: CCC_TRADITION,
+        sourceUrl: cccUrl(82),
         year: 1992,
       }),
       a({
@@ -1184,9 +1153,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         type: "catechism",
         title: "CCC 491",
         subtitle: "The Immaculate Conception",
-        shortQuote:
-          "Through the centuries the Church has become ever more aware that Mary, “full of grace” through God, was redeemed from the moment of her conception. That is what the dogma of the Immaculate Conception confesses, as Pope Pius IX proclaimed in 1854.",
-        sourceUrl: CCC_VIRGIN,
+        sourceUrl: cccUrl(491),
         year: 1854,
       }),
     ],
@@ -1203,10 +1170,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "First Vatican Council",
         subtitle: "Pastor Aeternus — 18 July 1870",
         year: 1870,
-        location: place(
-          "St. Peter's Basilica, Rome",
-          "St. Peter's Basilica, Vatican City",
-        ),
+        location: place("St. Peter's Basilica, Rome", "St. Peter's Basilica, Vatican City"),
         sourceUrl: cathen("15303a"),
       }),
       a({
@@ -1214,9 +1178,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         type: "catechism",
         title: "CCC 891",
         subtitle: "The Roman Pontiff and infallibility",
-        shortQuote:
-          "The Roman Pontiff, head of the college of bishops, enjoys this infallibility in virtue of his office, when, as supreme pastor and teacher of all the faithful — who confirms his brethren in the faith — he proclaims by a definitive act a doctrine pertaining to faith or morals.",
-        sourceUrl: CCC_HIERARCHY,
+        sourceUrl: cccUrl(891),
         year: 1870,
       }),
     ],
@@ -1336,7 +1298,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         type: "catechism",
         title: "CCC 779",
         subtitle: "The Church, Body of Christ",
-        sourceUrl: CCC_BODY_CHURCH,
+        sourceUrl: cccUrl(779),
         year: 1992,
       }),
     ],
@@ -1369,10 +1331,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "Munificentissimus Deus",
         subtitle: "Pius XII, 1 November 1950",
         year: 1950,
-        location: place(
-          "St. Peter's Basilica, Vatican City",
-          "St. Peter's Basilica, Vatican City",
-        ),
+        location: place("St. Peter's Basilica, Vatican City", "St. Peter's Basilica, Vatican City"),
         sourceUrl: cathen("02006b"),
       }),
       a({
@@ -1388,7 +1347,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         type: "catechism",
         title: "CCC 966",
         subtitle: "The Assumption of the Blessed Virgin",
-        sourceUrl: CCC_MARY,
+        sourceUrl: cccUrl(966),
         year: 1950,
       }),
     ],
@@ -1421,10 +1380,7 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         title: "Second Vatican Council",
         subtitle: "1962–1965",
         year: 1962,
-        location: place(
-          "St. Peter's Basilica, Vatican City",
-          "St. Peter's Basilica, Vatican City",
-        ),
+        location: place("St. Peter's Basilica, Vatican City", "St. Peter's Basilica, Vatican City"),
         sourceUrl: VATICAN_II,
       }),
       a({
@@ -1432,8 +1388,6 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         type: "papal",
         title: "Dei Verbum 11",
         subtitle: "Dogmatic Constitution on Divine Revelation",
-        shortQuote:
-          "Those divinely revealed realities which are contained and presented in Sacred Scripture have been committed to writing under the inspiration of the Holy Spirit. For holy mother Church, relying on the belief of the Apostles, holds that the books of both the Old and New Testaments in their entirety, with all their parts, are sacred and canonical.",
         sourceUrl: DEI_VERBUM,
         year: 1965,
       }),

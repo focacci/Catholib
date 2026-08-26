@@ -19,9 +19,12 @@ export function ArtifactSheet({
 }) {
   const open = artifact !== null;
   const isCommentary = artifact?.type === "commentary";
-  const cccBody =
-    artifact?.type === "catechism" ? cccParagraphFor(artifact.title) : undefined;
-  const quote = cccBody ?? (isCommentary ? undefined : artifact?.shortQuote);
+  const quote =
+    artifact?.type === "catechism"
+      ? cccParagraphFor(artifact.title)
+      : artifact?.type === "papal" || isCommentary
+        ? undefined
+        : artifact?.shortQuote;
 
   return (
     <Drawer.Root

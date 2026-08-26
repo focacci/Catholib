@@ -1,4 +1,5 @@
 import { BIBLE_BOOKS } from "./bible";
+import { cccParagraphFor } from "./ccc.ts";
 import { CHURCH_ENTRIES } from "./church";
 import { missalSections } from "./missal";
 import { eventPlaceHaystack } from "./place";
@@ -26,6 +27,7 @@ function artifactMatches(a: TimelineArtifact, q: string, filter: FilterId): bool
     a.title,
     a.subtitle ?? "",
     a.shortQuote ?? "",
+    a.type === "catechism" ? (cccParagraphFor(a.title) ?? "") : "",
     a.imageCredit ?? "",
     eventPlaceHaystack(a.location),
     ...(a.bibleRefs ?? []),

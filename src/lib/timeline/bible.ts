@@ -546,6 +546,22 @@ const wisdom2: TimelineArtifact[] = [
   }),
 ];
 
+const matthew3: TimelineArtifact[] = [
+  art({
+    id: "mt3-artwork",
+    type: "artwork",
+    title: "The Baptism of Christ",
+    subtitle: "Verrocchio and Leonardo, c. 1470–1475",
+    sourceUrl:
+      "https://commons.wikimedia.org/wiki/File:Verrocchio,_Leonardo_da_Vinci_-_Battesimo_di_Cristo.jpg",
+    imageUrl: wiki("Verrocchio,_Leonardo_da_Vinci_-_Battesimo_di_Cristo.jpg"),
+    imageCredit:
+      "Andrea del Verrocchio and Leonardo da Vinci, The Baptism of Christ, c. 1470–1475. Uffizi Gallery. Public domain, via Wikimedia Commons.",
+    bibleRefs: ["Mt 3:13–17"],
+    year: 1475,
+  }),
+];
+
 const matthew5: TimelineArtifact[] = [
   art({
     id: "mt5-ccc-1716",
@@ -632,6 +648,66 @@ const matthew16: TimelineArtifact[] = [
   }),
 ];
 
+const matthew17: TimelineArtifact[] = [
+  art({
+    id: "mt17-artwork",
+    type: "artwork",
+    title: "The Transfiguration",
+    subtitle: "Raphael, 1516–1520",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Transfiguration_Raphael.jpg",
+    imageUrl: wiki("Transfiguration_Raphael.jpg"),
+    imageCredit:
+      "Raphael, The Transfiguration, 1516–1520. Pinacoteca Vaticana. Public domain, via Wikimedia Commons.",
+    bibleRefs: ["Mt 17:1–8"],
+    year: 1520,
+  }),
+];
+
+const matthew26: TimelineArtifact[] = [
+  art({
+    id: "mt26-artwork",
+    type: "artwork",
+    title: "The Agony in the Garden",
+    subtitle: "Giovanni Bellini, c. 1458–1460",
+    sourceUrl:
+      "https://commons.wikimedia.org/wiki/File:Bellini,Giovanni_-_Agony_in_the_Garden_-_National_Gallery.jpg",
+    imageUrl: wiki("Bellini,Giovanni_-_Agony_in_the_Garden_-_National_Gallery.jpg"),
+    imageCredit:
+      "Giovanni Bellini, The Agony in the Garden, c. 1458–1460. National Gallery, London. Public domain, via Wikimedia Commons.",
+    bibleRefs: ["Mt 26:36–46"],
+    year: 1460,
+  }),
+];
+
+const matthew27: TimelineArtifact[] = [
+  art({
+    id: "mt27-scourging-artwork",
+    type: "artwork",
+    title: "The Flagellation of Christ",
+    subtitle: "Caravaggio, 1607",
+    sourceUrl:
+      "https://commons.wikimedia.org/wiki/File:The_Flagellation_of_Christ-Caravaggio_(1607).jpg",
+    imageUrl: wiki("The_Flagellation_of_Christ-Caravaggio_(1607).jpg"),
+    imageCredit:
+      "Caravaggio, The Flagellation of Christ, 1607. Museo di Capodimonte, Naples. Public domain, via Wikimedia Commons.",
+    bibleRefs: ["Mt 27:26"],
+    year: 1607,
+  }),
+  art({
+    id: "mt27-crowning-artwork",
+    type: "artwork",
+    title: "The Crowning with Thorns",
+    subtitle: "Caravaggio, c. 1602–1604",
+    sourceUrl:
+      "https://commons.wikimedia.org/wiki/File:The_Crowning_with_Thorns-Caravaggio_(1602).jpg",
+    imageUrl: wiki("The_Crowning_with_Thorns-Caravaggio_(1602).jpg"),
+    imageCredit:
+      "Caravaggio, The Crowning with Thorns, c. 1602–1604. Kunsthistorisches Museum, Vienna. Public domain, via Wikimedia Commons.",
+    bibleRefs: ["Mt 27:29"],
+    year: 1604,
+  }),
+];
+
 const matthew28: TimelineArtifact[] = [
   art({
     id: "mt28-ccc-849",
@@ -692,6 +768,62 @@ const luke1: TimelineArtifact[] = [
       "Fra Angelico, The Annunciation, c. 1433–1434. Museo del Prado. Public domain, via Wikimedia Commons.",
     bibleRefs: ["Lk 1:26–38"],
     year: 1434,
+  }),
+  art({
+    id: "lk1-visitation-artwork",
+    type: "artwork",
+    title: "The Visitation",
+    subtitle: "Giotto, Scrovegni Chapel, c. 1303–1305",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Giotto_-_Scrovegni_-_-16-_-_Visitation.jpg",
+    imageUrl: wiki("Giotto_-_Scrovegni_-_-16-_-_Visitation.jpg"),
+    imageCredit:
+      "Giotto, The Visitation, Scrovegni Chapel, Padua, c. 1303–1305. Public domain, via Wikimedia Commons.",
+    bibleRefs: ["Lk 1:39–56"],
+    year: 1305,
+  }),
+];
+
+const luke2: TimelineArtifact[] = [
+  art({
+    id: "lk2-nativity-artwork",
+    type: "artwork",
+    title: "The Nativity",
+    subtitle: "Giotto, Scrovegni Chapel, c. 1303–1305",
+    sourceUrl:
+      "https://commons.wikimedia.org/wiki/File:Giotto_-_Scrovegni_-_-17-_-_Nativity,_Birth_of_Jesus.jpg",
+    imageUrl: wiki("Giotto_-_Scrovegni_-_-17-_-_Nativity,_Birth_of_Jesus.jpg"),
+    imageCredit:
+      "Giotto, The Nativity, Scrovegni Chapel, Padua, c. 1303–1305. Public domain, via Wikimedia Commons.",
+    bibleRefs: ["Lk 2:1–20"],
+    year: 1305,
+  }),
+  art({
+    id: "lk2-presentation-artwork",
+    type: "artwork",
+    title: "The Presentation of Christ in the Temple",
+    subtitle: "Giotto, Scrovegni Chapel, c. 1303–1305",
+    sourceUrl:
+      "https://commons.wikimedia.org/wiki/File:Giotto_di_Bondone_-_No._19_Scenes_from_the_Life_of_Christ_-_3._Presentation_of_Christ_at_the_Temple_-_WGA09197.jpg",
+    imageUrl: wiki(
+      "Giotto_di_Bondone_-_No._19_Scenes_from_the_Life_of_Christ_-_3._Presentation_of_Christ_at_the_Temple_-_WGA09197.jpg",
+    ),
+    imageCredit:
+      "Giotto, The Presentation of Christ in the Temple, Scrovegni Chapel, Padua, c. 1303–1305. Public domain, via Wikimedia Commons.",
+    bibleRefs: ["Lk 2:22–38"],
+    year: 1305,
+  }),
+  art({
+    id: "lk2-finding-artwork",
+    type: "artwork",
+    title: "The Finding in the Temple",
+    subtitle: "Giotto, Scrovegni Chapel, c. 1303–1305",
+    sourceUrl:
+      "https://commons.wikimedia.org/wiki/File:Giotto_-_Scrovegni_-_-22-_-_Christ_among_the_Doctors.jpg",
+    imageUrl: wiki("Giotto_-_Scrovegni_-_-22-_-_Christ_among_the_Doctors.jpg"),
+    imageCredit:
+      "Giotto, Christ among the Doctors, Scrovegni Chapel, Padua, c. 1303–1305. Public domain, via Wikimedia Commons.",
+    bibleRefs: ["Lk 2:41–52"],
+    year: 1305,
   }),
 ];
 
@@ -836,6 +968,21 @@ const john1: TimelineArtifact[] = [
   }),
 ];
 
+const john2: TimelineArtifact[] = [
+  art({
+    id: "jn2-artwork",
+    type: "artwork",
+    title: "The Wedding at Cana",
+    subtitle: "Paolo Veronese, 1563",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Veronese,_The_Marriage_at_Cana_(1563).jpg",
+    imageUrl: wiki("Veronese,_The_Marriage_at_Cana_(1563).jpg"),
+    imageCredit:
+      "Paolo Veronese, The Wedding at Cana, 1563. Musée du Louvre. Public domain, via Wikimedia Commons.",
+    bibleRefs: ["Jn 2:1–11"],
+    year: 1563,
+  }),
+];
+
 const john6: TimelineArtifact[] = [
   art({
     id: "jn6-ccc-1338",
@@ -894,6 +1041,19 @@ const john19: TimelineArtifact[] = [
     bibleRefs: ["Jn 19:25–27"],
     year: 1992,
   }),
+  art({
+    id: "jn19-artwork",
+    type: "artwork",
+    title: "Christ Carrying the Cross",
+    subtitle: "El Greco, c. 1580",
+    sourceUrl:
+      "https://commons.wikimedia.org/wiki/File:El_Greco_-_Christ_Carrying_the_Cross_-_Google_Art_Project.jpg",
+    imageUrl: wiki("El_Greco_-_Christ_Carrying_the_Cross_-_Google_Art_Project.jpg"),
+    imageCredit:
+      "El Greco, Christ Carrying the Cross, c. 1580. Public domain, via Wikimedia Commons.",
+    bibleRefs: ["Jn 19:17"],
+    year: 1580,
+  }),
 ];
 
 const john20: TimelineArtifact[] = [
@@ -914,6 +1074,34 @@ const john20: TimelineArtifact[] = [
     sourceUrl: cccUrl(448),
     bibleRefs: ["Jn 20:28"],
     year: 1992,
+  }),
+  art({
+    id: "jn20-artwork",
+    type: "artwork",
+    title: "The Resurrection",
+    subtitle: "Piero della Francesca, c. 1463",
+    sourceUrl:
+      "https://commons.wikimedia.org/wiki/File:Piero_della_Francesca_-_Resurrection_-_WGA17609.jpg",
+    imageUrl: wiki("Piero_della_Francesca_-_Resurrection_-_WGA17609.jpg"),
+    imageCredit:
+      "Piero della Francesca, The Resurrection, c. 1463. Museo Civico, Sansepolcro. Public domain, via Wikimedia Commons.",
+    bibleRefs: ["Jn 20:1–18"],
+    year: 1463,
+  }),
+];
+
+const acts1: TimelineArtifact[] = [
+  art({
+    id: "acts1-artwork",
+    type: "artwork",
+    title: "The Ascension",
+    subtitle: "Giotto, Scrovegni Chapel, c. 1303–1305",
+    sourceUrl: "https://commons.wikimedia.org/wiki/File:Giotto_-_Scrovegni_-_-38-_-_Ascension.jpg",
+    imageUrl: wiki("Giotto_-_Scrovegni_-_-38-_-_Ascension.jpg"),
+    imageCredit:
+      "Giotto, The Ascension, Scrovegni Chapel, Padua, c. 1303–1305. Public domain, via Wikimedia Commons.",
+    bibleRefs: ["Acts 1:9–11"],
+    year: 1305,
   }),
 ];
 
@@ -1352,24 +1540,33 @@ const RICH: Record<string, { chapter: number; heading: string; artifacts: Timeli
       { chapter: 8, heading: "Love Strong as Death", artifacts: song8 },
     ],
     Matthew: [
+      { chapter: 3, heading: "The Baptism of the Lord", artifacts: matthew3 },
       { chapter: 5, heading: "The Sermon on the Mount", artifacts: matthew5 },
       { chapter: 6, heading: "The Lord’s Prayer", artifacts: matthew6 },
       { chapter: 16, heading: "Peter’s Confession", artifacts: matthew16 },
+      { chapter: 17, heading: "The Transfiguration", artifacts: matthew17 },
+      { chapter: 26, heading: "The Agony in the Garden", artifacts: matthew26 },
+      { chapter: 27, heading: "The Passion according to Matthew", artifacts: matthew27 },
       { chapter: 28, heading: "The Great Commission", artifacts: matthew28 },
     ],
     Luke: [
       { chapter: 1, heading: "The Annunciation", artifacts: luke1 },
+      { chapter: 2, heading: "The Infancy of Jesus", artifacts: luke2 },
       { chapter: 15, heading: "The Prodigal Son", artifacts: luke15 },
       { chapter: 22, heading: "The Last Supper", artifacts: luke22 },
       { chapter: 23, heading: "The Crucifixion", artifacts: luke23 },
     ],
     John: [
       { chapter: 1, heading: "The Word Became Flesh", artifacts: john1 },
+      { chapter: 2, heading: "The Wedding at Cana", artifacts: john2 },
       { chapter: 6, heading: "The Bread of Life", artifacts: john6 },
       { chapter: 19, heading: "The Passion according to John", artifacts: john19 },
       { chapter: 20, heading: "The Resurrection", artifacts: john20 },
     ],
-    "Acts of the Apostles": [{ chapter: 2, heading: "Pentecost", artifacts: acts2 }],
+    "Acts of the Apostles": [
+      { chapter: 1, heading: "The Ascension", artifacts: acts1 },
+      { chapter: 2, heading: "Pentecost", artifacts: acts2 },
+    ],
     Romans: [
       { chapter: 1, heading: "The Gospel and the Nations", artifacts: romans1 },
       { chapter: 5, heading: "Adam and Christ", artifacts: romans5 },

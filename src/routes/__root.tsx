@@ -14,7 +14,7 @@ export const Route = createRootRoute({
       {
         name: "description",
         content:
-          "A Catholic library of Sacred Scripture, the living Magisterium, and the 1962 Roman Missal, drawn only from the Holy See, the USCCB, and confirmed commentary sources.",
+          "A Catholic library of Sacred Scripture, the living Magisterium, and the 1962 Roman Missal, drawn only from the Holy See, the USCCB, EWTN, the Douay-Rheims, and confirmed commentary sources.",
       },
       { name: "theme-color", content: "#0a0e14" },
       { name: "apple-mobile-web-app-title", content: APP_NAME },

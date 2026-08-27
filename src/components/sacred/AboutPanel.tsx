@@ -17,7 +17,17 @@ const SOURCES = [
   {
     name: "United States Conference of Catholic Bishops",
     href: "https://bible.usccb.org/",
-    note: "New American Bible Revised Edition, chapter by chapter. Used in the Bible view.",
+    note: "New American Bible Revised Edition (NABRE), chapter by chapter. Used in the Bible view.",
+  },
+  {
+    name: "EWTN",
+    href: "https://www.ewtn.com/bible",
+    note: "Revised Standard Version Catholic Edition (RSV-CE), chapter by chapter. Used in the Bible view.",
+  },
+  {
+    name: "The Douay-Rheims Bible",
+    href: "https://thedouayrheims.com/drc/genesis/1",
+    note: "Douay-Rheims Challoner revision, chapter by chapter. Used in the Bible view.",
   },
   {
     name: "Haydock Commentary (1859)",
@@ -45,14 +55,15 @@ function AboutCopy() {
   return (
     <>
       <p className="text-base leading-relaxed text-muted">
-        Catholib has three views. Bible follows the canon, with sample
-        chapters from the USCCB and commentary from Haydock, the Catena
-        Aurea, and Cornelius a Lapide. Church follows the history of the
-        Church, with encyclopedia articles for events, popes, and saints,
-        and magisterial texts from the Holy See. Missal is a static catalog
+        Catholib has three views. Bible follows the canon, with chapter
+        text in NABRE, RSV-CE, and the Douay-Rheims (Challoner), and
+        commentary from Haydock, the Catena Aurea, and Cornelius a
+        Lapide. Church follows the history of the Church, with
+        encyclopedia articles for events, popes, and saints, and
+        magisterial texts from the Holy See. Missal is a static catalog
         of the 1962 Roman Missal: Today, the Ordo Missae, the Temporale,
-        the Sanctorale, the Commons, and Votive Masses, each card opening a
-        confirmed page on Missale Meum.
+        the Sanctorale, the Commons, and Votive Masses, each card opening
+        a confirmed page on Missale Meum.
       </p>
       <p className="mt-3 text-base leading-relaxed text-muted">
         The dataset stays limited to approved sources. No paraphrase of

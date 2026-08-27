@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useLayoutEffect, useMemo, useRef } from "react";
 import { ChevronDown, ExternalLink } from "lucide-react";
 import { BIBLE_BOOKS } from "@/lib/timeline/bible";
 import { bibleVersionLinks } from "@/lib/timeline/bible-versions";
@@ -8,6 +8,10 @@ import {
   periodSwatchStyle,
   TIMELINE_PERIOD_LIST,
 } from "@/lib/timeline/bible-periods";
+import {
+  isBookHeaderStuck,
+  pinSectionToScrollerTop,
+} from "@/lib/timeline/book-collapse-scroll";
 import { bookMatchesSearch, filterArtifacts } from "@/lib/timeline/search";
 import { useTimeline } from "@/lib/timeline/store";
 import type { BibleBook, FilterId, TimelineArtifact } from "@/lib/timeline/types";
@@ -81,6 +85,15 @@ function BookSection({
   const showBecauseQuery = q.length > 0 && (nameMatch || matchingChapters.length > 0);
   const hideEmpty = q.length > 0 && !showBecauseQuery && filter !== "all";
   const hideUnmatched = q.length > 0 && !nameMatch && matchingChapters.length === 0;
+  const sectionRef = useRef<HTMLElement>(null);
+  const headerRef = useRef<HTMLButtonElement>(null);
+  const pinOnCollapseRef = useRef(false);
+
+  useLayoutEffect(() => {
+    if (expanded || !pinOnCollapseRef.current || !sectionRef.current) return;
+    pinOnCollapseRef.current = false;
+    pinSectionToScrollerTop(sectionRef.current);
+  }, [expanded]);
 
   if (hideUnmatched || hideEmpty) return null;
 
@@ -99,11 +112,25 @@ function BookSection({
 
   const period = periodForBook(book.name);
 
+  const handleToggle = () => {
+    if (expanded && sectionRef.current && headerRef.current) {
+      const sectionTop = sectionRef.current.getBoundingClientRect().top;
+      const headerTop = headerRef.current.getBoundingClientRect().top;
+      pinOnCollapseRef.current = isBookHeaderStuck(sectionTop, headerTop);
+    }
+    onToggle();
+  };
+
   return (
-    <section id={`book-${book.name}`} className="scroll-mt-[var(--chrome-h,0px)]">
+    <section
+      ref={sectionRef}
+      id={`book-${book.name}`}
+      className="scroll-mt-[var(--chrome-h,0px)]"
+    >
       <button
+        ref={headerRef}
         type="button"
-        onClick={onToggle}
+        onClick={handleToggle}
         className="sticky top-[var(--chrome-h,0px)] z-10 flex min-h-12 w-full items-center gap-2.5 border-b border-line bg-bg px-2"
         aria-expanded={expanded}
         aria-label={`${book.abbreviation} ${book.name}, ${period.label}`}
@@ -127,7 +154,7 @@ function BookSection({
       </button>
 
       {expanded && (
-        <div className="relative border-b border-line">
+        <div className="relative border-b border-line" style={{ overflowAnchor: "none" }}>
           <div
             className="absolute top-0 bottom-0 left-[var(--rail-x)] w-px timeline-rail"
             aria-hidden

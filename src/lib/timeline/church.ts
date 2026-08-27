@@ -701,12 +701,12 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
     id: "leo-great",
     year: 461,
     era: "Patristic Age",
-    title: "St. Leo the Great",
+    title: "Pope St. Leo the Great",
     artifacts: [
       a({
         id: "ch-leo-pope",
         type: "pope",
-        title: "St. Leo the Great",
+        title: "Pope St. Leo the Great",
         subtitle: "Pope — d. 461",
         year: 461,
         sourceUrl: cathen("09154b"),
@@ -792,12 +792,12 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
     id: "gregory-great",
     year: 604,
     era: "Monastic Age",
-    title: "St. Gregory the Great",
+    title: "Pope St. Gregory the Great",
     artifacts: [
       a({
         id: "ch-greggreat-pope",
         type: "pope",
-        title: "St. Gregory the Great",
+        title: "Pope St. Gregory the Great",
         subtitle: "Pope and Doctor — d. 604",
         year: 604,
         sourceUrl: cathen("06780a"),
@@ -958,12 +958,12 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
     id: "gregory-vii",
     year: 1085,
     era: "High Middle Ages",
-    title: "St. Gregory VII",
+    title: "Pope St. Gregory VII",
     artifacts: [
       a({
         id: "ch-gregory-vii-pope",
         type: "pope",
-        title: "St. Gregory VII",
+        title: "Pope St. Gregory VII",
         subtitle: "Pope — d. 1085; the Gregorian Reform",
         year: 1085,
         sourceUrl: cathen("06791c"),
@@ -1039,12 +1039,12 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
     id: "innocent-iii",
     year: 1216,
     era: "High Middle Ages",
-    title: "Innocent III",
+    title: "Pope Innocent III",
     artifacts: [
       a({
         id: "ch-innocent-iii-pope",
         type: "pope",
-        title: "Innocent III",
+        title: "Pope Innocent III",
         subtitle: "Pope — d. 1216; Fourth Lateran Council",
         year: 1216,
         sourceUrl: cathen("08013a"),
@@ -1297,12 +1297,12 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
     id: "paul-iii",
     year: 1549,
     era: "Catholic Reformation",
-    title: "Paul III",
+    title: "Pope Paul III",
     artifacts: [
       a({
         id: "ch-paul-iii-pope",
         type: "pope",
-        title: "Paul III",
+        title: "Pope Paul III",
         subtitle: "Pope — d. 1549; opened the Council of Trent",
         year: 1549,
         sourceUrl: cathen("11579a"),
@@ -1313,12 +1313,12 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
     id: "pius-v",
     year: 1572,
     era: "Catholic Reformation",
-    title: "St. Pius V",
+    title: "Pope St. Pius V",
     artifacts: [
       a({
         id: "ch-pius-v-pope",
         type: "pope",
-        title: "St. Pius V",
+        title: "Pope St. Pius V",
         subtitle: "Pope — d. 1572; implemented the Council of Trent",
         year: 1572,
         sourceUrl: cathen("12130a"),
@@ -1454,12 +1454,12 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
     id: "pius-ix",
     year: 1878,
     era: "Modern era",
-    title: "Pius IX",
+    title: "Pope Pius IX",
     artifacts: [
       a({
         id: "ch-pius-ix-pope",
         type: "pope",
-        title: "Pius IX",
+        title: "Pope Pius IX",
         subtitle: "Pope — d. 1878; Immaculate Conception and Vatican I",
         year: 1878,
         sourceUrl: cathen("12134b"),
@@ -1487,12 +1487,12 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
     id: "leo-xiii",
     year: 1891,
     era: "Modern era",
-    title: "Leo XIII — Rerum Novarum",
+    title: "Pope Leo XIII — Rerum Novarum",
     artifacts: [
       a({
         id: "ch-leo13-pope",
         type: "pope",
-        title: "Leo XIII",
+        title: "Pope Leo XIII",
         subtitle: "1878–1903",
         year: 1878,
         sourceUrl: cathen("09169a"),
@@ -1543,12 +1543,12 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
     id: "pius-x",
     year: 1907,
     era: "Twentieth century",
-    title: "St. Pius X",
+    title: "Pope St. Pius X",
     artifacts: [
       a({
         id: "ch-piusx-pope",
         type: "pope",
-        title: "St. Pius X",
+        title: "Pope St. Pius X",
         subtitle: "1903–1914",
         year: 1903,
         sourceUrl: cathen("12137a"),

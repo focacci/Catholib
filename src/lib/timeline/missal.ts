@@ -6,7 +6,8 @@ import {
   missalOrdoUrl,
   missalVotiveIndexUrl,
   missalVotiveUrl,
-} from "./missal-urls";
+} from "./missal-urls.ts";
+import { todayRosaryArtifact } from "./rosary.ts";
 
 function art(partial: TimelineArtifact): TimelineArtifact {
   return partial;
@@ -81,6 +82,7 @@ function todaySection(now = new Date()): MissalSection {
     "Today",
     [
       todayArtifact(now),
+      todayRosaryArtifact(now),
       art({
         id: "missal-calendar",
         type: "proper",

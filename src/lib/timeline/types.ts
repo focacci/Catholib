@@ -8,7 +8,8 @@ export type ArtifactType =
   | "saint"
   | "ordo"
   | "proper"
-  | "votive";
+  | "votive"
+  | "rosary";
 
 export type ViewMode = "bible" | "church" | "missal";
 
@@ -99,6 +100,7 @@ export const VIEW_FILTERS: Record<ViewMode, FilterChip[]> = {
     { id: "ordo", label: "Ordo" },
     { id: "proper", label: "Proper" },
     { id: "votive", label: "Votive" },
+    { id: "rosary", label: "Rosary" },
   ],
 };
 
@@ -114,6 +116,7 @@ export const FILTERS: FilterChip[] = [
   { id: "ordo", label: "Ordo" },
   { id: "proper", label: "Proper" },
   { id: "votive", label: "Votive" },
+  { id: "rosary", label: "Rosary" },
 ];
 
 export const ARTIFACT_LABEL: Record<ArtifactType, string> = {
@@ -127,6 +130,7 @@ export const ARTIFACT_LABEL: Record<ArtifactType, string> = {
   ordo: "Ordo",
   proper: "Proper",
   votive: "Votive",
+  rosary: "Rosary",
 };
 
 export const VIEW_LABEL: Record<ViewMode, string> = {

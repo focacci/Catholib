@@ -149,6 +149,19 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         bibleRefs: ["Mt 16:18–19"],
         year: 1992,
       }),
+      a({
+        id: "ch-peter-art",
+        type: "artwork",
+        title: "Christ’s Charge to Peter",
+        subtitle: "Peter Paul Rubens, c. 1616",
+        year: 1616,
+        sourceUrl:
+          "https://commons.wikimedia.org/wiki/File:Peter_Paul_Rubens_-_Christ's_Charge_to_Peter.jpg",
+        imageUrl: wiki("Peter_Paul_Rubens_-_Christ's_Charge_to_Peter.jpg"),
+        imageCredit:
+          "Peter Paul Rubens, Christ’s Charge to Peter, c. 1616. Wallace Collection, London. Public domain, via Wikimedia Commons.",
+        bibleRefs: ["Jn 21:15–17"],
+      }),
     ],
   },
   {
@@ -173,6 +186,19 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         subtitle: "The apostolic preaching",
         sourceUrl: DEI_VERBUM,
         year: 1965,
+      }),
+      a({
+        id: "ch-paul-art",
+        type: "artwork",
+        title: "Conversion on the Way to Damascus",
+        subtitle: "Caravaggio, c. 1600–1601",
+        year: 1601,
+        sourceUrl:
+          "https://commons.wikimedia.org/wiki/File:Conversion_on_the_Way_to_Damascus-Caravaggio_(c.1600-1).jpg",
+        imageUrl: wiki("Conversion_on_the_Way_to_Damascus-Caravaggio_(c.1600-1).jpg"),
+        imageCredit:
+          "Caravaggio, Conversion on the Way to Damascus, c. 1600–1601. Santa Maria del Popolo, Rome. Public domain, via Wikimedia Commons.",
+        bibleRefs: ["Acts 9:1–22"],
       }),
     ],
   },
@@ -311,6 +337,18 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         subtitle: "Homoousios with the Father",
         sourceUrl: cccUrl(465),
         year: 325,
+      }),
+      a({
+        id: "ch-nicaea-art",
+        type: "artwork",
+        title: "First Council of Nicaea",
+        subtitle: "Michael Damaskinos, 1591",
+        year: 1591,
+        sourceUrl:
+          "https://commons.wikimedia.org/wiki/File:First_Council_of_Nicaea_Michael_Damaskinos.png",
+        imageUrl: wiki("First_Council_of_Nicaea_Michael_Damaskinos.png"),
+        imageCredit:
+          "Michael Damaskinos, First Council of Nicaea, 1591. Public domain, via Wikimedia Commons.",
       }),
     ],
   },
@@ -542,6 +580,17 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         subtitle: "Ignorance of the Scriptures is ignorance of Christ",
         sourceUrl: DEI_VERBUM,
         year: 1965,
+      }),
+      a({
+        id: "ch-jerome-art",
+        type: "artwork",
+        title: "Saint Jerome Writing",
+        subtitle: "Caravaggio, c. 1606",
+        year: 1606,
+        sourceUrl: "https://commons.wikimedia.org/wiki/File:Caravaggio_-_San_Gerolamo.jpg",
+        imageUrl: wiki("Caravaggio_-_San_Gerolamo.jpg"),
+        imageCredit:
+          "Caravaggio, Saint Jerome Writing, c. 1606. Galleria Borghese, Rome. Public domain, via Wikimedia Commons.",
       }),
     ],
   },
@@ -908,6 +957,18 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         sourceUrl: cccUrl(2131),
         year: 787,
       }),
+      a({
+        id: "ch-nicaea2-art",
+        type: "artwork",
+        title: "Christ Pantocrator",
+        subtitle: "Deësis mosaic, Hagia Sophia",
+        year: 1261,
+        sourceUrl:
+          "https://commons.wikimedia.org/wiki/File:Christ_Pantocrator_Deesis_mosaic_Hagia_Sophia.jpg",
+        imageUrl: wiki("Christ_Pantocrator_Deesis_mosaic_Hagia_Sophia.jpg"),
+        imageCredit:
+          "Christ Pantocrator, Deësis mosaic, Hagia Sophia, Constantinople, c. 1261. Public domain, via Wikimedia Commons.",
+      }),
     ],
   },
   {
@@ -1073,6 +1134,17 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         year: 2010,
         sourceUrl: AUD(2010, "20100203"),
       }),
+      a({
+        id: "ch-dominic-art",
+        type: "artwork",
+        title: "Saint Dominic in Prayer",
+        subtitle: "El Greco, c. 1600",
+        year: 1600,
+        sourceUrl: "https://commons.wikimedia.org/wiki/File:El_Greco_-_Saint_Dominic,_Toledo.jpg",
+        imageUrl: wiki("El_Greco_-_Saint_Dominic,_Toledo.jpg"),
+        imageCredit:
+          "El Greco, Saint Dominic in Prayer, c. 1600. Toledo. Public domain, via Wikimedia Commons.",
+      }),
     ],
   },
   {
@@ -1098,12 +1170,23 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         sourceUrl: AUD(2010, "20100127"),
       }),
       a({
-        id: "ch-francis-ls",
+        id: "ch-francis-assisi-ls",
         type: "papal",
         title: "Laudato Si’ 10–12",
         subtitle: "Pope Francis on the Poverello of Assisi",
         year: 2015,
         sourceUrl: LAUDATO_SI,
+      }),
+      a({
+        id: "ch-francis-art",
+        type: "artwork",
+        title: "Saint Francis of Assisi",
+        subtitle: "Cimabue, c. 1278–1280",
+        year: 1280,
+        sourceUrl: "https://commons.wikimedia.org/wiki/File:Francis_of_Assisi_-_Cimabue.jpg",
+        imageUrl: wiki("Francis_of_Assisi_-_Cimabue.jpg"),
+        imageCredit:
+          "Cimabue, Saint Francis of Assisi, c. 1278–1280. Public domain, via Wikimedia Commons.",
       }),
     ],
   },
@@ -1186,6 +1269,17 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         year: 2010,
         sourceUrl: AUD(2010, "20100602"),
       }),
+      a({
+        id: "ch-aquinas-art",
+        type: "artwork",
+        title: "Saint Thomas Aquinas",
+        subtitle: "Carlo Crivelli, 1476",
+        year: 1476,
+        sourceUrl: "https://commons.wikimedia.org/wiki/File:Carlo_Crivelli_007.jpg",
+        imageUrl: wiki("Carlo_Crivelli_007.jpg"),
+        imageCredit:
+          "Carlo Crivelli, Saint Thomas Aquinas, 1476. National Gallery, London. Public domain, via Wikimedia Commons.",
+      }),
     ],
   },
   {
@@ -1255,6 +1349,18 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         ),
         sourceUrl: cathen("07043a"),
       }),
+      a({
+        id: "ch-guadalupe-art",
+        type: "artwork",
+        title: "Our Lady of Guadalupe",
+        subtitle: "Tilma of Juan Diego, 1531",
+        year: 1531,
+        sourceUrl:
+          "https://commons.wikimedia.org/wiki/File:1531_Nuestra_Señora_de_Guadalupe_anagoria.jpg",
+        imageUrl: wiki("1531_Nuestra_Señora_de_Guadalupe_anagoria.jpg"),
+        imageCredit:
+          "The tilma of Juan Diego, Our Lady of Guadalupe, Tepeyac, 1531. Public domain, via Wikimedia Commons.",
+      }),
     ],
   },
   {
@@ -1291,6 +1397,18 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         year: 1965,
         sourceUrl: DEI_VERBUM,
       }),
+      a({
+        id: "ch-trent-art",
+        type: "artwork",
+        title: "The Council of Trent",
+        subtitle: "Pasquale Cati, c. 1588",
+        year: 1588,
+        sourceUrl:
+          "https://commons.wikimedia.org/wiki/File:Pasquale_Cati_Da_Iesi_-_The_Council_of_Trent_-_WGA04574.jpg",
+        imageUrl: wiki("Pasquale_Cati_Da_Iesi_-_The_Council_of_Trent_-_WGA04574.jpg"),
+        imageCredit:
+          "Pasquale Cati, The Council of Trent, c. 1588. Santa Maria in Trastevere, Rome. Public domain, via Wikimedia Commons.",
+      }),
     ],
   },
   {
@@ -1307,6 +1425,20 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         year: 1549,
         sourceUrl: cathen("11579a"),
       }),
+      a({
+        id: "ch-paul-iii-art",
+        type: "artwork",
+        title: "Pope Paul III",
+        subtitle: "Titian, 1543",
+        year: 1543,
+        sourceUrl:
+          "https://commons.wikimedia.org/wiki/File:Portrait_of_Pope_Paul_III_Farnese_(by_Titian)_-_National_Museum_of_Capodimonte.jpg",
+        imageUrl: wiki(
+          "Portrait_of_Pope_Paul_III_Farnese_(by_Titian)_-_National_Museum_of_Capodimonte.jpg",
+        ),
+        imageCredit:
+          "Titian, Portrait of Pope Paul III Farnese, 1543. Museo di Capodimonte, Naples. Public domain, via Wikimedia Commons.",
+      }),
     ],
   },
   {
@@ -1322,6 +1454,18 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         subtitle: "Pope — d. 1572; implemented the Council of Trent",
         year: 1572,
         sourceUrl: cathen("12130a"),
+      }),
+      a({
+        id: "ch-pius-v-art",
+        type: "artwork",
+        title: "Pope Pius V",
+        subtitle: "Bartolomeo Passarotti, c. 1566",
+        year: 1566,
+        sourceUrl:
+          "https://commons.wikimedia.org/wiki/File:Bartolomeo_Passarotti_-_Portrait_of_Pope_Pius_V_-_Walters_37453.jpg",
+        imageUrl: wiki("Bartolomeo_Passarotti_-_Portrait_of_Pope_Pius_V_-_Walters_37453.jpg"),
+        imageCredit:
+          "Bartolomeo Passarotti, Portrait of Pope Pius V, c. 1566. Walters Art Museum. Public domain, via Wikimedia Commons.",
       }),
     ],
   },
@@ -1346,6 +1490,17 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         subtitle: "St. Teresa of Avila — 2 February 2011",
         year: 2011,
         sourceUrl: AUD(2011, "20110202"),
+      }),
+      a({
+        id: "ch-teresa-art",
+        type: "artwork",
+        title: "Saint Teresa of Ávila",
+        subtitle: "Peter Paul Rubens, c. 1615",
+        year: 1615,
+        sourceUrl: "https://commons.wikimedia.org/wiki/File:Peter_Paul_Rubens_138.jpg",
+        imageUrl: wiki("Peter_Paul_Rubens_138.jpg"),
+        imageCredit:
+          "Peter Paul Rubens, Saint Teresa of Ávila, c. 1615. Public domain, via Wikimedia Commons.",
       }),
     ],
   },
@@ -1422,6 +1577,20 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         subtitle: "The Immaculate Conception",
         sourceUrl: cccUrl(491),
         year: 1854,
+      }),
+      a({
+        id: "ch-ic-art",
+        type: "artwork",
+        title: "The Immaculate Conception of Los Venerables",
+        subtitle: "Bartolomé Esteban Murillo, 1678",
+        year: 1678,
+        sourceUrl:
+          "https://commons.wikimedia.org/wiki/File:Murillo_-_Inmaculada_Concepción_de_los_Venerables_o_de_Soult_(Museo_del_Prado,_1678).jpg",
+        imageUrl: wiki(
+          "Murillo_-_Inmaculada_Concepción_de_los_Venerables_o_de_Soult_(Museo_del_Prado,_1678).jpg",
+        ),
+        imageCredit:
+          "Bartolomé Esteban Murillo, The Immaculate Conception of Los Venerables, 1678. Museo del Prado. Public domain, via Wikimedia Commons.",
       }),
     ],
   },
@@ -1649,6 +1818,28 @@ export const CHURCH_ENTRIES: ChurchEntry[] = [
         subtitle: "The Assumption of the Blessed Virgin",
         sourceUrl: cccUrl(966),
         year: 1950,
+      }),
+      a({
+        id: "ch-assump-art",
+        type: "artwork",
+        title: "Assumption of the Virgin",
+        subtitle: "Titian, 1516–1518",
+        year: 1518,
+        sourceUrl: "https://commons.wikimedia.org/wiki/File:Tiziano,_l'assunta,_1516-18.JPG",
+        imageUrl: wiki("Tiziano,_l'assunta,_1516-18.JPG"),
+        imageCredit:
+          "Titian, Assumption of the Virgin, 1516–1518. Santa Maria Gloriosa dei Frari, Venice. Public domain, via Wikimedia Commons.",
+      }),
+      a({
+        id: "ch-coronation-art",
+        type: "artwork",
+        title: "The Coronation of the Virgin",
+        subtitle: "Diego Velázquez, 1635–1636",
+        year: 1636,
+        sourceUrl: "https://commons.wikimedia.org/wiki/File:Diego_Velázquez_012.jpg",
+        imageUrl: wiki("Diego_Velázquez_012.jpg"),
+        imageCredit:
+          "Diego Velázquez, The Coronation of the Virgin, 1635–1636. Museo del Prado. Public domain, via Wikimedia Commons.",
       }),
     ],
   },

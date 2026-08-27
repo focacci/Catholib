@@ -29,8 +29,8 @@ export function MissalView() {
   if (sections.length === 0) {
     return (
       <p className="px-4 py-16 text-center text-sm text-muted">
-        No Missal entries match these filters. Catalog cards from Missale Meum
-        only.
+        No Missal entries match these filters. Catalog cards from Missale Meum,
+        plus today's rosary from the Rosary Center.
       </p>
     );
   }

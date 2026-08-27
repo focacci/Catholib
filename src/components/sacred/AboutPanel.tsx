@@ -47,7 +47,12 @@ const SOURCES = [
   {
     name: "Missale Meum",
     href: "https://www.missalemeum.com/en",
-    note: "1962 Roman Missal. Sole source for the Missal view. Cards link to confirmed Missale Meum pages; proper texts remain there. This app does not calculate the liturgical year.",
+    note: "1962 Roman Missal. Catalog cards link to confirmed Missale Meum pages; proper texts remain there. This app does not calculate the liturgical year.",
+  },
+  {
+    name: "Rosary Center & Confraternity",
+    href: "https://www.rosarycenter.org/how-to-pray-the-rosary/",
+    note: "Scripturally based rosary, including the Luminous Mysteries. Today's rosary in the Missal view links to the mysteries assigned to the civil weekday.",
   },
 ];
 
@@ -62,8 +67,9 @@ function AboutCopy() {
         encyclopedia articles for events, popes, and saints, and
         magisterial texts from the Holy See. Missal is a static catalog
         of the 1962 Roman Missal: Today, the Ordo Missae, the Temporale,
-        the Sanctorale, the Commons, and Votive Masses, each card opening
-        a confirmed page on Missale Meum.
+        the Sanctorale, the Commons, and Votive Masses. Missal cards open
+        confirmed pages on Missale Meum. Today also includes the day's
+        scripturally based rosary from the Rosary Center.
       </p>
       <p className="mt-3 text-base leading-relaxed text-muted">
         The dataset stays limited to approved sources. No paraphrase of

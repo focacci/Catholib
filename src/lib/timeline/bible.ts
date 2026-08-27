@@ -1475,10 +1475,12 @@ export const USCCB_SLUG: Record<string, string> = Object.fromEntries(
   [...OT, ...NT].map(([name, , slug]) => [name, slug]),
 );
 
-export function usccbChapterUrl(bookName: string, chapter: number): string {
+export function nabreChapterUrl(bookName: string, chapter: number): string {
   const slug = USCCB_SLUG[bookName];
   return `https://bible.usccb.org/bible/${slug}/${chapter}`;
 }
+
+export const usccbChapterUrl = nabreChapterUrl;
 
 export const POPULATED_BOOK_NAMES = new Set(
   BIBLE_BOOKS.filter((b) => b.populatedChapters.length > 0).map((b) => b.name),

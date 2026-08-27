@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { ChevronDown, ExternalLink } from "lucide-react";
-import { BIBLE_BOOKS, usccbChapterUrl } from "@/lib/timeline/bible";
+import { BIBLE_BOOKS } from "@/lib/timeline/bible";
+import { bibleVersionLinks } from "@/lib/timeline/bible-versions";
 import {
   periodBadgeStyle,
   periodForBook,
@@ -151,15 +152,21 @@ function BookSection({
                   Chapter {ch.chapter}
                   {ch.heading ? ` · ${ch.heading}` : ""}
                 </p>
-                <a
-                  href={usccbChapterUrl(book.name, ch.chapter)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-0.5 inline-flex min-h-11 items-center gap-1 text-base text-gold"
-                >
-                  Read at USCCB
-                  <ExternalLink className="size-3.5" />
-                </a>
+                <div className="mt-0.5 flex flex-wrap items-center gap-x-4">
+                  {bibleVersionLinks(book.name, ch.chapter).map((version) => (
+                    <a
+                      key={version.id}
+                      href={version.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex min-h-11 items-center gap-1 text-base text-gold"
+                      aria-label={`Read ${book.name} ${ch.chapter} in ${version.label}`}
+                    >
+                      {version.label}
+                      <ExternalLink className="size-3.5" />
+                    </a>
+                  ))}
+                </div>
               </div>
               <div className="flex flex-col gap-2 pl-[var(--rail-pad)]">
                 {ch.artifacts.map((a) => (

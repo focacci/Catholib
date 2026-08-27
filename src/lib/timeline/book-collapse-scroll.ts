@@ -23,16 +23,28 @@ export function scrollerTopForSection(args: {
   return Math.max(0, scrollTop + (sectionTop - scrollerTop) - chromeHeight);
 }
 
+/** Visible overlay may be 0 while the header is hidden; leave room for it to return. */
+export function collapsePinChromeHeight(
+  cssChrome: number,
+  headerHeight: number,
+): number {
+  return Math.max(cssChrome, headerHeight);
+}
+
 export function pinSectionToScrollerTop(section: HTMLElement): void {
   const scroller = document.getElementById("timeline-scroll");
   if (!(scroller instanceof HTMLElement)) {
     section.scrollIntoView({ block: "start" });
     return;
   }
-  const chromeHeight =
+  const cssChrome =
     Number.parseFloat(
       getComputedStyle(scroller).getPropertyValue("--chrome-h"),
     ) || 0;
+  const header = document.getElementById("timeline-chrome");
+  const headerHeight =
+    header instanceof HTMLElement ? header.offsetHeight : cssChrome;
+  const chromeHeight = collapsePinChromeHeight(cssChrome, headerHeight);
   const top = scrollerTopForSection({
     scrollTop: scroller.scrollTop,
     sectionTop: section.getBoundingClientRect().top,

@@ -294,6 +294,10 @@ export function AppShell() {
     const delta = y - lastScrollRef.current;
     lastScrollRef.current = y;
     const h = headerHRef.current;
+    if (delta < -h) {
+      applyChrome(0);
+      return;
+    }
     const prev = chromeOffsetRef.current;
     const next =
       y < 1 ? 0 : Math.min(Math.max(prev + delta, 0), Math.min(h, y));
@@ -337,6 +341,7 @@ export function AppShell() {
     >
       <header
         ref={headerRef}
+        id="timeline-chrome"
         className="absolute inset-x-0 top-0 z-20 border-b border-line bg-bg pt-[env(safe-area-inset-top)] will-change-transform"
       >
         <div className="px-3 pt-2">

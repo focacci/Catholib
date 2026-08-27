@@ -1,10 +1,10 @@
-import { BIBLE_BOOKS } from "./bible";
+import { BIBLE_BOOKS } from "./bible.ts";
 import { cccParagraphFor } from "./ccc.ts";
-import { CHURCH_ENTRIES } from "./church";
-import { missalSections } from "./missal";
-import { eventPlaceHaystack } from "./place";
-import { MISSAL_KIND_LABEL } from "./types";
-import type { FilterId, TimelineArtifact, ViewMode } from "./types";
+import { CHURCH_ENTRIES } from "./church.ts";
+import { missalSections } from "./missal.ts";
+import { eventPlaceHaystack } from "./place.ts";
+import { MISSAL_KIND_LABEL } from "./types.ts";
+import type { FilterId, TimelineArtifact, ViewMode } from "./types.ts";
 
 export interface SearchHit {
   id: string;
@@ -16,40 +16,60 @@ export interface SearchHit {
   entryId?: string;
 }
 
+const haystackCache = new WeakMap<TimelineArtifact, string>();
+
 function matchesQuery(text: string, q: string): boolean {
   return text.toLowerCase().includes(q);
+}
+
+function artifactHaystack(artifact: TimelineArtifact): string {
+  const cached = haystackCache.get(artifact);
+  if (cached) return cached;
+  const hay = [
+    artifact.title,
+    artifact.subtitle ?? "",
+    artifact.shortQuote ?? "",
+    artifact.type === "catechism" ? (cccParagraphFor(artifact.title) ?? "") : "",
+    artifact.imageCredit ?? "",
+    eventPlaceHaystack(artifact.location),
+    ...(artifact.bibleRefs ?? []),
+    String(artifact.year ?? ""),
+    artifact.type,
+  ]
+    .join(" ")
+    .toLowerCase();
+  haystackCache.set(artifact, hay);
+  return hay;
 }
 
 function artifactMatches(a: TimelineArtifact, q: string, filter: FilterId): boolean {
   if (filter !== "all" && a.type !== filter) return false;
   if (!q) return true;
-  const hay = [
-    a.title,
-    a.subtitle ?? "",
-    a.shortQuote ?? "",
-    a.type === "catechism" ? (cccParagraphFor(a.title) ?? "") : "",
-    a.imageCredit ?? "",
-    eventPlaceHaystack(a.location),
-    ...(a.bibleRefs ?? []),
-    String(a.year ?? ""),
-    a.type,
-  ]
-    .join(" ")
-    .toLowerCase();
-  return matchesQuery(hay, q);
+  return artifactHaystack(a).includes(q);
+}
+
+function includeArtifact(
+  artifact: TimelineArtifact,
+  q: string,
+  filter: FilterId,
+  sectionHit: boolean,
+): boolean {
+  if (filter !== "all" && artifact.type !== filter) return false;
+  if (!q) return true;
+  if (sectionHit) return true;
+  return artifactMatches(artifact, q, "all");
 }
 
 export function collectHits(query: string, filter: FilterId): SearchHit[] {
   const q = query.trim().toLowerCase();
   const hits: SearchHit[] = [];
+  if (!q && filter === "all") return hits;
 
   for (const book of BIBLE_BOOKS) {
     const bookHit = Boolean(q) && matchesQuery(`${book.name} ${book.abbreviation}`, q);
     for (const ch of book.populatedChapters) {
       for (const a of ch.artifacts) {
-        if (filter !== "all" && a.type !== filter) continue;
-        if (q && !bookHit && !artifactMatches(a, q, filter)) continue;
-        if (!q && filter === "all") continue;
+        if (!includeArtifact(a, q, filter, bookHit)) continue;
         hits.push({
           id: a.id,
           view: "bible",
@@ -64,12 +84,9 @@ export function collectHits(query: string, filter: FilterId): SearchHit[] {
 
   for (const entry of CHURCH_ENTRIES) {
     const entryHit =
-      Boolean(q) &&
-      matchesQuery(`${entry.title} ${entry.era ?? ""} ${entry.year}`, q);
+      Boolean(q) && matchesQuery(`${entry.title} ${entry.era ?? ""} ${entry.year}`, q);
     for (const a of entry.artifacts) {
-      if (filter !== "all" && a.type !== filter) continue;
-      if (q && !entryHit && !artifactMatches(a, q, filter)) continue;
-      if (!q && filter === "all") continue;
+      if (!includeArtifact(a, q, filter, entryHit)) continue;
       hits.push({
         id: a.id,
         view: "church",
@@ -88,9 +105,7 @@ export function collectHits(query: string, filter: FilterId): SearchHit[] {
         q,
       );
     for (const a of section.artifacts) {
-      if (filter !== "all" && a.type !== filter) continue;
-      if (q && !sectionHit && !artifactMatches(a, q, filter)) continue;
-      if (!q && filter === "all") continue;
+      if (!includeArtifact(a, q, filter, sectionHit)) continue;
       hits.push({
         id: a.id,
         view: "missal",
@@ -104,6 +119,46 @@ export function collectHits(query: string, filter: FilterId): SearchHit[] {
   return hits;
 }
 
+export function countHitsByView(
+  query: string,
+  filter: FilterId,
+): Record<ViewMode, number> {
+  const counts: Record<ViewMode, number> = { bible: 0, church: 0, missal: 0 };
+  const q = query.trim().toLowerCase();
+  if (!q && filter === "all") return counts;
+
+  for (const book of BIBLE_BOOKS) {
+    const bookHit = Boolean(q) && matchesQuery(`${book.name} ${book.abbreviation}`, q);
+    for (const ch of book.populatedChapters) {
+      for (const a of ch.artifacts) {
+        if (includeArtifact(a, q, filter, bookHit)) counts.bible += 1;
+      }
+    }
+  }
+
+  for (const entry of CHURCH_ENTRIES) {
+    const entryHit =
+      Boolean(q) && matchesQuery(`${entry.title} ${entry.era ?? ""} ${entry.year}`, q);
+    for (const a of entry.artifacts) {
+      if (includeArtifact(a, q, filter, entryHit)) counts.church += 1;
+    }
+  }
+
+  for (const section of missalSections()) {
+    const sectionHit =
+      Boolean(q) &&
+      matchesQuery(
+        `${section.title} ${section.subtitle ?? ""} ${section.kind} ${MISSAL_KIND_LABEL[section.kind]}`,
+        q,
+      );
+    for (const a of section.artifacts) {
+      if (includeArtifact(a, q, filter, sectionHit)) counts.missal += 1;
+    }
+  }
+
+  return counts;
+}
+
 export function filterArtifacts(
   artifacts: TimelineArtifact[],
   query: string,
@@ -111,6 +166,19 @@ export function filterArtifacts(
 ): TimelineArtifact[] {
   const q = query.trim().toLowerCase();
   return artifacts.filter((a) => artifactMatches(a, q, filter));
+}
+
+export function countMatchingArtifacts(
+  artifacts: TimelineArtifact[],
+  query: string,
+  filter: FilterId,
+): number {
+  const q = query.trim().toLowerCase();
+  let count = 0;
+  for (const artifact of artifacts) {
+    if (artifactMatches(artifact, q, filter)) count += 1;
+  }
+  return count;
 }
 
 /** Filter by type, then by query; if the section itself matches, keep the type-filtered list. */

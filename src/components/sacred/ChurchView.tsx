@@ -1,25 +1,33 @@
+import { memo, useDeferredValue, useMemo } from "react";
 import { CHURCH_ENTRIES } from "@/lib/timeline/church";
 import { sectionArtifactsForQuery } from "@/lib/timeline/search";
 import { useTimeline } from "@/lib/timeline/store";
+import { estimateSectionBodyHeight } from "@/lib/timeline/viewport-gate";
 import { ArtifactCard } from "./ArtifactCard";
+import { ViewportGate } from "./ViewportGate";
 
-export function ChurchView() {
-  const query = useTimeline((s) => s.query);
+export const ChurchView = memo(function ChurchView() {
+  const queryRaw = useTimeline((s) => s.query);
+  const query = useDeferredValue(queryRaw);
   const filter = useTimeline((s) => s.filter);
   const openArtifact = useTimeline((s) => s.openArtifact);
 
   const q = query.trim();
-  const sections = CHURCH_ENTRIES.map((entry, index) => {
-    const visible = sectionArtifactsForQuery(
-      entry.artifacts,
-      q,
-      filter,
-      `${entry.title} ${entry.era ?? ""} ${entry.year}`,
-    );
-    if (visible.length === 0) return null;
-    const showEra = Boolean(entry.era && entry.era !== CHURCH_ENTRIES[index - 1]?.era);
-    return { entry, visible, showEra };
-  }).filter((s) => s !== null);
+  const sections = useMemo(
+    () =>
+      CHURCH_ENTRIES.map((entry, index) => {
+        const visible = sectionArtifactsForQuery(
+          entry.artifacts,
+          q,
+          filter,
+          `${entry.title} ${entry.era ?? ""} ${entry.year}`,
+        );
+        if (visible.length === 0) return null;
+        const showEra = Boolean(entry.era && entry.era !== CHURCH_ENTRIES[index - 1]?.era);
+        return { entry, visible, showEra };
+      }).filter((s) => s !== null),
+    [filter, q],
+  );
 
   if (sections.length === 0) {
     return (
@@ -36,7 +44,7 @@ export function ChurchView() {
         className="absolute top-2 bottom-8 left-[var(--rail-x)] w-px timeline-rail"
         aria-hidden
       />
-      {sections.map(({ entry, visible, showEra }) => (
+      {sections.map(({ entry, visible, showEra }, index) => (
         <section
           key={entry.id}
           id={`era-${entry.id}`}
@@ -56,7 +64,11 @@ export function ChurchView() {
                 {entry.title}
               </h3>
             </div>
-            <div className="mt-2.5 flex flex-col gap-2 pl-[var(--rail-pad)]">
+            <ViewportGate
+              className="mt-2.5 flex flex-col gap-2 pl-[var(--rail-pad)]"
+              estimateHeight={estimateSectionBodyHeight(visible)}
+              eager={index < 6}
+            >
               {visible.map((a) => (
                 <ArtifactCard
                   key={a.id}
@@ -65,10 +77,10 @@ export function ChurchView() {
                   onOpen={openArtifact}
                 />
               ))}
-            </div>
+            </ViewportGate>
           </div>
         </section>
       ))}
     </div>
   );
-}
+});

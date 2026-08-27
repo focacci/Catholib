@@ -1,4 +1,5 @@
 import {
+  useDeferredValue,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -21,7 +22,7 @@ import { BIBLE_BOOKS } from "@/lib/timeline/bible";
 import { periodBadgeStyle, periodForBook } from "@/lib/timeline/bible-periods";
 import { CHURCH_ENTRIES } from "@/lib/timeline/church";
 import { missalJumpItems } from "@/lib/timeline/missal";
-import { collectHits } from "@/lib/timeline/search";
+import { countHitsByView } from "@/lib/timeline/search";
 import { useTimeline } from "@/lib/timeline/store";
 import {
   VIEW_FILTERS,
@@ -250,12 +251,11 @@ export function AppShell() {
     shell?.style.setProperty("--chrome-h", `${Math.max(0, h - next)}px`);
   };
 
-  const hits = useMemo(() => collectHits(query, filter), [query, filter]);
-  const hitCounts = useMemo(() => {
-    const counts: Record<ViewMode, number> = { bible: 0, church: 0, missal: 0 };
-    for (const h of hits) counts[h.view] += 1;
-    return counts;
-  }, [hits]);
+  const deferredQuery = useDeferredValue(query);
+  const hitCounts = useMemo(
+    () => countHitsByView(deferredQuery, filter),
+    [deferredQuery, filter],
+  );
   const otherViews = (["bible", "church", "missal"] as const).filter(
     (id) => id !== view && hitCounts[id] > 0,
   );
@@ -441,24 +441,15 @@ export function AppShell() {
         className="relative min-h-0 flex-1 overflow-y-auto"
       >
         <div aria-hidden className="shrink-0" style={{ height: headerH }} />
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.div
-            key={view}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-            className="mx-auto w-full max-w-xl"
-          >
-            {view === "bible" ? (
-              <BibleView />
-            ) : view === "church" ? (
-              <ChurchView />
-            ) : (
-              <MissalView />
-            )}
-          </motion.div>
-        </AnimatePresence>
+        <div className="mx-auto w-full max-w-xl">
+          {view === "bible" ? (
+            <BibleView />
+          ) : view === "church" ? (
+            <ChurchView />
+          ) : (
+            <MissalView />
+          )}
+        </div>
       </main>
 
       {view === "bible" && (

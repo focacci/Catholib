@@ -26,8 +26,8 @@ const SOURCES = [
   },
   {
     name: "The Douay-Rheims Bible",
-    href: "https://thedouayrheims.com/",
-    note: "Original Douay-Rheims Bible, chapter by chapter. Used in the Bible view.",
+    href: "https://thedouayrheims.com/drc/genesis/1",
+    note: "Douay-Rheims Challoner revision, chapter by chapter. Used in the Bible view.",
   },
   {
     name: "Haydock Commentary (1859)",
@@ -56,13 +56,14 @@ function AboutCopy() {
     <>
       <p className="text-base leading-relaxed text-muted">
         Catholib has three views. Bible follows the canon, with chapter
-        text in NABRE, RSV-CE, and the Douay-Rheims, and commentary from
-        Haydock, the Catena Aurea, and Cornelius a Lapide. Church follows
-        the history of the Church, with encyclopedia articles for events,
-        popes, and saints, and magisterial texts from the Holy See. Missal
-        is a static catalog of the 1962 Roman Missal: Today, the Ordo
-        Missae, the Temporale, the Sanctorale, the Commons, and Votive
-        Masses, each card opening a confirmed page on Missale Meum.
+        text in NABRE, RSV-CE, and the Douay-Rheims (Challoner), and
+        commentary from Haydock, the Catena Aurea, and Cornelius a
+        Lapide. Church follows the history of the Church, with
+        encyclopedia articles for events, popes, and saints, and
+        magisterial texts from the Holy See. Missal is a static catalog
+        of the 1962 Roman Missal: Today, the Ordo Missae, the Temporale,
+        the Sanctorale, the Commons, and Votive Masses, each card opening
+        a confirmed page on Missale Meum.
       </p>
       <p className="mt-3 text-base leading-relaxed text-muted">
         The dataset stays limited to approved sources. No paraphrase of

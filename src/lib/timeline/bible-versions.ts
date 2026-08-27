@@ -78,8 +78,9 @@ export const RSVCE_SLUG: Record<string, string> = {
 };
 
 /**
- * Confirmed thedouayrheims.com slugs. Names follow Douay-Rheims
- * (Kings / Paralipomenon / Esdras numbering, Vulgate book titles).
+ * Confirmed thedouayrheims.com slugs for the Challoner revision (`/drc/`).
+ * Names follow Douay-Rheims (Kings / Paralipomenon / Esdras numbering,
+ * Vulgate book titles).
  */
 export const DOUAY_RHEIMS_SLUG: Record<string, string> = {
   Genesis: "genesis",
@@ -178,7 +179,7 @@ export function rsvceChapterUrl(bookName: string, chapter: number): string {
 
 export function douayRheimsChapterUrl(bookName: string, chapter: number): string {
   const slug = requireSlug(DOUAY_RHEIMS_SLUG, bookName, "Douay-Rheims");
-  return `https://thedouayrheims.com/odr/${slug}/${chapter}`;
+  return `https://thedouayrheims.com/drc/${slug}/${chapter}`;
 }
 
 /** Chapter text versions, left to right: NABRE, RSV-CE, Douay Rheims. */

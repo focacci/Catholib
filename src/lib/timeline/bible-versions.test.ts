@@ -56,31 +56,31 @@ describe("Bible chapter version URLs", () => {
   it("builds Douay-Rheims chapter URLs on thedouayrheims.com", () => {
     assert.equal(
       douayRheimsChapterUrl("Genesis", 1),
-      "https://thedouayrheims.com/odr/genesis/1",
+      "https://thedouayrheims.com/drc/genesis/1",
     );
     assert.equal(
       douayRheimsChapterUrl("Joshua", 1),
-      "https://thedouayrheims.com/odr/josue/1",
+      "https://thedouayrheims.com/drc/josue/1",
     );
     assert.equal(
       douayRheimsChapterUrl("1 Samuel", 1),
-      "https://thedouayrheims.com/odr/1-kings/1",
+      "https://thedouayrheims.com/drc/1-kings/1",
     );
     assert.equal(
       douayRheimsChapterUrl("1 Kings", 8),
-      "https://thedouayrheims.com/odr/3-kings/8",
+      "https://thedouayrheims.com/drc/3-kings/8",
     );
     assert.equal(
       douayRheimsChapterUrl("Song of Songs", 1),
-      "https://thedouayrheims.com/odr/canticle-of-canticles/1",
+      "https://thedouayrheims.com/drc/canticle-of-canticles/1",
     );
     assert.equal(
       douayRheimsChapterUrl("Isaiah", 7),
-      "https://thedouayrheims.com/odr/isaie/7",
+      "https://thedouayrheims.com/drc/isaie/7",
     );
     assert.equal(
       douayRheimsChapterUrl("Revelation", 21),
-      "https://thedouayrheims.com/odr/apocalypse/21",
+      "https://thedouayrheims.com/drc/apocalypse/21",
     );
   });
 
@@ -98,7 +98,7 @@ describe("Bible chapter version URLs", () => {
       );
       assert.match(links[0].href, /^https:\/\/bible\.usccb\.org\/bible\//);
       assert.match(links[1].href, /^https:\/\/www\.ewtn\.com\/bible\//);
-      assert.match(links[2].href, /^https:\/\/thedouayrheims\.com\/odr\//);
+      assert.match(links[2].href, /^https:\/\/thedouayrheims\.com\/drc\//);
       assert.doesNotMatch(links[0].href, /undefined/);
       assert.doesNotMatch(links[1].href, /undefined/);
       assert.doesNotMatch(links[2].href, /undefined/);

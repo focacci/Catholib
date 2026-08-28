@@ -212,7 +212,7 @@ export function grokPwaHeadTags(appName = DEFAULT_APP_NAME) {
     // Standalone display comes from the manifest ("display": "standalone");
     // the legacy *-web-app-capable metas it replaces are deliberately absent.
     ["manifest", '<link rel="manifest" href="/__grok/manifest.webmanifest">'],
-    ["apple-touch-icon", '<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">'],
+    ["apple-touch-icon", '<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=2">'],
     [
       "apple-mobile-web-app-title",
       `<meta name="apple-mobile-web-app-title" content="${escapeHtml(appName)}">`,

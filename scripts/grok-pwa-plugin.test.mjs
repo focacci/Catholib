@@ -25,7 +25,7 @@ test("injects before </head>", () => {
   const out = injectGrokPwaHead("<html><head><title>x</title></head><body></body></html>");
   assert.match(out, /rel="manifest"/);
   assert.match(out, /apple-touch-icon/);
-  assert.match(out, /href="\/apple-touch-icon.png"/);
+  assert.match(out, /href="\/apple-touch-icon.png\?v=2"/);
   assert.match(out, /grok-app-builder\/extensions\.js/);
   assert.ok(out.indexOf("manifest") < out.indexOf("</head>"));
 });
@@ -469,7 +469,7 @@ test("rejects hosts that are not plain slugs", () => {
 
 test("renders install page markup", () => {
   const html = renderInstallPage("wild-race.grok.me", "/?install=1&platform=ios");
-  assert.match(html, /href="\/apple-touch-icon.png"/);
+  assert.match(html, /href="\/apple-touch-icon.png\?v=2"/);
   assert.match(html, /Add Wild Race to your/);
   assert.match(html, /\/__grok\/install\/styles\.css/);
   assert.match(html, /href="\/"/);

@@ -1,4 +1,4 @@
-import { memo, useDeferredValue, useLayoutEffect, useMemo, useRef } from "react";
+import { memo, useLayoutEffect, useMemo, useRef } from "react";
 import { ChevronDown, ExternalLink } from "lucide-react";
 import { BIBLE_BOOKS } from "@/lib/timeline/bible";
 import { bibleVersionLinks } from "@/lib/timeline/bible-versions";
@@ -102,12 +102,12 @@ const BookSection = memo(function BookSection({
     if (!expanded) onToggle(book.name);
     const el = document.getElementById(`ch-${book.abbreviation}-${n}`);
     if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
+      el.scrollIntoView({ block: "start" });
       return;
     }
     if (!book.populatedChapters.some((c) => c.chapter === n)) {
       const note = document.getElementById(`empty-${book.name}`);
-      note?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      note?.scrollIntoView({ block: "nearest" });
     }
   };
 
@@ -174,13 +174,12 @@ const BookSection = memo(function BookSection({
             </div>
           )}
 
-          {matchingChapters.map((ch, index) => (
+          {matchingChapters.map((ch) => (
             <ViewportGate
               key={ch.chapter}
               id={`ch-${book.abbreviation}-${ch.chapter}`}
               className="relative scroll-mt-[calc(var(--chrome-h,0px)+3.5rem)] px-2 pt-4 pb-3"
               estimateHeight={estimateChapterBlockHeight(ch)}
-              eager={index < 3}
             >
               <div className="mb-2.5 pl-[var(--rail-pad)]">
                 <p className="font-serif text-base font-semibold text-fg">
@@ -229,8 +228,7 @@ const BookSection = memo(function BookSection({
 });
 
 export const BibleView = memo(function BibleView() {
-  const queryRaw = useTimeline((s) => s.query);
-  const query = useDeferredValue(queryRaw);
+  const query = useTimeline((s) => s.query);
   const filter = useTimeline((s) => s.filter);
   const expandedBooks = useTimeline((s) => s.expandedBooks);
   const toggleBook = useTimeline((s) => s.toggleBook);

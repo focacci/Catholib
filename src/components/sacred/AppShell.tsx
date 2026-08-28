@@ -1,5 +1,4 @@
 import {
-  useDeferredValue,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -251,10 +250,9 @@ export function AppShell() {
     shell?.style.setProperty("--chrome-h", `${Math.max(0, h - next)}px`);
   };
 
-  const deferredQuery = useDeferredValue(query);
   const hitCounts = useMemo(
-    () => countHitsByView(deferredQuery, filter),
-    [deferredQuery, filter],
+    () => countHitsByView(query, filter),
+    [filter, query],
   );
   const otherViews = (["bible", "church", "missal"] as const).filter(
     (id) => id !== view && hitCounts[id] > 0,
@@ -311,7 +309,7 @@ export function AppShell() {
     requestAnimationFrame(() => {
       document
         .getElementById(`book-${book.name}`)
-        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+        ?.scrollIntoView({ block: "start" });
     });
   };
 
@@ -320,7 +318,7 @@ export function AppShell() {
     requestAnimationFrame(() => {
       document
         .getElementById(`${prefix}-${id}`)
-        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+        ?.scrollIntoView({ block: "start" });
     });
   };
 
@@ -329,7 +327,7 @@ export function AppShell() {
       const book = BIBLE_BOOKS[index];
       if (!book) return;
       expandBook(book.name, true);
-      document.getElementById(`book-${book.name}`)?.scrollIntoView({ behavior: "smooth" });
+      document.getElementById(`book-${book.name}`)?.scrollIntoView({ block: "start" });
     }
   };
 
@@ -438,7 +436,7 @@ export function AppShell() {
         ref={scrollRef}
         id="timeline-scroll"
         onScroll={onScroll}
-        className="relative min-h-0 flex-1 overflow-y-auto"
+        className="relative min-h-0 flex-1 overflow-y-auto [overflow-anchor:none]"
       >
         <div aria-hidden className="shrink-0" style={{ height: headerH }} />
         <div className="mx-auto w-full max-w-xl">

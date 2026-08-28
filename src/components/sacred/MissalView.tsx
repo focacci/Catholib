@@ -1,4 +1,4 @@
-import { memo, useDeferredValue, useMemo } from "react";
+import { memo, useMemo } from "react";
 import { MISSAL_KIND_LABEL } from "@/lib/timeline/types";
 import { missalSections } from "@/lib/timeline/missal";
 import { sectionArtifactsForQuery } from "@/lib/timeline/search";
@@ -8,32 +8,28 @@ import { ArtifactCard } from "./ArtifactCard";
 import { ViewportGate } from "./ViewportGate";
 
 export const MissalView = memo(function MissalView() {
-  const queryRaw = useTimeline((s) => s.query);
-  const query = useDeferredValue(queryRaw);
+  const query = useTimeline((s) => s.query);
   const filter = useTimeline((s) => s.filter);
   const openArtifact = useTimeline((s) => s.openArtifact);
 
   const q = query.trim();
-  const todayKey = new Date().toDateString();
-  const catalog = useMemo(() => missalSections(), [todayKey]);
-  const sections = useMemo(
-    () =>
-      catalog
-        .map((section, index) => {
-          const haystack = `${section.title} ${section.subtitle ?? ""} ${section.kind} ${MISSAL_KIND_LABEL[section.kind]}`;
-          const visible = sectionArtifactsForQuery(
-            section.artifacts,
-            q,
-            filter,
-            haystack,
-          );
-          if (visible.length === 0) return null;
-          const showKind = section.kind !== catalog[index - 1]?.kind;
-          return { section, visible, showKind };
-        })
-        .filter((s) => s !== null),
-    [catalog, filter, q],
-  );
+  const sections = useMemo(() => {
+    const catalog = missalSections();
+    return catalog
+      .map((section, index) => {
+        const haystack = `${section.title} ${section.subtitle ?? ""} ${section.kind} ${MISSAL_KIND_LABEL[section.kind]}`;
+        const visible = sectionArtifactsForQuery(
+          section.artifacts,
+          q,
+          filter,
+          haystack,
+        );
+        if (visible.length === 0) return null;
+        const showKind = section.kind !== catalog[index - 1]?.kind;
+        return { section, visible, showKind };
+      })
+      .filter((s) => s !== null);
+  }, [filter, q]);
 
   if (sections.length === 0) {
     return (
@@ -50,7 +46,7 @@ export const MissalView = memo(function MissalView() {
         className="absolute top-2 bottom-8 left-[var(--rail-x)] w-px timeline-rail"
         aria-hidden
       />
-      {sections.map(({ section, visible, showKind }, index) => (
+      {sections.map(({ section, visible, showKind }) => (
         <section
           key={section.id}
           id={`missal-${section.id}`}
@@ -75,7 +71,6 @@ export const MissalView = memo(function MissalView() {
             <ViewportGate
               className="mt-2.5 flex flex-col gap-2 pl-[var(--rail-pad)]"
               estimateHeight={estimateSectionBodyHeight(visible)}
-              eager={index < 4}
             >
               {visible.map((a) => (
                 <ArtifactCard

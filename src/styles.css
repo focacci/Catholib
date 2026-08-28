@@ -107,3 +107,8 @@
     transparent
   );
 }
+
+.timeline-block {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 12rem;
+}

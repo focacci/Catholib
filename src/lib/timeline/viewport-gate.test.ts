@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  containIntrinsicSize,
   estimateArtifactListHeight,
   estimateChapterBlockHeight,
   estimateSectionBodyHeight,
@@ -24,5 +25,10 @@ describe("timeline height estimates", () => {
     const cards = estimateArtifactListHeight([{}, { imageUrl: "https://example.com/a.jpg" }]);
     const section = estimateSectionBodyHeight([{}, { imageUrl: "https://example.com/a.jpg" }]);
     assert.ok(section >= cards);
+  });
+
+  it("emits a remembered intrinsic size the browser can skip-paint with", () => {
+    assert.equal(containIntrinsicSize(280), "auto 280px");
+    assert.equal(containIntrinsicSize(0), "auto 1px");
   });
 });

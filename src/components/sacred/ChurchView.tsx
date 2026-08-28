@@ -1,4 +1,4 @@
-import { memo, useDeferredValue, useMemo } from "react";
+import { memo, useMemo } from "react";
 import { CHURCH_ENTRIES } from "@/lib/timeline/church";
 import { sectionArtifactsForQuery } from "@/lib/timeline/search";
 import { useTimeline } from "@/lib/timeline/store";
@@ -7,8 +7,7 @@ import { ArtifactCard } from "./ArtifactCard";
 import { ViewportGate } from "./ViewportGate";
 
 export const ChurchView = memo(function ChurchView() {
-  const queryRaw = useTimeline((s) => s.query);
-  const query = useDeferredValue(queryRaw);
+  const query = useTimeline((s) => s.query);
   const filter = useTimeline((s) => s.filter);
   const openArtifact = useTimeline((s) => s.openArtifact);
 
@@ -44,7 +43,7 @@ export const ChurchView = memo(function ChurchView() {
         className="absolute top-2 bottom-8 left-[var(--rail-x)] w-px timeline-rail"
         aria-hidden
       />
-      {sections.map(({ entry, visible, showEra }, index) => (
+      {sections.map(({ entry, visible, showEra }) => (
         <section
           key={entry.id}
           id={`era-${entry.id}`}
@@ -67,7 +66,6 @@ export const ChurchView = memo(function ChurchView() {
             <ViewportGate
               className="mt-2.5 flex flex-col gap-2 pl-[var(--rail-pad)]"
               estimateHeight={estimateSectionBodyHeight(visible)}
-              eager={index < 6}
             >
               {visible.map((a) => (
                 <ArtifactCard

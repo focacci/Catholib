@@ -36,9 +36,7 @@ export const ArtifactCard = memo(function ArtifactCard({
           <img
             src={artifact.imageUrl}
             alt=""
-            loading="lazy"
             decoding="async"
-            fetchPriority="low"
             className="block h-auto w-full md:transition-[filter] md:duration-200 md:ease-out md:group-hover:brightness-110"
             onError={(e) => {
               e.currentTarget.style.display = "none";

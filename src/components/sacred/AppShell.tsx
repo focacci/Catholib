@@ -35,6 +35,7 @@ import { useIsDesktop } from "@/lib/media";
 import { cn } from "@/lib/utils";
 import { AboutPanel } from "./AboutPanel";
 import { ArtifactSheet } from "./ArtifactSheet";
+import { ArtworkPreloader } from "./ArtworkPreloader";
 import { BibleView } from "./BibleView";
 import { ChurchView } from "./ChurchView";
 import { MissalView } from "./MissalView";
@@ -337,6 +338,7 @@ export function AppShell() {
       className="relative flex h-dvh flex-col overflow-hidden bg-bg text-fg"
       style={{ "--chrome-h": `${headerH}px` } as CSSProperties}
     >
+      <ArtworkPreloader />
       <header
         ref={headerRef}
         id="timeline-chrome"

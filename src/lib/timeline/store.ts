@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { BIBLE_BOOKS } from "./bible.ts";
 import type { FilterId, TimelineArtifact, ViewMode } from "./types.ts";
 
 interface TimelineState {
@@ -16,7 +17,11 @@ interface TimelineState {
   setAboutOpen: (open: boolean) => void;
   toggleBook: (name: string) => void;
   expandBook: (name: string, open?: boolean) => void;
+  expandAllBooks: () => void;
+  collapseAllBooks: () => void;
 }
+
+const BOOK_NAMES = BIBLE_BOOKS.map((book) => book.name);
 
 const DEFAULT_EXPANDED: Record<string, boolean> = {
   Genesis: true,
@@ -30,6 +35,22 @@ export function nextExpandedBooks(
 ): Record<string, boolean> {
   if (open) return { [name]: true };
   return { ...current, [name]: false };
+}
+
+export function mapAllBooks(
+  names: readonly string[],
+  open: boolean,
+): Record<string, boolean> {
+  const next: Record<string, boolean> = {};
+  for (const name of names) next[name] = open;
+  return next;
+}
+
+export function areAllBooksExpanded(
+  expanded: Record<string, boolean>,
+  names: readonly string[] = BOOK_NAMES,
+): boolean {
+  return names.length > 0 && names.every((name) => expanded[name]);
 }
 
 export const useTimeline = create<TimelineState>((set) => ({
@@ -53,4 +74,6 @@ export const useTimeline = create<TimelineState>((set) => ({
     set((s) => ({
       expandedBooks: nextExpandedBooks(s.expandedBooks, name, open),
     })),
+  expandAllBooks: () => set({ expandedBooks: mapAllBooks(BOOK_NAMES, true) }),
+  collapseAllBooks: () => set({ expandedBooks: mapAllBooks(BOOK_NAMES, false) }),
 }));

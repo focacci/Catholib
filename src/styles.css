@@ -13,6 +13,12 @@
   --color-line: color-mix(in oklab, #d4b37a 22%, transparent);
   --color-line-strong: color-mix(in oklab, #d4b37a 40%, transparent);
   --color-danger: #c45c4a;
+  --color-lit-white: #f4eee0;
+  --color-lit-red: #8f3a32;
+  --color-lit-green: #3e5c48;
+  --color-lit-violet: #5a4a68;
+  --color-lit-rose: #b5838d;
+  --color-lit-black: #121212;
 
   --font-sans: "Nunito Sans", "Segoe UI", system-ui, sans-serif;
   --font-serif: "Literata", "Iowan Old Style", "Palatino Linotype", serif;

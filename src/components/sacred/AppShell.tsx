@@ -1,16 +1,11 @@
-import {
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-  type CSSProperties,
-} from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   BookOpen,
   CalendarDays,
   ChevronDown,
+  ChevronsDownUp,
+  ChevronsUpDown,
   Church,
   Info,
   ListFilter,
@@ -22,7 +17,7 @@ import { periodBadgeStyle, periodForBook } from "@/lib/timeline/bible-periods";
 import { CHURCH_ENTRIES } from "@/lib/timeline/church";
 import { missalJumpItems } from "@/lib/timeline/missal";
 import { countHitsByView } from "@/lib/timeline/search";
-import { useTimeline } from "@/lib/timeline/store";
+import { areAllBooksExpanded, useTimeline } from "@/lib/timeline/store";
 import {
   VIEW_FILTERS,
   VIEW_LABEL,
@@ -38,6 +33,7 @@ import { ArtifactSheet } from "./ArtifactSheet";
 import { ArtworkPreloader } from "./ArtworkPreloader";
 import { BibleView } from "./BibleView";
 import { ChurchView } from "./ChurchView";
+import { DayHeader } from "./DayHeader";
 import { MissalView } from "./MissalView";
 
 const CHURCH_JUMPS = (() => {
@@ -69,7 +65,7 @@ function BibleJumpGrid({ onPick }: { onPick: (book: BibleBook) => void }) {
       <p className="px-1 pb-1.5 pt-2 font-serif text-xs uppercase tracking-[0.16em] text-gold-dim">
         {label}
       </p>
-      <div className="grid grid-cols-6 gap-1 sm:grid-cols-8">
+      <div className="grid grid-cols-5 gap-1">
         {books.map((book) => {
           const populated = book.populatedChapters.length > 0;
           const period = periodForBook(book.name);
@@ -79,7 +75,7 @@ function BibleJumpGrid({ onPick }: { onPick: (book: BibleBook) => void }) {
               type="button"
               onClick={() => onPick(book)}
               className={cn(
-                "flex h-11 items-center justify-center rounded-sm font-serif text-sm font-semibold",
+                "flex aspect-square min-w-0 w-full items-center justify-center rounded-sm px-0.5 text-center font-serif text-xs font-semibold leading-none",
                 populated ? "opacity-100" : "opacity-40 hover:opacity-80",
               )}
               style={periodBadgeStyle(book.name)}
@@ -94,7 +90,7 @@ function BibleJumpGrid({ onPick }: { onPick: (book: BibleBook) => void }) {
     </div>
   );
   return (
-    <div className="max-h-[min(28rem,55dvh)] overflow-y-auto p-3">
+    <div className="p-3">
       {group("Old Testament", ot)}
       {group("New Testament", nt)}
     </div>
@@ -109,7 +105,7 @@ function SectionJumpList({
   onPick: (id: string) => void;
 }) {
   return (
-    <div className="max-h-[min(24rem,50dvh)] overflow-y-auto py-1">
+    <div className="py-1">
       {items.map((opt) => (
         <button
           key={opt.id}
@@ -120,6 +116,65 @@ function SectionJumpList({
           {opt.label}
         </button>
       ))}
+    </div>
+  );
+}
+
+function BookExpandControls({ compact }: { compact?: boolean }) {
+  const expandedBooks = useTimeline((s) => s.expandedBooks);
+  const expandAllBooks = useTimeline((s) => s.expandAllBooks);
+  const collapseAllBooks = useTimeline((s) => s.collapseAllBooks);
+  const allOpen = areAllBooksExpanded(expandedBooks);
+
+  if (compact) {
+    const allClosed = Object.values(expandedBooks).every((open) => !open);
+    return (
+      <div
+        className="flex h-12 overflow-hidden rounded-full bg-elevated shadow-[var(--shadow-border)]"
+        role="group"
+        aria-label="Expand or collapse all books"
+      >
+        <button
+          type="button"
+          onClick={collapseAllBooks}
+          disabled={allClosed}
+          className="flex h-full w-12 items-center justify-center text-gold transition-colors duration-150 hover:bg-gold-soft disabled:opacity-40"
+          aria-label="Collapse all books"
+        >
+          <ChevronsDownUp className="size-5" strokeWidth={1.75} />
+        </button>
+        <span className="my-2 w-px shrink-0 bg-line" aria-hidden />
+        <button
+          type="button"
+          onClick={expandAllBooks}
+          disabled={allOpen}
+          className="flex h-full w-12 items-center justify-center text-gold transition-colors duration-150 hover:bg-gold-soft disabled:opacity-40"
+          aria-label="Expand all books"
+        >
+          <ChevronsUpDown className="size-5" strokeWidth={1.75} />
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-2 gap-1 px-3 py-2">
+      <button
+        type="button"
+        onClick={collapseAllBooks}
+        disabled={Object.values(expandedBooks).every((open) => !open)}
+        className="flex h-10 items-center justify-center rounded-md border border-line-strong bg-elevated px-2 text-xs font-medium text-muted transition-colors duration-150 hover:text-fg disabled:opacity-40"
+      >
+        Collapse all
+      </button>
+      <button
+        type="button"
+        onClick={expandAllBooks}
+        disabled={allOpen}
+        className="flex h-10 items-center justify-center rounded-md border border-line-strong bg-elevated px-2 text-xs font-medium text-muted transition-colors duration-150 hover:text-fg disabled:opacity-40"
+      >
+        Expand all
+      </button>
     </div>
   );
 }
@@ -165,7 +220,7 @@ function FilterMenu({
         aria-label={`Filter: ${current.label}`}
         onClick={() => onOpenChange(!open)}
         className={cn(
-          "flex h-10 max-w-[8.5rem] items-center gap-1 rounded-md border px-2 text-sm font-medium",
+          "flex h-10 max-w-[8.5rem] items-center gap-1 rounded-md border px-2 text-sm font-medium transition-transform duration-150 ease-out active:scale-95",
           value !== "all"
             ? "border-gold bg-gold text-bg"
             : "border-line-strong bg-elevated text-muted",
@@ -182,7 +237,7 @@ function FilterMenu({
         <ul
           role="listbox"
           aria-label="Filter artifacts"
-          className="absolute right-0 z-30 mt-1 min-w-[10.5rem] overflow-hidden rounded-md bg-elevated py-1 shadow-[var(--shadow-border)]"
+          className="absolute right-0 bottom-full z-40 mb-1 min-w-[10.5rem] overflow-hidden rounded-md bg-elevated py-1 shadow-[var(--shadow-border)]"
         >
           {filters.map((f) => (
             <li key={f.id}>
@@ -211,6 +266,24 @@ function FilterMenu({
   );
 }
 
+function JumpBody({
+  view,
+  onBook,
+  onChurch,
+  onMissal,
+}: {
+  view: ViewMode;
+  onBook: (book: BibleBook) => void;
+  onChurch: (id: string) => void;
+  onMissal: (id: string) => void;
+}) {
+  if (view === "bible") return <BibleJumpGrid onPick={onBook} />;
+  if (view === "church") {
+    return <SectionJumpList items={CHURCH_JUMPS} onPick={onChurch} />;
+  }
+  return <SectionJumpList items={MISSAL_JUMPS} onPick={onMissal} />;
+}
+
 export function AppShell() {
   const view = useTimeline((s) => s.view);
   const setView = useTimeline((s) => s.setView);
@@ -225,31 +298,9 @@ export function AppShell() {
   const setAboutOpen = useTimeline((s) => s.setAboutOpen);
   const expandBook = useTimeline((s) => s.expandBook);
 
-  const scrollRef = useRef<HTMLElement>(null);
-  const headerRef = useRef<HTMLElement>(null);
-  const shellRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
-  const lastScrollRef = useRef(0);
-  const chromeOffsetRef = useRef(0);
-  const headerHRef = useRef(96);
   const [jumpOpen, setJumpOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
-  const [headerH, setHeaderH] = useState(96);
-
-  const applyChrome = (offset: number) => {
-    const h = headerHRef.current;
-    const next = Math.max(0, Math.min(h, offset));
-    chromeOffsetRef.current = next;
-    const header = headerRef.current;
-    const shell = shellRef.current;
-    if (header) {
-      header.style.transform = next ? `translate3d(0, ${-next}px, 0)` : "";
-      const hidden = h > 0 && next >= h - 0.5;
-      header.toggleAttribute("inert", hidden);
-      header.style.pointerEvents = hidden ? "none" : "";
-    }
-    shell?.style.setProperty("--chrome-h", `${Math.max(0, h - next)}px`);
-  };
 
   const hitCounts = useMemo(
     () => countHitsByView(query, filter),
@@ -259,25 +310,8 @@ export function AppShell() {
     (id) => id !== view && hitCounts[id] > 0,
   );
 
-  useLayoutEffect(() => {
-    const el = headerRef.current;
-    if (!el) return;
-    const update = () => {
-      const h = el.offsetHeight;
-      headerHRef.current = h;
-      setHeaderH(h);
-      applyChrome(Math.min(chromeOffsetRef.current, h));
-    };
-    update();
-    const ro = new ResizeObserver(update);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
-
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: 0 });
-    lastScrollRef.current = 0;
-    applyChrome(0);
+    document.getElementById("timeline-scroll")?.scrollTo({ top: 0 });
     setFilterOpen(false);
     setJumpOpen(false);
   }, [view]);
@@ -285,24 +319,6 @@ export function AppShell() {
   useEffect(() => {
     if (isDesktop) closeArtifact();
   }, [isDesktop, closeArtifact]);
-
-  const onScroll = () => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const y = Math.max(0, el.scrollTop);
-    const delta = y - lastScrollRef.current;
-    lastScrollRef.current = y;
-    const h = headerHRef.current;
-    if (delta < -h) {
-      applyChrome(0);
-      return;
-    }
-    const prev = chromeOffsetRef.current;
-    const next =
-      y < 1 ? 0 : Math.min(Math.max(prev + delta, 0), Math.min(h, y));
-    if (prev < 1 && next > 1) setFilterOpen(false);
-    applyChrome(next);
-  };
 
   const jumpToBook = (book: BibleBook) => {
     setJumpOpen(false);
@@ -323,195 +339,199 @@ export function AppShell() {
     });
   };
 
-  const jumpMinimap = (index: number) => {
-    if (view === "bible") {
-      const book = BIBLE_BOOKS[index];
-      if (!book) return;
-      expandBook(book.name, true);
-      document.getElementById(`book-${book.name}`)?.scrollIntoView({ block: "start" });
-    }
-  };
+  const jumpLabel =
+    view === "bible" ? "Jump to a book" : view === "church" ? "Jump to an era" : "Jump in the Missal";
 
   return (
-    <div
-      ref={shellRef}
-      className="relative flex h-dvh flex-col overflow-hidden bg-bg text-fg"
-      style={{ "--chrome-h": `${headerH}px` } as CSSProperties}
-    >
+    <div className="flex h-dvh flex-col overflow-hidden bg-bg text-fg">
       <ArtworkPreloader />
-      <header
-        ref={headerRef}
-        id="timeline-chrome"
-        className="absolute inset-x-0 top-0 z-20 border-b border-line bg-bg pt-[env(safe-area-inset-top)] will-change-transform"
-      >
-        <div className="px-3 pt-2">
-          <div
-            role="tablist"
-            aria-label="Timeline view"
-            className="grid grid-cols-3 rounded-md bg-elevated p-0.5"
-            style={{
-              boxShadow:
-                "0 0 0 1px color-mix(in oklab, var(--color-gold) 30%, transparent)",
-            }}
-          >
-            {VIEWS.map(({ id, label, Icon }) => (
-              <button
-                key={id}
-                type="button"
-                role="tab"
-                aria-selected={view === id}
-                onClick={() => setView(id)}
-                className={cn(
-                  "flex h-10 items-center justify-center gap-1 rounded-sm text-base font-medium transition-colors duration-150",
-                  view === id ? "bg-gold text-bg" : "text-muted",
-                )}
-              >
-                <Icon className="size-3.5 shrink-0" strokeWidth={1.75} />
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
+      <DayHeader />
 
-        <div className="flex items-center gap-2 px-3 pt-2 pb-2">
-          <button
-            type="button"
-            onClick={() => setAboutOpen(true)}
-            className="flex size-11 shrink-0 items-center justify-center rounded-md text-gold hover:bg-gold-soft"
-            aria-label="About and sources"
-          >
-            <Info className="size-5" strokeWidth={1.75} />
-          </button>
-          <label className="relative min-w-0 flex-1">
-            <span className="sr-only">Search Scripture, Magisterium, and Missal</span>
-            <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-subtle" />
-            <input
-              ref={searchRef}
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search"
-              className="h-10 w-full rounded-md border border-line-strong bg-elevated pr-9 pl-8 text-base text-fg outline-none placeholder:text-subtle focus:border-gold"
-            />
-            {query && (
-              <button
-                type="button"
-                onClick={() => setQuery("")}
-                className="absolute top-1/2 right-0.5 flex size-8 -translate-y-1/2 items-center justify-center text-muted"
-                aria-label="Clear search"
-              >
-                <X className="size-3.5" />
-              </button>
-            )}
-          </label>
-          <FilterMenu
-            filters={VIEW_FILTERS[view]}
-            value={filter}
-            open={filterOpen}
-            onOpenChange={setFilterOpen}
-            onChange={setFilter}
-          />
-        </div>
-
-        {query.trim() && (
-          <p className="px-3 pb-2 text-sm text-muted">
-            {hitCounts[view] === 0
-              ? `No matches in ${VIEW_LABEL[view]}`
-              : `${hitCounts[view]} in ${VIEW_LABEL[view]}`}
-            {otherViews.map((id) => (
-              <span key={id}>
-                {" · "}
-                <button
-                  type="button"
-                  className="text-gold underline-offset-2 hover:underline"
-                  onClick={() => setView(id)}
-                >
-                  {hitCounts[id]} in {VIEW_LABEL[id]}
-                </button>
-              </span>
-            ))}
+      <div className="flex min-h-0 flex-1">
+        <aside className="hidden w-64 shrink-0 flex-col border-r border-line bg-surface lg:flex">
+          <p className="px-5 pt-4 pb-2 font-serif text-xs tracking-[0.16em] text-gold-dim uppercase">
+            {jumpLabel}
           </p>
-        )}
-      </header>
-
-      <main
-        ref={scrollRef}
-        id="timeline-scroll"
-        onScroll={onScroll}
-        className="relative min-h-0 flex-1 overflow-y-auto [overflow-anchor:none]"
-      >
-        <div aria-hidden className="shrink-0" style={{ height: headerH }} />
-        <div className="mx-auto w-full max-w-xl">
-          {view === "bible" ? (
-            <BibleView />
-          ) : view === "church" ? (
-            <ChurchView />
-          ) : (
-            <MissalView />
-          )}
-        </div>
-      </main>
-
-      {view === "bible" && (
-        <div
-          className="pointer-events-none absolute right-1 bottom-24 hidden w-3 md:block"
-          style={{ top: "calc(var(--chrome-h, 0px) + 8px)" }}
-          aria-hidden
-        >
-          <div className="pointer-events-auto flex h-full flex-col">
-            {BIBLE_BOOKS.filter((b) => b.populatedChapters.length > 0).map((b) => (
-              <button
-                key={b.name}
-                type="button"
-                onClick={() => jumpMinimap(BIBLE_BOOKS.indexOf(b))}
-                className="flex-1 rounded-full bg-gold-dim/40 hover:bg-gold"
-                aria-label={`Jump to ${b.name}`}
-                title={b.name}
-              />
-            ))}
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <JumpBody
+              view={view}
+              onBook={jumpToBook}
+              onChurch={(id) => jumpToAnchor("era", id)}
+              onMissal={(id) => jumpToAnchor("missal", id)}
+            />
           </div>
-        </div>
-      )}
-
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-30 px-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
-        <div className="pointer-events-auto relative mx-auto w-full max-w-xl">
-          <AnimatePresence>
-            {jumpOpen && (
-              <motion.div
-                initial={{ opacity: 0, y: 8, scale: 0.97 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 8, scale: 0.97 }}
-                transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                className={cn(
-                  "absolute bottom-14 overflow-hidden rounded-lg bg-elevated shadow-[var(--shadow-border)]",
-                  view === "bible" ? "inset-x-0" : "left-1/2 w-72 -translate-x-1/2",
-                )}
-              >
-                {view === "bible" ? (
-                  <BibleJumpGrid onPick={jumpToBook} />
-                ) : view === "church" ? (
-                  <SectionJumpList
-                    items={CHURCH_JUMPS}
-                    onPick={(id) => jumpToAnchor("era", id)}
-                  />
-                ) : (
-                  <SectionJumpList
-                    items={MISSAL_JUMPS}
-                    onPick={(id) => jumpToAnchor("missal", id)}
-                  />
-                )}
-              </motion.div>
-            )}
-          </AnimatePresence>
-          <div className="flex justify-center">
+          {view === "bible" && (
+            <div className="border-t border-line">
+              <BookExpandControls />
+            </div>
+          )}
+          <div className="border-t border-line p-3">
             <button
               type="button"
-              onClick={() => setJumpOpen((v) => !v)}
-              className="flex h-12 min-w-32 items-center justify-center rounded-full bg-elevated px-5 font-serif text-lg text-gold shadow-[var(--shadow-border)]"
+              onClick={() => setAboutOpen(true)}
+              className="flex h-11 w-full items-center gap-2 rounded-md px-2 text-sm text-muted transition-colors duration-150 hover:bg-gold-soft hover:text-fg"
             >
-              Jump to…
+              <Info className="size-4 text-gold" strokeWidth={1.75} />
+              About and sources
             </button>
           </div>
+        </aside>
+
+        <div className="flex min-w-0 flex-1 flex-col">
+          <div className="relative min-h-0 flex-1">
+            <main
+              id="timeline-scroll"
+              className="h-full overflow-y-auto [overflow-anchor:none]"
+              style={{ "--chrome-h": "0px" } as CSSProperties}
+            >
+              <div className="mx-auto w-full max-w-xl">
+                {view === "bible" ? (
+                  <BibleView />
+                ) : view === "church" ? (
+                  <ChurchView />
+                ) : (
+                  <MissalView />
+                )}
+              </div>
+            </main>
+
+            <div className="pointer-events-none absolute inset-x-0 bottom-3 z-20 px-3 lg:hidden">
+              <div className="pointer-events-auto relative mx-auto w-full max-w-xl">
+                <AnimatePresence>
+                  {jumpOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8, scale: 0.97 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 8, scale: 0.97 }}
+                      transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                      className={cn(
+                        "absolute bottom-14 max-h-[min(28rem,50dvh)] overflow-y-auto rounded-lg bg-elevated shadow-[var(--shadow-border)]",
+                        view === "bible"
+                          ? "inset-x-0"
+                          : "left-1/2 w-72 -translate-x-1/2",
+                      )}
+                    >
+                      <JumpBody
+                        view={view}
+                        onBook={jumpToBook}
+                        onChurch={(id) => jumpToAnchor("era", id)}
+                        onMissal={(id) => jumpToAnchor("missal", id)}
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+                <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-2">
+                  <span />
+                  <button
+                    type="button"
+                    onClick={() => setJumpOpen((v) => !v)}
+                    className="flex h-12 min-w-32 items-center justify-center rounded-full bg-elevated px-5 font-serif text-lg text-gold shadow-[var(--shadow-border)] transition-transform duration-150 ease-out active:scale-95"
+                  >
+                    Jump to…
+                  </button>
+                  <div className="flex justify-end">
+                    {view === "bible" && <BookExpandControls compact />}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <nav
+            className="shrink-0 border-t border-line bg-bg pb-[max(0.5rem,env(safe-area-inset-bottom))]"
+            aria-label="Library"
+          >
+            {query.trim() && (
+              <p className="px-3 pt-2 text-sm text-muted">
+                {hitCounts[view] === 0
+                  ? `No matches in ${VIEW_LABEL[view]}`
+                  : `${hitCounts[view]} in ${VIEW_LABEL[view]}`}
+                {otherViews.map((id) => (
+                  <span key={id}>
+                    {" · "}
+                    <button
+                      type="button"
+                      className="text-gold underline-offset-2 hover:underline"
+                      onClick={() => setView(id)}
+                    >
+                      {hitCounts[id]} in {VIEW_LABEL[id]}
+                    </button>
+                  </span>
+                ))}
+              </p>
+            )}
+
+            <div className="flex items-center gap-2 px-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setAboutOpen(true)}
+                className="flex size-11 shrink-0 items-center justify-center rounded-md text-gold hover:bg-gold-soft"
+                aria-label="About and sources"
+              >
+                <Info className="size-5" strokeWidth={1.75} />
+              </button>
+              <label className="relative min-w-0 flex-1">
+                <span className="sr-only">
+                  Search Scripture, Magisterium, and Missal
+                </span>
+                <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-subtle" />
+                <input
+                  ref={searchRef}
+                  type="search"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search"
+                  className="h-10 w-full rounded-md border border-line-strong bg-elevated pr-9 pl-8 text-base text-fg outline-none placeholder:text-subtle focus:border-gold"
+                />
+                {query && (
+                  <button
+                    type="button"
+                    onClick={() => setQuery("")}
+                    className="absolute top-1/2 right-0.5 flex size-8 -translate-y-1/2 items-center justify-center text-muted"
+                    aria-label="Clear search"
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                )}
+              </label>
+              <FilterMenu
+                filters={VIEW_FILTERS[view]}
+                value={filter}
+                open={filterOpen}
+                onOpenChange={setFilterOpen}
+                onChange={setFilter}
+              />
+            </div>
+
+            <div className="px-3 pt-2">
+              <div
+                role="tablist"
+                aria-label="Timeline view"
+                className="grid grid-cols-3 rounded-md bg-elevated p-0.5"
+                style={{
+                  boxShadow:
+                    "0 0 0 1px color-mix(in oklab, var(--color-gold) 30%, transparent)",
+                }}
+              >
+                {VIEWS.map(({ id, label, Icon }) => (
+                  <button
+                    key={id}
+                    type="button"
+                    role="tab"
+                    aria-selected={view === id}
+                    onClick={() => setView(id)}
+                    className={cn(
+                      "flex h-10 items-center justify-center gap-1 rounded-sm text-base font-medium transition-colors duration-150",
+                      view === id ? "bg-gold text-bg" : "text-muted",
+                    )}
+                  >
+                    <Icon className="size-3.5 shrink-0" strokeWidth={1.75} />
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </nav>
         </div>
       </div>
 

@@ -57,7 +57,13 @@ const VIEWS: { id: ViewMode; label: string; Icon: typeof BookOpen }[] = [
   { id: "missal", label: "Missal", Icon: CalendarDays },
 ];
 
-function BibleJumpGrid({ onPick }: { onPick: (book: BibleBook) => void }) {
+function BibleJumpGrid({
+  onPick,
+  compact,
+}: {
+  onPick: (book: BibleBook) => void;
+  compact?: boolean;
+}) {
   const ot = BIBLE_BOOKS.filter((b) => b.testament === "OT");
   const nt = BIBLE_BOOKS.filter((b) => b.testament === "NT");
   const group = (label: string, books: BibleBook[]) => (
@@ -65,7 +71,11 @@ function BibleJumpGrid({ onPick }: { onPick: (book: BibleBook) => void }) {
       <p className="px-1 pb-1.5 pt-2 font-serif text-xs uppercase tracking-[0.16em] text-gold-dim">
         {label}
       </p>
-      <div className="grid grid-cols-5 gap-1">
+      <div
+        className={
+          compact ? "grid grid-cols-6 gap-1 sm:grid-cols-8" : "grid grid-cols-5 gap-1"
+        }
+      >
         {books.map((book) => {
           const populated = book.populatedChapters.length > 0;
           const period = periodForBook(book.name);
@@ -75,7 +85,9 @@ function BibleJumpGrid({ onPick }: { onPick: (book: BibleBook) => void }) {
               type="button"
               onClick={() => onPick(book)}
               className={cn(
-                "flex aspect-square min-w-0 w-full items-center justify-center rounded-sm px-0.5 text-center font-serif text-xs font-semibold leading-none",
+                compact
+                  ? "flex h-11 items-center justify-center rounded-sm font-serif text-sm font-semibold"
+                  : "flex aspect-square min-w-0 w-full items-center justify-center rounded-sm px-0.5 text-center font-serif text-xs font-semibold leading-none",
                 populated ? "opacity-100" : "opacity-40 hover:opacity-80",
               )}
               style={periodBadgeStyle(book.name)}
@@ -271,13 +283,15 @@ function JumpBody({
   onBook,
   onChurch,
   onMissal,
+  compact,
 }: {
   view: ViewMode;
   onBook: (book: BibleBook) => void;
   onChurch: (id: string) => void;
   onMissal: (id: string) => void;
+  compact?: boolean;
 }) {
-  if (view === "bible") return <BibleJumpGrid onPick={onBook} />;
+  if (view === "bible") return <BibleJumpGrid onPick={onBook} compact={compact} />;
   if (view === "church") {
     return <SectionJumpList items={CHURCH_JUMPS} onPick={onChurch} />;
   }
@@ -413,6 +427,7 @@ export function AppShell() {
                     >
                       <JumpBody
                         view={view}
+                        compact
                         onBook={jumpToBook}
                         onChurch={(id) => jumpToAnchor("era", id)}
                         onMissal={(id) => jumpToAnchor("missal", id)}

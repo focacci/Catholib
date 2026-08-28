@@ -102,6 +102,7 @@ export function ArtifactSheet({
                       <img
                         src={artifact.imageUrl}
                         alt={artifact.title}
+                        decoding="async"
                         className="block h-auto w-full outline outline-1 -outline-offset-1 outline-fg/10"
                         onError={(e) => {
                           e.currentTarget.style.display = "none";

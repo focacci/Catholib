@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef } from "react";
+import { memo, useLayoutEffect, useMemo, useRef } from "react";
 import { ChevronDown, ExternalLink } from "lucide-react";
 import { BIBLE_BOOKS } from "@/lib/timeline/bible";
 import { bibleVersionLinks } from "@/lib/timeline/bible-versions";
@@ -9,14 +9,20 @@ import {
   TIMELINE_PERIOD_LIST,
 } from "@/lib/timeline/bible-periods";
 import {
+  applyBibleBookExpansion,
+  matchingChaptersForBook,
+  matchBibleBooks,
+} from "@/lib/timeline/bible-view";
+import {
   isBookHeaderStuck,
   pinSectionToScrollerTop,
 } from "@/lib/timeline/book-collapse-scroll";
-import { bookMatchesSearch, filterArtifacts } from "@/lib/timeline/search";
+import { estimateChapterBlockHeight } from "@/lib/timeline/viewport-gate";
 import { useTimeline } from "@/lib/timeline/store";
 import type { BibleBook, FilterId, TimelineArtifact } from "@/lib/timeline/types";
 import { cn } from "@/lib/utils";
 import { ArtifactCard } from "./ArtifactCard";
+import { ViewportGate } from "./ViewportGate";
 
 function ChapterIndex({
   book,
@@ -58,11 +64,13 @@ function ChapterIndex({
   );
 }
 
-function BookSection({
+const BookSection = memo(function BookSection({
   book,
   query,
   filter,
   expanded,
+  hitCount,
+  nameMatch,
   onToggle,
   onOpen,
 }: {
@@ -70,21 +78,16 @@ function BookSection({
   query: string;
   filter: FilterId;
   expanded: boolean;
-  onToggle: () => void;
+  hitCount: number;
+  nameMatch: boolean;
+  onToggle: (name: string) => void;
   onOpen: (a: TimelineArtifact) => void;
 }) {
-  const populated = book.populatedChapters;
-  const matchingChapters = populated
-    .map((ch) => ({
-      ...ch,
-      artifacts: filterArtifacts(ch.artifacts, query, filter),
-    }))
-    .filter((ch) => ch.artifacts.length > 0);
   const q = query.trim();
-  const nameMatch = bookMatchesSearch(book.name, book.abbreviation, q);
-  const showBecauseQuery = q.length > 0 && (nameMatch || matchingChapters.length > 0);
-  const hideEmpty = q.length > 0 && !showBecauseQuery && filter !== "all";
-  const hideUnmatched = q.length > 0 && !nameMatch && matchingChapters.length === 0;
+  const matchingChapters = useMemo(
+    () => (expanded ? matchingChaptersForBook(book, query, filter) : []),
+    [book, expanded, filter, query],
+  );
   const sectionRef = useRef<HTMLElement>(null);
   const headerRef = useRef<HTMLButtonElement>(null);
   const pinOnCollapseRef = useRef(false);
@@ -95,18 +98,16 @@ function BookSection({
     pinSectionToScrollerTop(sectionRef.current);
   }, [expanded]);
 
-  if (hideUnmatched || hideEmpty) return null;
-
   const jumpChapter = (n: number) => {
-    if (!expanded) onToggle();
+    if (!expanded) onToggle(book.name);
     const el = document.getElementById(`ch-${book.abbreviation}-${n}`);
     if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
+      el.scrollIntoView({ block: "start" });
       return;
     }
-    if (!populated.some((c) => c.chapter === n)) {
+    if (!book.populatedChapters.some((c) => c.chapter === n)) {
       const note = document.getElementById(`empty-${book.name}`);
-      note?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      note?.scrollIntoView({ block: "nearest" });
     }
   };
 
@@ -118,7 +119,7 @@ function BookSection({
       const headerTop = headerRef.current.getBoundingClientRect().top;
       pinOnCollapseRef.current = isBookHeaderStuck(sectionTop, headerTop);
     }
-    onToggle();
+    onToggle(book.name);
   };
 
   return (
@@ -145,6 +146,11 @@ function BookSection({
         <span className="min-w-0 flex-1 truncate text-left font-serif text-lg font-semibold leading-tight text-fg">
           {book.name}
         </span>
+        {hitCount > 0 && (
+          <span className="shrink-0 font-sans text-sm tabular-nums text-gold-dim">
+            {hitCount}
+          </span>
+        )}
         <ChevronDown
           className={cn(
             "size-5 shrink-0 text-muted transition-transform duration-250 ease-[var(--ease-out)]",
@@ -169,10 +175,11 @@ function BookSection({
           )}
 
           {matchingChapters.map((ch) => (
-            <div
+            <ViewportGate
               key={ch.chapter}
               id={`ch-${book.abbreviation}-${ch.chapter}`}
               className="relative scroll-mt-[calc(var(--chrome-h,0px)+3.5rem)] px-2 pt-4 pb-3"
+              estimateHeight={estimateChapterBlockHeight(ch)}
             >
               <div className="mb-2.5 pl-[var(--rail-pad)]">
                 <p className="font-serif text-base font-semibold text-fg">
@@ -205,7 +212,7 @@ function BookSection({
                   />
                 ))}
               </div>
-            </div>
+            </ViewportGate>
           ))}
 
           {q && matchingChapters.length === 0 && nameMatch && (
@@ -218,50 +225,50 @@ function BookSection({
       )}
     </section>
   );
-}
+});
 
-export function BibleView() {
+export const BibleView = memo(function BibleView() {
   const query = useTimeline((s) => s.query);
   const filter = useTimeline((s) => s.filter);
   const expandedBooks = useTimeline((s) => s.expandedBooks);
   const toggleBook = useTimeline((s) => s.toggleBook);
   const openArtifact = useTimeline((s) => s.openArtifact);
 
-  const ot = useMemo(() => BIBLE_BOOKS.filter((b) => b.testament === "OT"), []);
-  const nt = useMemo(() => BIBLE_BOOKS.filter((b) => b.testament === "NT"), []);
+  const matches = useMemo(
+    () => matchBibleBooks(BIBLE_BOOKS, query, filter),
+    [filter, query],
+  );
+  const rows = useMemo(
+    () => applyBibleBookExpansion(matches, query, expandedBooks),
+    [expandedBooks, matches, query],
+  );
+  const ot = useMemo(
+    () => rows.filter((row) => row.book.testament === "OT"),
+    [rows],
+  );
+  const nt = useMemo(
+    () => rows.filter((row) => row.book.testament === "NT"),
+    [rows],
+  );
 
-  const renderGroup = (label: string, books: BibleBook[]) => (
+  const renderGroup = (label: string, group: typeof rows) => (
     <div>
       <p className="px-2 py-2.5 font-serif text-sm tracking-[0.2em] text-gold-dim uppercase">
         {label}
       </p>
-      {books.map((book) => {
-        const qLen = query.trim().length > 0;
-        const nameMatch = bookMatchesSearch(book.name, book.abbreviation, query);
-        const matchingCount = book.populatedChapters.reduce(
-          (n, ch) => n + filterArtifacts(ch.artifacts, query, filter).length,
-          0,
-        );
-        if (filter !== "all" && !qLen && matchingCount === 0) return null;
-        if (qLen && !nameMatch && matchingCount === 0) return null;
-        const expanded =
-          Boolean(expandedBooks[book.name]) ||
-          (qLen && (nameMatch || matchingCount > 0)) ||
-          (filter !== "all" && matchingCount > 0 && !qLen);
-        return (
-          <BookSection
-            key={book.name}
-            book={book}
-            query={query}
-            filter={filter}
-            expanded={expanded}
-            onToggle={() => {
-              toggleBook(book.name);
-            }}
-            onOpen={openArtifact}
-          />
-        );
-      })}
+      {group.map((row) => (
+        <BookSection
+          key={row.book.name}
+          book={row.book}
+          query={query}
+          filter={filter}
+          expanded={row.expanded}
+          hitCount={row.hitCount}
+          nameMatch={row.nameMatch}
+          onToggle={toggleBook}
+          onOpen={openArtifact}
+        />
+      ))}
     </div>
   );
 
@@ -272,7 +279,7 @@ export function BibleView() {
       <TimelineColorKey />
     </div>
   );
-}
+});
 
 function TimelineColorKey() {
   return (

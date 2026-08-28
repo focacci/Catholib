@@ -1,9 +1,10 @@
+import { memo } from "react";
 import { ARTIFACT_LABEL, type TimelineArtifact } from "@/lib/timeline/types";
 import { isDesktopViewport } from "@/lib/media";
 import { showModernPlace } from "@/lib/timeline/place";
 import { cn } from "@/lib/utils";
 
-export function ArtifactCard({
+export const ArtifactCard = memo(function ArtifactCard({
   artifact,
   context,
   onOpen,
@@ -35,6 +36,9 @@ export function ArtifactCard({
           <img
             src={artifact.imageUrl}
             alt=""
+            loading="lazy"
+            decoding="async"
+            fetchPriority="low"
             className="block h-auto w-full md:transition-[filter] md:duration-200 md:ease-out md:group-hover:brightness-110"
             onError={(e) => {
               e.currentTarget.style.display = "none";
@@ -77,4 +81,4 @@ export function ArtifactCard({
       </span>
     </a>
   );
-}
+});

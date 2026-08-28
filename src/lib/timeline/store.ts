@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { FilterId, TimelineArtifact, ViewMode } from "./types";
+import type { FilterId, TimelineArtifact, ViewMode } from "./types.ts";
 
 interface TimelineState {
   view: ViewMode;
@@ -22,6 +22,16 @@ const DEFAULT_EXPANDED: Record<string, boolean> = {
   Genesis: true,
 };
 
+/** Opening a book from Jump to… replaces the map so two large books are not mounted at once. */
+export function nextExpandedBooks(
+  current: Record<string, boolean>,
+  name: string,
+  open: boolean,
+): Record<string, boolean> {
+  if (open) return { [name]: true };
+  return { ...current, [name]: false };
+}
+
 export const useTimeline = create<TimelineState>((set) => ({
   view: "bible",
   filter: "all",
@@ -41,6 +51,6 @@ export const useTimeline = create<TimelineState>((set) => ({
     })),
   expandBook: (name, open = true) =>
     set((s) => ({
-      expandedBooks: { ...s.expandedBooks, [name]: open },
+      expandedBooks: nextExpandedBooks(s.expandedBooks, name, open),
     })),
 }));

@@ -5,6 +5,7 @@ import { sectionArtifactsForQuery } from "@/lib/timeline/search";
 import { useTimeline } from "@/lib/timeline/store";
 import { estimateSectionBodyHeight } from "@/lib/timeline/viewport-gate";
 import { ArtifactCard } from "./ArtifactCard";
+import { TodayOffice } from "./TodayOffice";
 import { ViewportGate } from "./ViewportGate";
 
 export const MissalView = memo(function MissalView() {
@@ -58,16 +59,22 @@ export const MissalView = memo(function MissalView() {
             </p>
           )}
           <div className="px-2 pb-5">
-            <div className="flex items-baseline gap-3 pl-[var(--rail-pad)]">
-              <h3 className="font-serif text-lg font-semibold leading-snug text-fg">
-                {section.title}
-              </h3>
-            </div>
-            {section.subtitle && (
+            {section.id !== "today" && (
+              <div className="flex items-baseline gap-3 pl-[var(--rail-pad)]">
+                <h3 className="font-serif text-lg font-semibold leading-snug text-fg">
+                  {section.title}
+                </h3>
+              </div>
+            )}
+            {section.id === "today" ? (
+              <div className="pl-[var(--rail-pad)]">
+                <TodayOffice />
+              </div>
+            ) : section.subtitle ? (
               <p className="pl-[var(--rail-pad)] pt-1 text-sm text-muted">
                 {section.subtitle}
               </p>
-            )}
+            ) : null}
             <ViewportGate
               className="mt-2.5 flex flex-col gap-2 pl-[var(--rail-pad)]"
               estimateHeight={estimateSectionBodyHeight(visible)}

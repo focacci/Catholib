@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { nextExpandedBooks } from "./store.ts";
+import { areAllBooksExpanded, mapAllBooks, nextExpandedBooks } from "./store.ts";
 
 describe("nextExpandedBooks", () => {
   it("opens one book at a time so Jump to… does not keep Genesis mounted", () => {
@@ -13,6 +13,32 @@ describe("nextExpandedBooks", () => {
     assert.deepEqual(
       nextExpandedBooks({ Genesis: true, Exodus: true }, "Exodus", false),
       { Genesis: true, Exodus: false },
+    );
+  });
+});
+
+describe("mapAllBooks", () => {
+  it("expands or collapses every named book", () => {
+    assert.deepEqual(mapAllBooks(["Genesis", "Exodus"], true), {
+      Genesis: true,
+      Exodus: true,
+    });
+    assert.deepEqual(mapAllBooks(["Genesis", "Exodus"], false), {
+      Genesis: false,
+      Exodus: false,
+    });
+  });
+});
+
+describe("areAllBooksExpanded", () => {
+  it("is true only when every named book is open", () => {
+    assert.equal(
+      areAllBooksExpanded({ Genesis: true, Exodus: true }, ["Genesis", "Exodus"]),
+      true,
+    );
+    assert.equal(
+      areAllBooksExpanded({ Genesis: true, Exodus: false }, ["Genesis", "Exodus"]),
+      false,
     );
   });
 });

@@ -1,5 +1,6 @@
 import { cccUrl } from "./ccc.ts";
 import type { ChurchEntry, EventPlace, TimelineArtifact } from "./types";
+import { wikimediaFileUrl } from "./wikimedia.ts";
 
 const DEI_VERBUM =
   "https://www.vatican.va/archive/hist_councils/ii_vatican_council/documents/vat-ii_const_19651118_dei-verbum_en.html";
@@ -76,7 +77,7 @@ function place(then: string, now: string): EventPlace {
 }
 
 function wiki(file: string): string {
-  return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(file)}?width=640`;
+  return wikimediaFileUrl(file);
 }
 
 export const CHURCH_ENTRIES: ChurchEntry[] = [

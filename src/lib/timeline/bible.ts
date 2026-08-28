@@ -2,6 +2,7 @@ import { catenaUrl, CATENA_SLUG } from "./catena.ts";
 import { cccUrl } from "./ccc.ts";
 import { haydockUrl, HAYDOCK_SLUG } from "./haydock.ts";
 import { lapideUrl, LAPIDE_SLUG } from "./lapide.ts";
+import { wikimediaFileUrl } from "./wikimedia.ts";
 import type { BibleBook, PopulatedChapter, TimelineArtifact } from "./types";
 
 const DEI_VERBUM =
@@ -31,8 +32,8 @@ function art(partial: TimelineArtifact): TimelineArtifact {
   return partial;
 }
 
-function wiki(file: string, width = 640): string {
-  return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(file)}?width=${width}`;
+function wiki(file: string): string {
+  return wikimediaFileUrl(file);
 }
 
 function bookKey(book: string): string {

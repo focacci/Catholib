@@ -25,6 +25,7 @@ test("injects before </head>", () => {
   const out = injectGrokPwaHead("<html><head><title>x</title></head><body></body></html>");
   assert.match(out, /rel="manifest"/);
   assert.match(out, /apple-touch-icon/);
+  assert.match(out, /href="\/apple-touch-icon.png\?v=2"/);
   assert.match(out, /grok-app-builder\/extensions\.js/);
   assert.ok(out.indexOf("manifest") < out.indexOf("</head>"));
 });
@@ -380,6 +381,13 @@ test("streaming injector matches </HEAD> case-insensitively", () => {
   assert.match(out, /<body>hello<\/body>/);
 });
 
+test("does not duplicate an existing apple-touch-icon", () => {
+  const html =
+    '<html><head><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"></head></html>';
+  const out = injectGrokPwaHead(html);
+  assert.equal((out.match(/rel="apple-touch-icon"/g) || []).length, 1);
+});
+
 test("does not duplicate the extensions script", () => {
   const ctx = { appName: "Demo", projectId: "proj-123" };
   const once = injectGrokPwaHead("<html><head></head></html>", ctx);
@@ -461,6 +469,7 @@ test("rejects hosts that are not plain slugs", () => {
 
 test("renders install page markup", () => {
   const html = renderInstallPage("wild-race.grok.me", "/?install=1&platform=ios");
+  assert.match(html, /href="\/apple-touch-icon.png\?v=2"/);
   assert.match(html, /Add Wild Race to your/);
   assert.match(html, /\/__grok\/install\/styles\.css/);
   assert.match(html, /href="\/"/);
@@ -480,6 +489,10 @@ test("renders the manifest with the per-app name", () => {
   assert.equal(manifest.icons[0].src, "/__grok/icon-180.png");
   assert.equal(manifest.icons[1].src, "/__grok/icon-192.png");
   assert.equal(manifest.icons[2].src, "/__grok/icon-512.png");
+  assert.equal(manifest.icons[3].src, "/__grok/icon-192-maskable.png");
+  assert.equal(manifest.icons[3].purpose, "maskable");
+  assert.equal(manifest.icons[4].src, "/__grok/icon-512-maskable.png");
+  assert.equal(manifest.icons[4].purpose, "maskable");
 });
 
 // Tripwires: the deployed-app path only works if Nitro scans server/ — an
@@ -499,6 +512,11 @@ test("nitro middleware and its bundled assets exist", () => {
   readFileSync(join(TEMPLATE_ROOT, "public/__grok/icon-180.png"));
   readFileSync(join(TEMPLATE_ROOT, "public/__grok/icon-192.png"));
   readFileSync(join(TEMPLATE_ROOT, "public/__grok/icon-512.png"));
+  readFileSync(join(TEMPLATE_ROOT, "public/__grok/icon-192-maskable.png"));
+  readFileSync(join(TEMPLATE_ROOT, "public/__grok/icon-512-maskable.png"));
+  readFileSync(join(TEMPLATE_ROOT, "public/apple-touch-icon.png"));
+  readFileSync(join(TEMPLATE_ROOT, "public/favicon.ico"));
+  readFileSync(join(TEMPLATE_ROOT, "public/favicon-16.png"));
   readFileSync(join(TEMPLATE_ROOT, "public/__grok/install/styles.css"));
 });
 

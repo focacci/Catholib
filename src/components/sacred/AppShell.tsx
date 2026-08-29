@@ -203,13 +203,13 @@ function SectionJumpList({
           type="button"
           onClick={() => onPick(opt.id)}
           className={cn(
-            "flex w-full items-center gap-3 px-4 text-left text-fg hover:bg-gold-soft",
-            compact ? "h-11 text-sm" : "h-12 text-base",
+            "flex w-full items-start gap-3 px-4 text-left text-fg hover:bg-gold-soft",
+            compact ? "min-h-11 py-2 text-sm" : "min-h-12 py-2.5 text-base",
           )}
         >
-          <span className="min-w-0 flex-1 truncate">{opt.label}</span>
+          <span className="min-w-0 flex-1 leading-snug">{opt.label}</span>
           {opt.range ? (
-            <span className="shrink-0 tabular-nums text-gold-dim">{opt.range}</span>
+            <span className="shrink-0 pt-0.5 tabular-nums text-gold-dim">{opt.range}</span>
           ) : null}
         </button>
       ))}

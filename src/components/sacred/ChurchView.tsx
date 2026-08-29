@@ -76,7 +76,7 @@ const EraGroup = memo(function EraGroup({
           aria-expanded={expanded}
           aria-label={range ? `${era}, ${range}` : era}
         >
-          <span className="min-w-0 truncate font-serif text-sm tracking-[0.2em] text-gold-dim uppercase">
+          <span className="min-w-0 truncate font-serif text-sm tracking-[0.08em] text-gold-dim uppercase sm:tracking-[0.14em]">
             {era}
           </span>
           {range ? (

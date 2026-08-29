@@ -167,5 +167,5 @@ input[type="search"]::-webkit-search-results-decoration {
 
 #timeline-scroll {
   padding-inline: var(--safe-x);
-  overscroll-behavior-y: auto;
+  overscroll-behavior-y: contain;
 }

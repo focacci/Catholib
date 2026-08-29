@@ -39,6 +39,7 @@ import {
   CHROME_SETTLE_MS,
   chromeFullyHidden,
   chromeHideProgress,
+  chromeOffsetWhenQueryCleared,
   chromeSettleOffset,
   interpolateChromeOffset,
   nextChromeHideOffset,
@@ -57,6 +58,7 @@ import {
   ridingSearchBarLift,
   shouldCaptureSearchBarPull,
   shouldCompactLibraryChrome,
+  shouldHoldOverlayChrome,
   shouldPullDismissSearchBar,
   stabilizeFocusedKeyboardLift,
   visualViewportGap,
@@ -421,6 +423,9 @@ export function AppShell() {
   const searchFocusLiftTimerRef = useRef(0);
   const searchPullRef = useRef<SearchBarPull>({ ...IDLE_SEARCH_PULL });
   const keyboardChaseRafRef = useRef(0);
+  const pullCaptureRef = useRef(false);
+  const pullTouchMoveRef = useRef<(e: TouchEvent) => void>(() => {});
+  const pullPointerMoveRef = useRef<(e: PointerEvent) => void>(() => {});
   const [jumpOpen, setJumpOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [headerH, setHeaderH] = useState(48);
@@ -557,9 +562,22 @@ export function AppShell() {
 
   const lockTimelinePointers = (lock: boolean) => {
     const scroll = scrollRef.current;
-    if (!scroll) return;
-    scroll.style.pointerEvents = lock ? "none" : "";
-    scroll.style.overflowY = lock ? "hidden" : "";
+    if (scroll) scroll.style.pointerEvents = lock ? "none" : "";
+  };
+
+  const setPullCapture = (on: boolean) => {
+    if (on === pullCaptureRef.current) return;
+    pullCaptureRef.current = on;
+    if (on) {
+      window.addEventListener("touchmove", pullTouchMoveRef.current, {
+        passive: false,
+        capture: true,
+      });
+      window.addEventListener("pointermove", pullPointerMoveRef.current, { passive: false });
+    } else {
+      window.removeEventListener("touchmove", pullTouchMoveRef.current, true);
+      window.removeEventListener("pointermove", pullPointerMoveRef.current);
+    }
   };
 
   const clearSearchFocusLiftTimer = () => {
@@ -634,6 +652,7 @@ export function AppShell() {
   };
 
   const endSearchBarPull = () => {
+    setPullCapture(false);
     const pull = searchPullRef.current;
     if (pull.riding) return;
     if (!pull.active) return;
@@ -671,6 +690,18 @@ export function AppShell() {
 
   const settleChrome = () => {
     if (isSidebarViewport() || pointerDownRef.current) return;
+    if (
+      shouldHoldOverlayChrome({
+        overlayLayout: true,
+        searchFocused: searchFocusedRef.current,
+        holdCompact: searchHoldCompactRef.current,
+        keyboardInset: measureKeyboardInset(),
+        hasQuery: Boolean(useTimeline.getState().query.trim()),
+      })
+    ) {
+      applyChrome(0);
+      return;
+    }
     const maxOffset = Math.max(headerHRef.current, footerHRef.current);
     const target = chromeSettleOffset({
       offset: chromeOffsetRef.current,
@@ -800,6 +831,28 @@ export function AppShell() {
   }, [view]);
 
   useEffect(() => {
+    if (isSidebarViewport()) return;
+    if (
+      shouldHoldOverlayChrome({
+        overlayLayout: true,
+        searchFocused: searchFocusedRef.current,
+        holdCompact: searchHoldCompactRef.current,
+        keyboardInset: measureKeyboardInset(),
+        hasQuery: Boolean(query.trim()),
+      })
+    ) {
+      applyChrome(0);
+      return;
+    }
+    applyChrome(
+      chromeOffsetWhenQueryCleared({
+        scrollTop: lastScrollRef.current,
+        maxOffset: Math.max(headerHRef.current, footerHRef.current),
+      }),
+    );
+  }, [query]);
+
+  useEffect(() => {
     if (isDesktop) closeArtifact();
   }, [isDesktop, closeArtifact]);
 
@@ -826,6 +879,8 @@ export function AppShell() {
         e.preventDefault();
       }
     };
+    pullTouchMoveRef.current = onTouchMove;
+    pullPointerMoveRef.current = onPointerMove;
     const onRelease = () => {
       endSearchBarPullRef.current();
       if (pointerDownRef.current) {
@@ -836,8 +891,6 @@ export function AppShell() {
     };
     el?.addEventListener("scrollend", onScrollEnd);
     el?.addEventListener("pointerdown", onPointerDown);
-    window.addEventListener("pointermove", onPointerMove, { passive: false });
-    window.addEventListener("touchmove", onTouchMove, { passive: false, capture: true });
     footer?.addEventListener("touchmove", onTouchMove, { passive: false });
     window.addEventListener("pointerup", onRelease, true);
     window.addEventListener("pointercancel", onRelease, true);
@@ -846,9 +899,12 @@ export function AppShell() {
     return () => {
       el?.removeEventListener("scrollend", onScrollEnd);
       el?.removeEventListener("pointerdown", onPointerDown);
-      window.removeEventListener("pointermove", onPointerMove);
-      window.removeEventListener("touchmove", onTouchMove, true);
       footer?.removeEventListener("touchmove", onTouchMove);
+      if (pullCaptureRef.current) {
+        window.removeEventListener("touchmove", onTouchMove, true);
+        window.removeEventListener("pointermove", onPointerMove);
+        pullCaptureRef.current = false;
+      }
       window.removeEventListener("pointerup", onRelease, true);
       window.removeEventListener("pointercancel", onRelease, true);
       window.removeEventListener("mouseup", onRelease, true);
@@ -869,6 +925,7 @@ export function AppShell() {
     searchFocusPointerRef.current = true;
     lockTimelinePointers(true);
     if (document.activeElement === searchRef.current) {
+      setPullCapture(true);
       searchPullRef.current = {
         ...IDLE_SEARCH_PULL,
         active: true,
@@ -909,6 +966,14 @@ export function AppShell() {
       if (searchPullRef.current.active || searchPullRef.current.riding) return;
       searchHoldCompactRef.current = false;
       applyKeyboardInset(measureKeyboardInset());
+      if (!useTimeline.getState().query.trim()) {
+        applyChrome(
+          chromeOffsetWhenQueryCleared({
+            scrollTop: lastScrollRef.current,
+            maxOffset: Math.max(headerHRef.current, footerHRef.current),
+          }),
+        );
+      }
     }, KEYBOARD_BLUR_HOLD_MS);
   };
 
@@ -921,12 +986,12 @@ export function AppShell() {
     lastScrollRef.current = y;
     if (delta !== 0) lastDeltaRef.current = delta;
     if (
-      document.activeElement === searchRef.current ||
-      shouldCompactLibraryChrome({
+      shouldHoldOverlayChrome({
         overlayLayout: true,
         searchFocused: searchFocusedRef.current,
         holdCompact: searchHoldCompactRef.current,
         keyboardInset: measureKeyboardInset(),
+        hasQuery: Boolean(query.trim()),
       })
     ) {
       applyChrome(0);
@@ -982,7 +1047,7 @@ export function AppShell() {
       <DayHeader
         ref={headerRef}
         id="timeline-chrome"
-        className="max-lg:absolute max-lg:inset-x-0 max-lg:top-0 max-lg:z-20 max-lg:will-change-transform"
+        className="max-lg:absolute max-lg:inset-x-0 max-lg:top-0 max-lg:z-20 max-lg:overscroll-none"
       />
 
       <div className="flex min-h-0 flex-1">
@@ -1022,7 +1087,7 @@ export function AppShell() {
               id="timeline-scroll"
               onScroll={onScroll}
               onPointerDown={onChromePointerDown}
-              className="h-full overflow-y-auto [overflow-anchor:none]"
+              className="h-full overflow-y-scroll overscroll-y-contain [overflow-anchor:none] [-webkit-overflow-scrolling:touch]"
             >
               {!isSidebar && <div aria-hidden className="shrink-0" style={{ height: headerH }} />}
               <div className="mx-auto w-full max-w-xl dual:max-w-6xl">

@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import {
   chromeFullyHidden,
   chromeHideProgress,
+  chromeOffsetWhenQueryCleared,
   chromeSettleOffset,
   interpolateChromeOffset,
   nextChromeHideOffset,
@@ -179,6 +180,16 @@ describe("chromeSettleOffset", () => {
       }),
       0,
     );
+  });
+});
+
+describe("chromeOffsetWhenQueryCleared", () => {
+  it("hides immediately when the list is already scrolled", () => {
+    assert.equal(chromeOffsetWhenQueryCleared({ scrollTop: 240, maxOffset: 120 }), 120);
+  });
+
+  it("stays shown at the top of the list", () => {
+    assert.equal(chromeOffsetWhenQueryCleared({ scrollTop: 0, maxOffset: 120 }), 0);
   });
 });
 

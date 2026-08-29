@@ -58,3 +58,12 @@ export function chromeSettleOffset(args: {
   if (offset >= maxOffset - 0.5) return maxOffset;
   return lastDelta < 0 ? 0 : maxOffset;
 }
+
+/** After the query is cleared, hide chrome immediately if the list is scrolled. */
+export function chromeOffsetWhenQueryCleared(args: {
+  scrollTop: number;
+  maxOffset: number;
+}): number {
+  if (args.maxOffset <= 0 || args.scrollTop < 1) return 0;
+  return args.maxOffset;
+}

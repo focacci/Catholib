@@ -98,6 +98,18 @@ export function shouldCompactLibraryChrome(args: {
   return args.searchFocused || args.holdCompact || isSoftwareKeyboardOpen(args.keyboardInset);
 }
 
+/** Keep overlay chrome on-screen while searching, including a non-empty query. */
+export function shouldHoldOverlayChrome(args: {
+  overlayLayout: boolean;
+  searchFocused: boolean;
+  holdCompact: boolean;
+  keyboardInset: number;
+  hasQuery: boolean;
+}): boolean {
+  if (!args.overlayLayout) return false;
+  return args.hasQuery || shouldCompactLibraryChrome(args);
+}
+
 /**
  * Close the keyboard by pulling the search bar down.
  * The gesture must have started on the search chrome while it was already focused,

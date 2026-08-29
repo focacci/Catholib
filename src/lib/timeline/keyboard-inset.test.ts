@@ -10,6 +10,7 @@ import {
   ridingSearchBarLift,
   shouldCaptureSearchBarPull,
   shouldCompactLibraryChrome,
+  shouldHoldOverlayChrome,
   shouldPullDismissSearchBar,
   stabilizeFocusedKeyboardLift,
   visualViewportGap,
@@ -199,6 +200,31 @@ describe("shouldCompactLibraryChrome", () => {
         searchFocused: true,
         holdCompact: false,
         keyboardInset: 300,
+      }),
+      false,
+    );
+  });
+});
+
+describe("shouldHoldOverlayChrome", () => {
+  it("keeps overlay chrome visible while the search query is non-empty", () => {
+    assert.equal(
+      shouldHoldOverlayChrome({
+        overlayLayout: true,
+        searchFocused: false,
+        holdCompact: false,
+        keyboardInset: 0,
+        hasQuery: true,
+      }),
+      true,
+    );
+    assert.equal(
+      shouldHoldOverlayChrome({
+        overlayLayout: true,
+        searchFocused: false,
+        holdCompact: false,
+        keyboardInset: 0,
+        hasQuery: false,
       }),
       false,
     );

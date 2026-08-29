@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   collapsePinChromeHeight,
+  collapsePinStackOffset,
   isBookHeaderStuck,
   scrollerTopForSection,
 } from "./book-collapse-scroll.ts";
@@ -63,5 +64,12 @@ describe("collapsePinChromeHeight", () => {
 
   it("keeps the visible overlay height when it already matches the header", () => {
     assert.equal(collapsePinChromeHeight(113, 113), 113);
+  });
+});
+
+describe("collapsePinStackOffset", () => {
+  it("adds the group header below the reserved chrome", () => {
+    assert.equal(collapsePinStackOffset(0, 113, 40), 153);
+    assert.equal(collapsePinStackOffset(113, 113, 40), 153);
   });
 });

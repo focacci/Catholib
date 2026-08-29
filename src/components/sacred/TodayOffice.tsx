@@ -15,14 +15,10 @@ function fastingNote(notes: string[]): string | undefined {
   return notes.find((note) => /fast|abstinence/i.test(note));
 }
 
-export function TodayOffice() {
+export function TodayOffice({ hideTitle = false }: { hideTitle?: boolean }) {
   const day = liturgicalDay();
-  const dateLine = [day.compactDate, day.seasonWeek, day.season]
-    .filter(Boolean)
-    .join(" - ");
-  const disciplineLine = [day.rosary, fastingNote(day.notes)]
-    .filter(Boolean)
-    .join(" - ");
+  const dateLine = [day.compactDate, day.seasonWeek, day.season].filter(Boolean).join(" - ");
+  const disciplineLine = [day.rosary, fastingNote(day.notes)].filter(Boolean).join(" - ");
 
   return (
     <div className="flex items-start gap-3">
@@ -36,10 +32,10 @@ export function TodayOffice() {
         {day.colorLabel}
       </span>
       <div className="min-w-0 flex-1">
-        <h3 className="font-serif text-lg font-semibold leading-snug text-fg">
-          {day.title}
-        </h3>
-        <p className="mt-0.5 text-sm leading-snug text-muted">{dateLine}</p>
+        {hideTitle ? null : (
+          <h3 className="font-serif text-lg font-semibold leading-snug text-fg">{day.title}</h3>
+        )}
+        <p className={cn("text-sm leading-snug text-muted", !hideTitle && "mt-0.5")}>{dateLine}</p>
         {disciplineLine ? (
           <p className="mt-0.5 text-sm leading-snug text-muted">{disciplineLine}</p>
         ) : null}

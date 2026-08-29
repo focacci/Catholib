@@ -54,6 +54,11 @@
 
   --rail-x: 10px;
   --rail-pad: 1.25rem;
+
+  /* Nested sticky headers: group (testament/era/kind) then item (book). */
+  --sticky-l1: 2.5rem;
+  --sticky-l2: 3rem;
+  --sticky-fade: 1.75rem;
 }
 
 @layer base {

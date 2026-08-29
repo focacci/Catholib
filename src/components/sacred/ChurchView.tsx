@@ -2,12 +2,14 @@ import { memo, useMemo } from "react";
 import { useTimelineLayout } from "@/lib/timeline/card-width";
 import { CHURCH_ENTRIES } from "@/lib/timeline/church";
 import { sectionArtifactsForQuery } from "@/lib/timeline/search";
+import { groupConsecutiveBy } from "@/lib/timeline/sticky-stack";
 import { useTimeline } from "@/lib/timeline/store";
 import {
   estimateDualSectionBodyHeight,
   estimateSectionBodyHeight,
 } from "@/lib/timeline/viewport-gate";
 import { ArtifactColumns } from "./ArtifactColumns";
+import { StickyGroupHeader, StickyItemHeader } from "./StickyHeaders";
 import { ViewportGate } from "./ViewportGate";
 
 export const ChurchView = memo(function ChurchView() {
@@ -19,7 +21,7 @@ export const ChurchView = memo(function ChurchView() {
   const q = query.trim();
   const sections = useMemo(
     () =>
-      CHURCH_ENTRIES.map((entry, index) => {
+      CHURCH_ENTRIES.map((entry) => {
         const visible = sectionArtifactsForQuery(
           entry.artifacts,
           q,
@@ -27,10 +29,14 @@ export const ChurchView = memo(function ChurchView() {
           `${entry.title} ${entry.era ?? ""} ${entry.year}`,
         );
         if (visible.length === 0) return null;
-        const showEra = Boolean(entry.era && entry.era !== CHURCH_ENTRIES[index - 1]?.era);
-        return { entry, visible, showEra };
+        return { entry, visible };
       }).filter((s) => s !== null),
     [filter, q],
+  );
+
+  const groups = useMemo(
+    () => groupConsecutiveBy(sections, (section) => section.entry.era ?? section.entry.id),
+    [sections],
   );
 
   if (sections.length === 0) {
@@ -47,43 +53,47 @@ export const ChurchView = memo(function ChurchView() {
         className="absolute top-2 bottom-8 left-[var(--rail-x)] w-px timeline-rail"
         aria-hidden
       />
-      {sections.map(({ entry, visible, showEra }) => (
-        <section
-          key={entry.id}
-          id={`era-${entry.id}`}
-          className="relative scroll-mt-[var(--chrome-h,0px)]"
-        >
-          {showEra && (
-            <p className="sticky top-[var(--chrome-h,0px)] z-10 bg-bg px-2 py-2 pl-[var(--rail-pad)] font-serif text-sm tracking-[0.18em] text-gold-dim uppercase">
-              {entry.era}
-            </p>
-          )}
-          <div className="px-2 pb-5">
-            <ViewportGate
-              className="pt-0"
-              estimateHeight={
-                dualColumn
-                  ? estimateDualSectionBodyHeight(visible, cardWidth, artworkWidth)
-                  : estimateSectionBodyHeight(visible, cardWidth)
-              }
-            >
-              <ArtifactColumns
-                artifacts={visible}
-                context={entry.title}
-                onOpen={openArtifact}
-                heading={
-                  <div className="flex items-baseline gap-3 pl-[var(--rail-pad)]">
+      {groups.map((group) => {
+        const era = group.items[0]?.entry.era;
+        return (
+          <div key={group.key}>
+            {era ? (
+              <StickyGroupHeader className="pl-[var(--rail-pad)]">{era}</StickyGroupHeader>
+            ) : null}
+            {group.items.map(({ entry, visible }) => (
+              <section
+                key={entry.id}
+                id={`era-${entry.id}`}
+                className="relative scroll-mt-[calc(var(--chrome-h,0px)+var(--sticky-l1))]"
+              >
+                <StickyItemHeader fade nested={Boolean(era)} className="px-2 py-2">
+                  <div className="flex min-h-10 items-baseline gap-3 pl-[var(--rail-pad)]">
                     <span className="font-serif text-xl tabular-nums text-gold">{entry.year}</span>
-                    <h3 className="font-serif text-lg font-semibold leading-snug text-fg">
+                    <h3 className="min-w-0 truncate font-serif text-lg font-semibold leading-snug text-fg">
                       {entry.title}
                     </h3>
                   </div>
-                }
-              />
-            </ViewportGate>
+                </StickyItemHeader>
+                <div className="px-2 pt-[var(--sticky-fade)] pb-5">
+                  <ViewportGate
+                    estimateHeight={
+                      dualColumn
+                        ? estimateDualSectionBodyHeight(visible, cardWidth, artworkWidth)
+                        : estimateSectionBodyHeight(visible, cardWidth)
+                    }
+                  >
+                    <ArtifactColumns
+                      artifacts={visible}
+                      context={entry.title}
+                      onOpen={openArtifact}
+                    />
+                  </ViewportGate>
+                </div>
+              </section>
+            ))}
           </div>
-        </section>
-      ))}
+        );
+      })}
     </div>
   );
 });

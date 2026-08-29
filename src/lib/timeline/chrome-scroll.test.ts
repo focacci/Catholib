@@ -8,6 +8,8 @@ import {
   interpolateChromeOffset,
   nextChromeHideOffset,
   nextOverlayChromeOffsets,
+  overlayChromeTranslateY,
+  reservedOverlayChromePx,
   visibleChromeSize,
 } from "./chrome-scroll.ts";
 
@@ -242,5 +244,27 @@ describe("interpolateChromeOffset", () => {
   it("starts at the origin and lands on the target", () => {
     assert.equal(interpolateChromeOffset(10, 110, 0), 10);
     assert.equal(interpolateChromeOffset(10, 110, 1), 110);
+  });
+});
+
+describe("reservedOverlayChromePx", () => {
+  it("keeps the full overlay size even when chrome is mid-hide", () => {
+    assert.equal(reservedOverlayChromePx(true, 96), 96);
+    assert.equal(reservedOverlayChromePx(true, 140), 140);
+    assert.notEqual(reservedOverlayChromePx(true, 96), visibleChromeSize(0.5, 96));
+  });
+
+  it("is zero in the sidebar layout or before chrome has been measured", () => {
+    assert.equal(reservedOverlayChromePx(false, 96), 0);
+    assert.equal(reservedOverlayChromePx(true, 0), 0);
+  });
+});
+
+describe("overlayChromeTranslateY", () => {
+  it("moves the header up and the footer down by the hidden amount", () => {
+    assert.equal(overlayChromeTranslateY({ progress: 0, size: 120, edge: "header" }), 0);
+    assert.equal(overlayChromeTranslateY({ progress: 1, size: 120, edge: "header" }), -120);
+    assert.equal(overlayChromeTranslateY({ progress: 0.5, size: 80, edge: "footer" }), 40);
+    assert.equal(overlayChromeTranslateY({ progress: 1, size: 80, edge: "footer" }), 80);
   });
 });

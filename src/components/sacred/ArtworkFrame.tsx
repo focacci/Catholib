@@ -26,6 +26,7 @@ export function ArtworkFrame({
         width={size.width}
         height={size.height}
         decoding="async"
+        loading="lazy"
         className={cn("block h-full w-full object-cover", imgClassName)}
         onError={(e) => {
           const frame = e.currentTarget.parentElement;

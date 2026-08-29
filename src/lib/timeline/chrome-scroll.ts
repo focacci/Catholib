@@ -2,6 +2,10 @@
  * Hide-on-scroll overlay chrome: 0 = fully shown, maxOffset = fully hidden.
  * Tracks finger movement 1:1 so the timeline does not jump when chrome recedes.
  * On release, a partial hide finishes off-screen (or a pull-back finishes on-screen).
+ *
+ * Overlay bars move with compositor transforms. `--chrome-h` stays at the
+ * reserved header height so sticky Bible/Church headers are not restyled on
+ * every scroll frame.
  */
 
 export const CHROME_SETTLE_MS = 240;
@@ -30,6 +34,28 @@ export function visibleChromeSize(progress: number, size: number): number {
 /** Treat sub-pixel remainders as fully off-screen so inert/pointer-events stay in sync. */
 export function chromeFullyHidden(visiblePx: number): boolean {
   return visiblePx < 0.5;
+}
+
+/**
+ * Length published as `--chrome-h` / `--footer-h` for sticky headers and the
+ * FAB dock. Must stay at the reserved overlay size while hide-on-scroll runs:
+ * shrinking an inherited custom property restyles every sticky node in the
+ * timeline and is what makes expanded Bible view stutter.
+ */
+export function reservedOverlayChromePx(overlay: boolean, measuredPx: number): number {
+  if (!overlay || measuredPx <= 0) return 0;
+  return measuredPx;
+}
+
+/** Compositor-only shift: header recedes up, footer and FAB recede down. */
+export function overlayChromeTranslateY(args: {
+  progress: number;
+  size: number;
+  edge: "header" | "footer";
+}): number {
+  const y = Math.max(0, args.progress) * Math.max(0, args.size);
+  if (y === 0) return 0;
+  return args.edge === "header" ? -y : y;
 }
 
 export function easeOutCubic(t: number): number {

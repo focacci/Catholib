@@ -4,6 +4,9 @@ import { partitionTimelineColumns, type ColumnItem } from "./columns.ts";
 const TEXT_CARD_PX = 96;
 const CHAPTER_CHROME_PX = 88;
 const SECTION_CHROME_PX = 52;
+const CHAPTER_INDEX_CELL_PX = 44;
+const CHAPTER_INDEX_GAP_PX = 4;
+const CHAPTER_INDEX_PAD_PX = 16;
 
 /** Inner width of a timeline card before the scroller has been measured. */
 export const DEFAULT_CARD_IMAGE_WIDTH_PX = 360;
@@ -73,4 +76,13 @@ export function estimateDualSectionBodyHeight(
 
 export function containIntrinsicSize(estimateHeight: number): string {
   return `auto ${Math.max(1, Math.round(estimateHeight))}px`;
+}
+
+/** Height of the Bible chapter-number grid (h-11 cells, gap-1, pb-3). */
+export function estimateChapterIndexHeight(chapterCount: number, columns = 8): number {
+  if (chapterCount <= 0) return 0;
+  const rows = Math.ceil(chapterCount / columns);
+  return (
+    rows * CHAPTER_INDEX_CELL_PX + Math.max(0, rows - 1) * CHAPTER_INDEX_GAP_PX + CHAPTER_INDEX_PAD_PX
+  );
 }

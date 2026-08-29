@@ -4,6 +4,7 @@ import {
   containIntrinsicSize,
   estimateArtifactListHeight,
   estimateChapterBlockHeight,
+  estimateChapterIndexHeight,
   estimateDualChapterBlockHeight,
   estimateDualSectionBodyHeight,
   estimateSectionBodyHeight,
@@ -87,5 +88,13 @@ describe("timeline height estimates", () => {
   it("emits a remembered intrinsic size the browser can skip-paint with", () => {
     assert.equal(containIntrinsicSize(280), "auto 280px");
     assert.equal(containIntrinsicSize(0), "auto 1px");
+  });
+
+  it("sizes the Bible chapter-number grid from row count", () => {
+    const oneRow = estimateChapterIndexHeight(8);
+    const twoRows = estimateChapterIndexHeight(9);
+    assert.equal(estimateChapterIndexHeight(0), 0);
+    assert.ok(oneRow > 0);
+    assert.equal(twoRows, oneRow + 44 + 4);
   });
 });

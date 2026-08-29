@@ -19,6 +19,7 @@ import { useTimeline } from "@/lib/timeline/store";
 import type { BibleBook, FilterId, TimelineArtifact } from "@/lib/timeline/types";
 import {
   estimateChapterBlockHeight,
+  estimateChapterIndexHeight,
   estimateDualChapterBlockHeight,
 } from "@/lib/timeline/viewport-gate";
 import { cn } from "@/lib/utils";
@@ -171,7 +172,9 @@ const BookSection = memo(function BookSection({
           {filter === "all" && !q && (
             <div id={`empty-${book.name}`} className="relative px-2 pt-3 pb-1">
               <div className="pl-[var(--rail-pad)]">
-                <ChapterIndex book={book} onJump={jumpChapter} />
+                <ViewportGate estimateHeight={estimateChapterIndexHeight(book.chapters)}>
+                  <ChapterIndex book={book} onJump={jumpChapter} />
+                </ViewportGate>
               </div>
             </div>
           )}

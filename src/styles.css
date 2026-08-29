@@ -160,6 +160,22 @@
 }
 
 /*
+ * Overlay hide-on-scroll is transform-only. Keep compositor layers on the bars
+ * so expanded Bible view does not recost layout while they recede.
+ */
+@media (max-width: 1023px) {
+  #timeline-chrome,
+  .library-footer {
+    will-change: transform;
+    contain: layout style;
+  }
+
+  .timeline-fab-dock {
+    will-change: transform;
+  }
+}
+
+/*
  * Search is focused or the software keyboard is up: drop home-indicator
  * padding and the jump dock so the search row sits on the keyboard.
  * Keep Bible / Church / Missal docked at the screen bottom (behind the keys).
@@ -173,7 +189,8 @@
   touch-action: none;
 }
 
-[data-keyboard] .timeline-fab-dock {
+[data-keyboard] .timeline-fab-dock,
+.timeline-fab-dock[data-keyboard] {
   visibility: hidden;
   pointer-events: none;
 }

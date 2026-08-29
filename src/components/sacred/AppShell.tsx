@@ -7,6 +7,7 @@ import {
   type CSSProperties,
   type PointerEvent as ReactPointerEvent,
 } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   BookOpen,
@@ -335,13 +336,41 @@ function FilterMenu({
   onOpenChange: (open: boolean) => void;
   onChange: (id: FilterId) => void;
 }) {
-  const rootRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLUListElement>(null);
+  const [coords, setCoords] = useState<{ right: number; bottom: number } | null>(null);
   const current = filters.find((f) => f.id === value) ?? filters[0];
+
+  const placeMenu = () => {
+    const trigger = triggerRef.current;
+    if (!trigger) return;
+    const r = trigger.getBoundingClientRect();
+    setCoords({
+      right: window.innerWidth - r.right,
+      bottom: window.innerHeight - r.top + 4,
+    });
+  };
+
+  useLayoutEffect(() => {
+    if (!open) {
+      setCoords(null);
+      return;
+    }
+    placeMenu();
+    window.addEventListener("resize", placeMenu);
+    window.addEventListener("scroll", placeMenu, true);
+    return () => {
+      window.removeEventListener("resize", placeMenu);
+      window.removeEventListener("scroll", placeMenu, true);
+    };
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
     const onDoc = (e: PointerEvent) => {
-      if (!rootRef.current?.contains(e.target as Node)) onOpenChange(false);
+      const t = e.target as Node;
+      if (triggerRef.current?.contains(t) || menuRef.current?.contains(t)) return;
+      onOpenChange(false);
     };
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onOpenChange(false);
@@ -355,8 +384,9 @@ function FilterMenu({
   }, [open, onOpenChange]);
 
   return (
-    <div ref={rootRef} className="relative shrink-0">
+    <div className="relative shrink-0">
       <button
+        ref={triggerRef}
         type="button"
         aria-haspopup="listbox"
         aria-expanded={open}
@@ -376,33 +406,38 @@ function FilterMenu({
           strokeWidth={1.75}
         />
       </button>
-      {open && (
-        <ul
-          role="listbox"
-          aria-label="Filter artifacts"
-          className="absolute right-0 bottom-full z-40 mb-1 min-w-[10.5rem] overflow-hidden rounded-md bg-elevated py-1 shadow-[var(--shadow-border)]"
-        >
-          {filters.map((f) => (
-            <li key={f.id}>
-              <button
-                type="button"
-                role="option"
-                aria-selected={f.id === value}
-                className={cn(
-                  "flex h-11 w-full items-center px-3 text-left text-base",
-                  f.id === value ? "bg-gold-soft text-gold" : "text-fg hover:bg-gold-soft",
-                )}
-                onClick={() => {
-                  onChange(f.id);
-                  onOpenChange(false);
-                }}
-              >
-                {f.label}
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
+      {open &&
+        coords &&
+        createPortal(
+          <ul
+            ref={menuRef}
+            role="listbox"
+            aria-label="Filter artifacts"
+            className="fixed z-[80] min-w-[10.5rem] overflow-hidden rounded-md bg-elevated py-1 shadow-[var(--shadow-border)]"
+            style={{ right: coords.right, bottom: coords.bottom }}
+          >
+            {filters.map((f) => (
+              <li key={f.id}>
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={f.id === value}
+                  className={cn(
+                    "flex h-11 w-full items-center px-3 text-left text-base",
+                    f.id === value ? "bg-gold-soft text-gold" : "text-fg hover:bg-gold-soft",
+                  )}
+                  onClick={() => {
+                    onChange(f.id);
+                    onOpenChange(false);
+                  }}
+                >
+                  {f.label}
+                </button>
+              </li>
+            ))}
+          </ul>,
+          document.body,
+        )}
     </div>
   );
 }
@@ -1102,6 +1137,17 @@ export function AppShell() {
     if (!pointerDownRef.current) scheduleChromeSettle();
   };
 
+  const scrollToTop = () => {
+    setJumpOpen(false);
+    setFilterOpen(false);
+    cancelChromeAnimation();
+    cancelChromeSettleTimer();
+    lastScrollRef.current = 0;
+    lastDeltaRef.current = 0;
+    applyChrome({ header: 0, footer: 0 });
+    scrollRef.current?.scrollTo({ top: 0 });
+  };
+
   const jumpToBook = (book: BibleBook) => {
     setJumpOpen(false);
     expandBook(book.name, true);
@@ -1146,6 +1192,8 @@ export function AppShell() {
         ref={headerRef}
         id="timeline-chrome"
         className="max-lg:absolute max-lg:inset-x-0 max-lg:top-0 max-lg:z-20 max-lg:overscroll-none"
+        onAboutClick={() => setAboutOpen(true)}
+        onBrandClick={scrollToTop}
       />
 
       <div className="flex min-h-0 flex-1">
@@ -1241,7 +1289,7 @@ export function AppShell() {
                 <button
                   type="button"
                   onClick={() => setAboutOpen(true)}
-                  className="flex size-11 shrink-0 items-center justify-center rounded-md text-gold hover:bg-gold-soft"
+                  className="hidden size-11 shrink-0 items-center justify-center rounded-md text-gold hover:bg-gold-soft lg:flex"
                   aria-label="About and sources"
                 >
                   <Info className="size-5" strokeWidth={1.75} />
@@ -1299,7 +1347,10 @@ export function AppShell() {
                   filters={VIEW_FILTERS[view]}
                   value={filter}
                   open={filterOpen}
-                  onOpenChange={setFilterOpen}
+                  onOpenChange={(next) => {
+                    setFilterOpen(next);
+                    if (next) setJumpOpen(false);
+                  }}
                   onChange={setFilter}
                 />
               </div>
@@ -1376,7 +1427,10 @@ export function AppShell() {
                 <span />
                 <button
                   type="button"
-                  onClick={() => setJumpOpen((v) => !v)}
+                  onClick={() => {
+                    setFilterOpen(false);
+                    setJumpOpen((v) => !v);
+                  }}
                   className="flex h-12 min-w-32 items-center justify-center rounded-full bg-elevated px-5 font-serif text-lg text-gold shadow-fab transition-transform duration-150 ease-out active:scale-95"
                 >
                   Jump to…

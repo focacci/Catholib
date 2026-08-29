@@ -551,7 +551,7 @@ export function AppShell() {
   return (
     <div
       ref={shellRef}
-      className="app-shell relative flex h-dvh flex-col overflow-hidden bg-bg text-fg"
+      className="relative flex h-dvh flex-col overflow-hidden bg-bg text-fg"
       style={
         {
           "--chrome-h": isSidebar ? "0px" : `${headerH}px`,
@@ -713,7 +713,7 @@ export function AppShell() {
           </nav>
 
           <div
-            className="timeline-fab-dock pointer-events-none absolute inset-x-0 z-30 px-3 lg:hidden"
+            className="timeline-fab-dock pointer-events-none absolute inset-x-0 z-30 px-[max(0.75rem,var(--safe-x))] lg:hidden"
             style={{ bottom: "var(--footer-h, 0px)" }}
           >
             <div className="pointer-events-auto relative mx-auto w-full max-w-xl">

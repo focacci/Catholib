@@ -12,32 +12,36 @@ export const SIDEBAR_MQ = "(min-width: 1024px)";
  */
 export const DUAL_COLUMN_MQ = "(min-width: 768px), (orientation: landscape)";
 
-function useMatchMedia(query: string): boolean {
-  const [matches, setMatches] = useState(false);
-  useLayoutEffect(() => {
-    const mq = window.matchMedia(query);
-    const update = () => setMatches(mq.matches);
+export function isDesktopViewport(): boolean {
+  return typeof window !== "undefined" && window.matchMedia(DESKTOP_MQ).matches;
+}
+
+export function useIsDesktop(): boolean {
+  const [desktop, setDesktop] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia(DESKTOP_MQ);
+    const update = () => setDesktop(mq.matches);
     update();
     mq.addEventListener("change", update);
     return () => mq.removeEventListener("change", update);
-  }, [query]);
-  return matches;
-}
-
-export function isDesktopViewport(): boolean {
-  return typeof window !== "undefined" && window.matchMedia(DESKTOP_MQ).matches;
+  }, []);
+  return desktop;
 }
 
 export function isDualColumnViewport(): boolean {
   return typeof window !== "undefined" && window.matchMedia(DUAL_COLUMN_MQ).matches;
 }
 
-export function useIsDesktop(): boolean {
-  return useMatchMedia(DESKTOP_MQ);
-}
-
 export function useDualColumn(): boolean {
-  return useMatchMedia(DUAL_COLUMN_MQ);
+  const [dual, setDual] = useState(isDualColumnViewport);
+  useLayoutEffect(() => {
+    const mq = window.matchMedia(DUAL_COLUMN_MQ);
+    const update = () => setDual(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+  return dual;
 }
 
 export function isSidebarViewport(): boolean {

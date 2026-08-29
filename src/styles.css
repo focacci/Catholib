@@ -46,8 +46,7 @@
 
   --shadow-border: 0 0 0 1px #c4a36a22;
   --shadow-fab:
-    var(--shadow-border),
-    inset 0 0 0 1px color-mix(in oklab, var(--color-gold) 58%, transparent),
+    var(--shadow-border), inset 0 0 0 1px color-mix(in oklab, var(--color-gold) 58%, transparent),
     inset 0 0 8px 1px color-mix(in oklab, var(--color-gold) 36%, transparent);
   --shadow-sheet: 0 -12px 40px #00000080;
 

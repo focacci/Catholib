@@ -4,6 +4,7 @@ import { ArrowUpRight, X } from "lucide-react";
 import { cccParagraphFor } from "@/lib/timeline/ccc";
 import { showModernPlace } from "@/lib/timeline/place";
 import { ARTIFACT_LABEL, type TimelineArtifact } from "@/lib/timeline/types";
+import { ArtworkFrame } from "./ArtworkFrame";
 
 /** Host + path, so ellipsis keeps the domain and clips the end of the path. */
 function sourceUrlCaption(url: string): string {
@@ -99,14 +100,10 @@ export function ArtifactSheet({
 
                   {artifact.imageUrl && (
                     <figure className="overflow-hidden rounded-md bg-elevated">
-                      <img
+                      <ArtworkFrame
                         src={artifact.imageUrl}
                         alt={artifact.title}
-                        decoding="async"
-                        className="block h-auto w-full outline outline-1 -outline-offset-1 outline-fg/10"
-                        onError={(e) => {
-                          e.currentTarget.style.display = "none";
-                        }}
+                        className="outline outline-1 -outline-offset-1 outline-fg/10"
                       />
                       {artifact.imageCredit && (
                         <figcaption className="px-3 py-2 text-sm leading-relaxed text-subtle">

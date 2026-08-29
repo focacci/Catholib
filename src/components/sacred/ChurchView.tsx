@@ -1,4 +1,5 @@
 import { memo, useMemo } from "react";
+import { useTimelineCardWidth } from "@/lib/timeline/card-width";
 import { CHURCH_ENTRIES } from "@/lib/timeline/church";
 import { sectionArtifactsForQuery } from "@/lib/timeline/search";
 import { useTimeline } from "@/lib/timeline/store";
@@ -10,6 +11,7 @@ export const ChurchView = memo(function ChurchView() {
   const query = useTimeline((s) => s.query);
   const filter = useTimeline((s) => s.filter);
   const openArtifact = useTimeline((s) => s.openArtifact);
+  const cardWidth = useTimelineCardWidth();
 
   const q = query.trim();
   const sections = useMemo(
@@ -65,7 +67,7 @@ export const ChurchView = memo(function ChurchView() {
             </div>
             <ViewportGate
               className="mt-2.5 flex flex-col gap-2 pl-[var(--rail-pad)]"
-              estimateHeight={estimateSectionBodyHeight(visible)}
+              estimateHeight={estimateSectionBodyHeight(visible, cardWidth)}
             >
               {visible.map((a) => (
                 <ArtifactCard

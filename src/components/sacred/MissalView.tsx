@@ -1,8 +1,9 @@
 import { memo, useMemo } from "react";
-import { MISSAL_KIND_LABEL } from "@/lib/timeline/types";
+import { useTimelineCardWidth } from "@/lib/timeline/card-width";
 import { missalSections } from "@/lib/timeline/missal";
 import { sectionArtifactsForQuery } from "@/lib/timeline/search";
 import { useTimeline } from "@/lib/timeline/store";
+import { MISSAL_KIND_LABEL } from "@/lib/timeline/types";
 import { estimateSectionBodyHeight } from "@/lib/timeline/viewport-gate";
 import { ArtifactCard } from "./ArtifactCard";
 import { TodayOffice } from "./TodayOffice";
@@ -12,6 +13,7 @@ export const MissalView = memo(function MissalView() {
   const query = useTimeline((s) => s.query);
   const filter = useTimeline((s) => s.filter);
   const openArtifact = useTimeline((s) => s.openArtifact);
+  const cardWidth = useTimelineCardWidth();
 
   const q = query.trim();
   const sections = useMemo(() => {
@@ -77,7 +79,7 @@ export const MissalView = memo(function MissalView() {
             ) : null}
             <ViewportGate
               className="mt-2.5 flex flex-col gap-2 pl-[var(--rail-pad)]"
-              estimateHeight={estimateSectionBodyHeight(visible)}
+              estimateHeight={estimateSectionBodyHeight(visible, cardWidth)}
             >
               {visible.map((a) => (
                 <ArtifactCard

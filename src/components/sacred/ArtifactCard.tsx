@@ -3,6 +3,7 @@ import { ARTIFACT_LABEL, type TimelineArtifact } from "@/lib/timeline/types";
 import { isDesktopViewport } from "@/lib/media";
 import { showModernPlace } from "@/lib/timeline/place";
 import { cn } from "@/lib/utils";
+import { ArtworkFrame } from "./ArtworkFrame";
 
 export const ArtifactCard = memo(function ArtifactCard({
   artifact,
@@ -33,14 +34,10 @@ export const ArtifactCard = memo(function ArtifactCard({
     >
       <span className="flex flex-col md:transition-transform md:duration-200 md:ease-out md:group-hover:-translate-y-0.5">
         {artifact.imageUrl ? (
-          <img
+          <ArtworkFrame
             src={artifact.imageUrl}
             alt=""
-            decoding="async"
-            className="block h-auto w-full md:transition-[filter] md:duration-200 md:ease-out md:group-hover:brightness-110"
-            onError={(e) => {
-              e.currentTarget.style.display = "none";
-            }}
+            imgClassName="md:transition-[filter] md:duration-200 md:ease-out md:group-hover:brightness-110"
           />
         ) : null}
         <span className="flex flex-col gap-1 px-3 py-2.5">

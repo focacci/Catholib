@@ -148,7 +148,7 @@ export function AboutPanel({
         <Drawer.Overlay className="fixed inset-0 z-50 bg-bg/70" />
         <Drawer.Content className="fixed inset-x-0 bottom-0 z-50 flex max-h-[88dvh] flex-col overflow-hidden rounded-t-xl bg-surface shadow-[var(--shadow-sheet)] outline-none">
           <div className="mx-auto mt-3 h-1 w-10 shrink-0 rounded-full bg-line-strong" />
-          <div className="flex shrink-0 items-center justify-between px-5 pt-3">
+          <div className="flex shrink-0 items-center justify-between px-[max(1.25rem,var(--safe-x))] pt-3">
             <Drawer.Title className="font-serif text-xl font-semibold text-fg">
               About and sources
             </Drawer.Title>
@@ -164,7 +164,7 @@ export function AboutPanel({
               <X className="size-5" />
             </button>
           </div>
-          <div className="overflow-y-auto overscroll-contain px-5 pt-2 pb-[max(1.5rem,env(safe-area-inset-bottom))] [max-height:calc(88dvh-4.75rem)]">
+          <div className="overflow-y-auto overscroll-contain px-[max(1.25rem,var(--safe-x))] pt-2 pb-[max(1.5rem,env(safe-area-inset-bottom))] [max-height:calc(88dvh-4.75rem)]">
             <AboutCopy />
           </div>
         </Drawer.Content>

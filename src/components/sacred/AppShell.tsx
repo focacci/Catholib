@@ -551,7 +551,7 @@ export function AppShell() {
   return (
     <div
       ref={shellRef}
-      className="relative flex h-dvh flex-col overflow-hidden bg-bg text-fg"
+      className="app-shell relative flex h-dvh flex-col overflow-hidden bg-bg text-fg"
       style={
         {
           "--chrome-h": isSidebar ? "0px" : `${headerH}px`,

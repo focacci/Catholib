@@ -47,9 +47,13 @@ import {
 } from "@/lib/timeline/chrome-scroll";
 import {
   KEYBOARD_BLUR_HOLD_MS,
+  KEYBOARD_CHASE_MS,
   SEARCH_FOCUS_LIFT_DELAY_MS,
+  appleKeyboardAccessoryPx,
   isSoftwareKeyboardOpen,
   keyboardInsetFromViewport,
+  layoutViewportBottom,
+  overlaySearchBarPinStyle,
   shouldCompactLibraryChrome,
   shouldPullDismissSearchBar,
 } from "@/lib/timeline/keyboard-inset";
@@ -93,13 +97,22 @@ type VirtualKeyboardNav = Navigator & {
 };
 
 function measureKeyboardInset(): number {
+  const layoutBottom = layoutViewportBottom({
+    clientHeight: document.documentElement.clientHeight,
+    innerHeight: window.innerHeight,
+  });
   const vv = window.visualViewport;
   const vk = (navigator as VirtualKeyboardNav).virtualKeyboard;
   return keyboardInsetFromViewport({
-    innerHeight: window.innerHeight,
-    visualHeight: vv?.height ?? window.innerHeight,
+    layoutBottom,
+    visualHeight: vv?.height ?? layoutBottom,
     visualOffsetTop: vv?.offsetTop ?? 0,
     virtualKeyboardHeight: vk?.boundingRect.height ?? 0,
+    accessoryInset: appleKeyboardAccessoryPx({
+      userAgent: navigator.userAgent,
+      platform: navigator.platform,
+      maxTouchPoints: navigator.maxTouchPoints,
+    }),
   });
 }
 
@@ -373,6 +386,7 @@ export function AppShell() {
   const searchFocusPointerRef = useRef(false);
   const searchFocusLiftTimerRef = useRef(0);
   const searchPullRef = useRef({ active: false, x: 0, y: 0, dy: 0 });
+  const keyboardChaseRafRef = useRef(0);
   const [jumpOpen, setJumpOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [headerH, setHeaderH] = useState(48);
@@ -439,7 +453,18 @@ export function AppShell() {
     const shell = shellRef.current;
     const scroll = scrollRef.current;
     if (footer) {
-      footer.style.bottom = lift ? `${lift}px` : "";
+      const pin = overlaySearchBarPinStyle(lift);
+      if (pin) {
+        footer.style.position = pin.position;
+        footer.style.left = pin.left;
+        footer.style.right = pin.right;
+        footer.style.bottom = pin.bottom;
+      } else {
+        footer.style.position = "";
+        footer.style.left = "";
+        footer.style.right = "";
+        footer.style.bottom = "";
+      }
       footer.toggleAttribute("data-keyboard", compact);
     }
     if (shell) {
@@ -470,6 +495,27 @@ export function AppShell() {
     }
   };
 
+  const cancelKeyboardChase = () => {
+    if (keyboardChaseRafRef.current) {
+      cancelAnimationFrame(keyboardChaseRafRef.current);
+      keyboardChaseRafRef.current = 0;
+    }
+  };
+
+  const startKeyboardChase = () => {
+    cancelKeyboardChase();
+    const until = performance.now() + KEYBOARD_CHASE_MS;
+    const tick = (now: number) => {
+      applyKeyboardInset(measureKeyboardInset());
+      if (now < until) {
+        keyboardChaseRafRef.current = requestAnimationFrame(tick);
+      } else {
+        keyboardChaseRafRef.current = 0;
+      }
+    };
+    keyboardChaseRafRef.current = requestAnimationFrame(tick);
+  };
+
   const releaseSearchFocusPointer = () => {
     if (!searchFocusPointerRef.current) return;
     searchFocusPointerRef.current = false;
@@ -479,6 +525,7 @@ export function AppShell() {
       lockTimelinePointers(false);
       if (searchFocusedRef.current) {
         applyKeyboardInset(Math.max(measureKeyboardInset(), lastKeyboardInsetRef.current));
+        startKeyboardChase();
       }
     }, SEARCH_FOCUS_LIFT_DELAY_MS);
   };
@@ -613,6 +660,10 @@ export function AppShell() {
         clearTimeout(searchFocusLiftTimerRef.current);
         searchFocusLiftTimerRef.current = 0;
       }
+      if (keyboardChaseRafRef.current) {
+        cancelAnimationFrame(keyboardChaseRafRef.current);
+        keyboardChaseRafRef.current = 0;
+      }
     };
   }, [isSidebar]);
 
@@ -716,6 +767,7 @@ export function AppShell() {
     setJumpOpen(false);
     if (!searchFocusPointerRef.current) {
       applyKeyboardInset(Math.max(measureKeyboardInset(), lastKeyboardInsetRef.current));
+      startKeyboardChase();
     }
   };
 
@@ -724,6 +776,7 @@ export function AppShell() {
     searchHoldCompactRef.current = true;
     endSearchBarPull();
     applyKeyboardInset(measureKeyboardInset());
+    startKeyboardChase();
     if (searchHoldTimerRef.current) clearTimeout(searchHoldTimerRef.current);
     searchHoldTimerRef.current = window.setTimeout(() => {
       searchHoldTimerRef.current = 0;
@@ -968,7 +1021,7 @@ export function AppShell() {
 
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-x-0 bottom-0 z-[19] bg-bg lg:hidden"
+            className="pointer-events-none fixed inset-x-0 bottom-0 z-[19] bg-bg lg:hidden"
             style={{ height: "var(--keyboard-inset, 0px)" }}
           />
 

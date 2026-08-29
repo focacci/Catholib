@@ -1,9 +1,9 @@
 import type { ComponentProps } from "react";
 import { cn } from "@/lib/utils";
 
-export function StickyGroupHeader({ className, children, ...props }: ComponentProps<"p">) {
+export function StickyGroupHeader({ className, children, ...props }: ComponentProps<"div">) {
   return (
-    <p
+    <div
       className={cn(
         "sticky top-[var(--chrome-h,0px)] z-30 flex h-[var(--sticky-l1)] items-center bg-bg px-2 font-serif text-sm tracking-[0.2em] text-gold-dim uppercase",
         className,
@@ -11,7 +11,7 @@ export function StickyGroupHeader({ className, children, ...props }: ComponentPr
       {...props}
     >
       {children}
-    </p>
+    </div>
   );
 }
 

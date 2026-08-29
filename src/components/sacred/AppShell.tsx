@@ -956,6 +956,7 @@ export function AppShell() {
 
   const onSearchChromePointerDown = (e: ReactPointerEvent<HTMLElement>) => {
     if (isSidebarViewport()) return;
+    if (e.target instanceof Element && e.target.closest("[data-search-clear]")) return;
     searchFocusPointerRef.current = true;
     lockTimelinePointers(true);
     if (document.activeElement === searchRef.current) {
@@ -1021,6 +1022,12 @@ export function AppShell() {
   const clearSearchQuery = () => {
     searchRef.current?.blur();
     setQuery("");
+  };
+
+  const onClearSearchPointerDown = (e: ReactPointerEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    clearSearchQuery();
   };
 
   const onScroll = () => {
@@ -1190,43 +1197,55 @@ export function AppShell() {
                 >
                   <Info className="size-5" strokeWidth={1.75} />
                 </button>
-                <label className="relative min-w-0 flex-1">
-                  <span className="sr-only">Search Scripture, Magisterium, and Missal</span>
-                  <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-subtle" />
-                  <input
-                    ref={searchRef}
-                    type="search"
-                    inputMode="search"
-                    enterKeyHint="search"
-                    autoComplete="off"
-                    autoCorrect="off"
-                    autoCapitalize="none"
-                    spellCheck={false}
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    onFocus={onSearchFocus}
-                    onBlur={onSearchBlur}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        e.currentTarget.blur();
-                      }
-                    }}
-                    placeholder="Search"
-                    className="h-10 w-full rounded-md border border-line-strong bg-elevated pr-9 pl-8 text-base text-fg outline-none placeholder:text-subtle focus:border-gold"
-                  />
-                  {query && (
+                <div className="relative min-w-0 flex-1">
+                  <label className="block">
+                    <span className="sr-only">Search Scripture, Magisterium, and Missal</span>
+                    <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-subtle" />
+                    <input
+                      ref={searchRef}
+                      type="search"
+                      inputMode="search"
+                      enterKeyHint="search"
+                      autoComplete="off"
+                      autoCorrect="off"
+                      autoCapitalize="none"
+                      spellCheck={false}
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      onFocus={onSearchFocus}
+                      onBlur={onSearchBlur}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          e.currentTarget.blur();
+                        }
+                      }}
+                      placeholder="Search"
+                      className="h-10 w-full rounded-md border border-line-strong bg-elevated pr-9 pl-8 text-base text-fg outline-none placeholder:text-subtle focus:border-gold"
+                    />
+                  </label>
+                  {query ? (
                     <button
                       type="button"
-                      onPointerDown={(e) => e.preventDefault()}
-                      onClick={clearSearchQuery}
+                      data-search-clear
+                      tabIndex={-1}
+                      onPointerDown={onClearSearchPointerDown}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        clearSearchQuery();
+                      }}
                       className="absolute top-1/2 right-0.5 flex size-8 -translate-y-1/2 items-center justify-center text-muted"
                       aria-label="Clear search"
                     >
                       <X className="size-3.5" />
                     </button>
-                  )}
-                </label>
+                  ) : null}
+                </div>
                 <FilterMenu
                   filters={VIEW_FILTERS[view]}
                   value={filter}

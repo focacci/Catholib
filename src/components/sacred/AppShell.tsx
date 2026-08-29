@@ -7,6 +7,7 @@ import {
   type CSSProperties,
   type PointerEvent as ReactPointerEvent,
 } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   BookOpen,
@@ -335,13 +336,41 @@ function FilterMenu({
   onOpenChange: (open: boolean) => void;
   onChange: (id: FilterId) => void;
 }) {
-  const rootRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLUListElement>(null);
+  const [coords, setCoords] = useState<{ right: number; bottom: number } | null>(null);
   const current = filters.find((f) => f.id === value) ?? filters[0];
+
+  const placeMenu = () => {
+    const trigger = triggerRef.current;
+    if (!trigger) return;
+    const r = trigger.getBoundingClientRect();
+    setCoords({
+      right: window.innerWidth - r.right,
+      bottom: window.innerHeight - r.top + 4,
+    });
+  };
+
+  useLayoutEffect(() => {
+    if (!open) {
+      setCoords(null);
+      return;
+    }
+    placeMenu();
+    window.addEventListener("resize", placeMenu);
+    window.addEventListener("scroll", placeMenu, true);
+    return () => {
+      window.removeEventListener("resize", placeMenu);
+      window.removeEventListener("scroll", placeMenu, true);
+    };
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
     const onDoc = (e: PointerEvent) => {
-      if (!rootRef.current?.contains(e.target as Node)) onOpenChange(false);
+      const t = e.target as Node;
+      if (triggerRef.current?.contains(t) || menuRef.current?.contains(t)) return;
+      onOpenChange(false);
     };
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onOpenChange(false);
@@ -355,8 +384,9 @@ function FilterMenu({
   }, [open, onOpenChange]);
 
   return (
-    <div ref={rootRef} className={cn("relative shrink-0", open && "z-50")}>
+    <div className="relative shrink-0">
       <button
+        ref={triggerRef}
         type="button"
         aria-haspopup="listbox"
         aria-expanded={open}
@@ -376,33 +406,38 @@ function FilterMenu({
           strokeWidth={1.75}
         />
       </button>
-      {open && (
-        <ul
-          role="listbox"
-          aria-label="Filter artifacts"
-          className="absolute right-0 bottom-full z-50 mb-1 min-w-[10.5rem] overflow-hidden rounded-md bg-elevated py-1 shadow-[var(--shadow-border)]"
-        >
-          {filters.map((f) => (
-            <li key={f.id}>
-              <button
-                type="button"
-                role="option"
-                aria-selected={f.id === value}
-                className={cn(
-                  "flex h-11 w-full items-center px-3 text-left text-base",
-                  f.id === value ? "bg-gold-soft text-gold" : "text-fg hover:bg-gold-soft",
-                )}
-                onClick={() => {
-                  onChange(f.id);
-                  onOpenChange(false);
-                }}
-              >
-                {f.label}
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
+      {open &&
+        coords &&
+        createPortal(
+          <ul
+            ref={menuRef}
+            role="listbox"
+            aria-label="Filter artifacts"
+            className="fixed z-[80] min-w-[10.5rem] overflow-hidden rounded-md bg-elevated py-1 shadow-[var(--shadow-border)]"
+            style={{ right: coords.right, bottom: coords.bottom }}
+          >
+            {filters.map((f) => (
+              <li key={f.id}>
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={f.id === value}
+                  className={cn(
+                    "flex h-11 w-full items-center px-3 text-left text-base",
+                    f.id === value ? "bg-gold-soft text-gold" : "text-fg hover:bg-gold-soft",
+                  )}
+                  onClick={() => {
+                    onChange(f.id);
+                    onOpenChange(false);
+                  }}
+                >
+                  {f.label}
+                </button>
+              </li>
+            ))}
+          </ul>,
+          document.body,
+        )}
     </div>
   );
 }
@@ -1215,10 +1250,7 @@ export function AppShell() {
 
           <div
             ref={footerRef}
-            className={cn(
-              "library-footer shrink-0 max-lg:absolute max-lg:inset-x-0 max-lg:bottom-0",
-              filterOpen ? "max-lg:z-50" : "max-lg:z-20",
-            )}
+            className="library-footer shrink-0 max-lg:absolute max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-20"
           >
             <nav
               ref={searchNavRef}
@@ -1315,7 +1347,10 @@ export function AppShell() {
                   filters={VIEW_FILTERS[view]}
                   value={filter}
                   open={filterOpen}
-                  onOpenChange={setFilterOpen}
+                  onOpenChange={(next) => {
+                    setFilterOpen(next);
+                    if (next) setJumpOpen(false);
+                  }}
                   onChange={setFilter}
                 />
               </div>
@@ -1392,7 +1427,10 @@ export function AppShell() {
                 <span />
                 <button
                   type="button"
-                  onClick={() => setJumpOpen((v) => !v)}
+                  onClick={() => {
+                    setFilterOpen(false);
+                    setJumpOpen((v) => !v);
+                  }}
                   className="flex h-12 min-w-32 items-center justify-center rounded-full bg-elevated px-5 font-serif text-lg text-gold shadow-fab transition-transform duration-150 ease-out active:scale-95"
                 >
                   Jump to…

@@ -33,7 +33,7 @@ export function DayHeader({
           type="button"
           onClick={onBrandClick}
           aria-label="Catholib, scroll to top"
-          className="flex cursor-pointer select-none items-center gap-2 [-webkit-touch-callout:none] [-webkit-user-drag:none]"
+          className="relative z-[1] flex cursor-pointer select-none items-center gap-2 rounded-md px-1 [-webkit-touch-callout:none] [-webkit-user-drag:none]"
         >
           <img
             src="/crucifix.png"

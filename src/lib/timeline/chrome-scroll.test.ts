@@ -3,6 +3,8 @@ import { describe, it } from "node:test";
 import {
   chromeFullyHidden,
   chromeHideProgress,
+  chromeSettleOffset,
+  interpolateChromeOffset,
   nextChromeHideOffset,
   visibleChromeSize,
 } from "./chrome-scroll.ts";
@@ -41,7 +43,16 @@ describe("nextChromeHideOffset", () => {
     );
   });
 
-  it("snaps fully shown on a large flick up", () => {
+  it("tracks a large flick 1:1 instead of snapping past the finger", () => {
+    assert.equal(
+      nextChromeHideOffset({
+        prev: 80,
+        delta: -30,
+        scrollTop: 400,
+        maxOffset: 120,
+      }),
+      50,
+    );
     assert.equal(
       nextChromeHideOffset({
         prev: 120,
@@ -97,5 +108,83 @@ describe("chromeFullyHidden", () => {
     assert.equal(chromeFullyHidden(12), false);
     assert.equal(chromeFullyHidden(0), true);
     assert.equal(chromeFullyHidden(0.25), true);
+  });
+});
+
+describe("chromeSettleOffset", () => {
+  it("leaves fully shown or fully hidden chrome where it is", () => {
+    assert.equal(
+      chromeSettleOffset({
+        offset: 0,
+        maxOffset: 120,
+        scrollTop: 400,
+        lastDelta: 20,
+      }),
+      0,
+    );
+    assert.equal(
+      chromeSettleOffset({
+        offset: 120,
+        maxOffset: 120,
+        scrollTop: 400,
+        lastDelta: -8,
+      }),
+      120,
+    );
+  });
+
+  it("finishes hiding after a partial hide when the user lets go", () => {
+    assert.equal(
+      chromeSettleOffset({
+        offset: 40,
+        maxOffset: 120,
+        scrollTop: 200,
+        lastDelta: 12,
+      }),
+      120,
+    );
+  });
+
+  it("finishes showing if the last move was a pull-back", () => {
+    assert.equal(
+      chromeSettleOffset({
+        offset: 40,
+        maxOffset: 120,
+        scrollTop: 200,
+        lastDelta: -12,
+      }),
+      0,
+    );
+  });
+
+  it("cannot hide more than the current scroll", () => {
+    assert.equal(
+      chromeSettleOffset({
+        offset: 20,
+        maxOffset: 120,
+        scrollTop: 50,
+        lastDelta: 10,
+      }),
+      50,
+    );
+  });
+
+  it("stays shown at the top of the list", () => {
+    assert.equal(
+      chromeSettleOffset({
+        offset: 40,
+        maxOffset: 120,
+        scrollTop: 0,
+        lastDelta: 20,
+      }),
+      0,
+    );
+  });
+});
+
+describe("interpolateChromeOffset", () => {
+  it("starts at the origin and lands on the target", () => {
+    assert.equal(interpolateChromeOffset(10, 110, 0), 10);
+    assert.equal(interpolateChromeOffset(10, 110, 1), 110);
   });
 });

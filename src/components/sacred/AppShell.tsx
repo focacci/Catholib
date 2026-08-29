@@ -28,8 +28,12 @@ import {
 } from "@/lib/timeline/types";
 import { isSidebarViewport, useIsDesktop, useIsSidebarLayout } from "@/lib/media";
 import {
+  CHROME_SETTLE_IDLE_MS,
+  CHROME_SETTLE_MS,
   chromeFullyHidden,
   chromeHideProgress,
+  chromeSettleOffset,
+  interpolateChromeOffset,
   nextChromeHideOffset,
   visibleChromeSize,
 } from "@/lib/timeline/chrome-scroll";
@@ -319,13 +323,31 @@ export function AppShell() {
   const footerRef = useRef<HTMLElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const lastScrollRef = useRef(0);
+  const lastDeltaRef = useRef(0);
+  const pointerDownRef = useRef(false);
   const chromeOffsetRef = useRef(0);
   const headerHRef = useRef(48);
   const footerHRef = useRef(108);
+  const settleRafRef = useRef(0);
+  const settleTimerRef = useRef(0);
   const [jumpOpen, setJumpOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [headerH, setHeaderH] = useState(48);
   const [footerH, setFooterH] = useState(108);
+
+  const cancelChromeAnimation = () => {
+    if (settleRafRef.current) {
+      cancelAnimationFrame(settleRafRef.current);
+      settleRafRef.current = 0;
+    }
+  };
+
+  const cancelChromeSettleTimer = () => {
+    if (settleTimerRef.current) {
+      clearTimeout(settleTimerRef.current);
+      settleTimerRef.current = 0;
+    }
+  };
 
   const applyChrome = (offset: number) => {
     const overlay = !isSidebarViewport();
@@ -335,7 +357,9 @@ export function AppShell() {
     const headerH = headerHRef.current;
     const footerH = footerHRef.current;
     const maxOffset = Math.max(headerH, footerH);
-    const next = overlay ? Math.max(0, Math.min(maxOffset, offset)) : 0;
+    const next = overlay
+      ? Math.max(0, Math.min(maxOffset, lastScrollRef.current, offset))
+      : 0;
     chromeOffsetRef.current = next;
     const progress = overlay ? chromeHideProgress(next, maxOffset) : 0;
     const headerVisible = overlay ? visibleChromeSize(progress, headerH) : 0;
@@ -358,6 +382,45 @@ export function AppShell() {
     shell?.style.setProperty("--chrome-h", `${headerVisible}px`);
     shell?.style.setProperty("--footer-h", `${footerVisible}px`);
   };
+
+  const settleChrome = () => {
+    if (isSidebarViewport() || pointerDownRef.current) return;
+    const maxOffset = Math.max(headerHRef.current, footerHRef.current);
+    const target = chromeSettleOffset({
+      offset: chromeOffsetRef.current,
+      maxOffset,
+      scrollTop: lastScrollRef.current,
+      lastDelta: lastDeltaRef.current,
+    });
+    if (Math.abs(target - chromeOffsetRef.current) < 0.5) return;
+    cancelChromeAnimation();
+    const start = chromeOffsetRef.current;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      applyChrome(target);
+      return;
+    }
+    const t0 = performance.now();
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - t0) / CHROME_SETTLE_MS);
+      applyChrome(interpolateChromeOffset(start, target, t));
+      if (t < 1) settleRafRef.current = requestAnimationFrame(tick);
+      else settleRafRef.current = 0;
+    };
+    settleRafRef.current = requestAnimationFrame(tick);
+  };
+
+  const scheduleChromeSettle = () => {
+    cancelChromeSettleTimer();
+    settleTimerRef.current = window.setTimeout(() => {
+      settleTimerRef.current = 0;
+      settleChrome();
+    }, CHROME_SETTLE_IDLE_MS);
+  };
+
+  const scheduleChromeSettleRef = useRef(scheduleChromeSettle);
+  scheduleChromeSettleRef.current = scheduleChromeSettle;
+  const settleChromeRef = useRef(settleChrome);
+  settleChromeRef.current = settleChrome;
 
   useLayoutEffect(() => {
     const header = headerRef.current;
@@ -387,6 +450,9 @@ export function AppShell() {
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: 0 });
     lastScrollRef.current = 0;
+    lastDeltaRef.current = 0;
+    cancelChromeAnimation();
+    cancelChromeSettleTimer();
     applyChrome(0);
     setFilterOpen(false);
     setJumpOpen(false);
@@ -396,17 +462,48 @@ export function AppShell() {
     if (isDesktop) closeArtifact();
   }, [isDesktop, closeArtifact]);
 
+  useEffect(() => {
+    const el = scrollRef.current;
+    const onScrollEnd = () => {
+      if (!pointerDownRef.current) settleChromeRef.current();
+    };
+    const onPointerUp = () => {
+      if (!pointerDownRef.current) return;
+      pointerDownRef.current = false;
+      scheduleChromeSettleRef.current();
+    };
+    el?.addEventListener("scrollend", onScrollEnd);
+    window.addEventListener("pointerup", onPointerUp);
+    window.addEventListener("pointercancel", onPointerUp);
+    return () => {
+      el?.removeEventListener("scrollend", onScrollEnd);
+      window.removeEventListener("pointerup", onPointerUp);
+      window.removeEventListener("pointercancel", onPointerUp);
+      cancelChromeAnimation();
+      cancelChromeSettleTimer();
+    };
+  }, [isSidebar]);
+
+  const onChromePointerDown = () => {
+    pointerDownRef.current = true;
+    cancelChromeAnimation();
+    cancelChromeSettleTimer();
+  };
+
   const onScroll = () => {
     const el = scrollRef.current;
     if (!el || isSidebarViewport()) return;
+    cancelChromeAnimation();
     if (document.activeElement === searchRef.current) {
       applyChrome(0);
       lastScrollRef.current = Math.max(0, el.scrollTop);
+      lastDeltaRef.current = 0;
       return;
     }
     const y = Math.max(0, el.scrollTop);
     const delta = y - lastScrollRef.current;
     lastScrollRef.current = y;
+    if (delta !== 0) lastDeltaRef.current = delta;
     const maxOffset = Math.max(headerHRef.current, footerHRef.current);
     const prev = chromeOffsetRef.current;
     const next = nextChromeHideOffset({
@@ -417,6 +514,7 @@ export function AppShell() {
     });
     if (prev < 1 && next > 1) setFilterOpen(false);
     applyChrome(next);
+    if (!pointerDownRef.current) scheduleChromeSettle();
   };
 
   const jumpToBook = (book: BibleBook) => {
@@ -495,6 +593,7 @@ export function AppShell() {
               ref={scrollRef}
               id="timeline-scroll"
               onScroll={onScroll}
+              onPointerDown={onChromePointerDown}
               className="h-full overflow-y-auto [overflow-anchor:none]"
             >
               {!isSidebar && <div aria-hidden className="shrink-0" style={{ height: headerH }} />}

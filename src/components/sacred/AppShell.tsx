@@ -1356,10 +1356,10 @@ export function AppShell() {
                     exit={{ opacity: 0, y: 8, scale: 0.97 }}
                     transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
                     className={cn(
-                      "absolute bottom-14 overflow-y-auto rounded-lg bg-elevated shadow-[var(--shadow-border)]",
+                      "absolute inset-x-0 bottom-14 overflow-y-auto rounded-lg bg-elevated shadow-[var(--shadow-border)]",
                       view === "bible"
-                        ? "inset-x-0 max-h-[min(28rem,50dvh)]"
-                        : "left-1/2 w-[min(22rem,calc(100%-1.5rem))] -translate-x-1/2 max-h-[calc(100dvh-var(--footer-h,0px)-5.5rem-env(safe-area-inset-top,0px))]",
+                        ? "max-h-[min(28rem,50dvh)]"
+                        : "max-h-[calc(100dvh-var(--footer-h,0px)-5.5rem-env(safe-area-inset-top,0px))]",
                     )}
                   >
                     <JumpBody

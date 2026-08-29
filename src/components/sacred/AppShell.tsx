@@ -48,14 +48,18 @@ import {
 import {
   KEYBOARD_BLUR_HOLD_MS,
   KEYBOARD_CHASE_MS,
+  KEYBOARD_CLOSE_MS,
   SEARCH_FOCUS_LIFT_DELAY_MS,
-  appleKeyboardAccessoryPx,
   isSoftwareKeyboardOpen,
   keyboardInsetFromViewport,
   layoutViewportBottom,
   overlaySearchBarPinStyle,
+  pullingSearchBarLift,
+  ridingSearchBarLift,
+  shouldCaptureSearchBarPull,
   shouldCompactLibraryChrome,
   shouldPullDismissSearchBar,
+  visualViewportGap,
 } from "@/lib/timeline/keyboard-inset";
 import { cn } from "@/lib/utils";
 import { AboutPanel } from "./AboutPanel";
@@ -96,25 +100,54 @@ type VirtualKeyboardNav = Navigator & {
   };
 };
 
-function measureKeyboardInset(): number {
+function viewportMetrics() {
   const layoutBottom = layoutViewportBottom({
     clientHeight: document.documentElement.clientHeight,
     innerHeight: window.innerHeight,
   });
   const vv = window.visualViewport;
   const vk = (navigator as VirtualKeyboardNav).virtualKeyboard;
-  return keyboardInsetFromViewport({
+  return {
     layoutBottom,
     visualHeight: vv?.height ?? layoutBottom,
     visualOffsetTop: vv?.offsetTop ?? 0,
     virtualKeyboardHeight: vk?.boundingRect.height ?? 0,
-    accessoryInset: appleKeyboardAccessoryPx({
-      userAgent: navigator.userAgent,
-      platform: navigator.platform,
-      maxTouchPoints: navigator.maxTouchPoints,
-    }),
-  });
+  };
 }
+
+function measureKeyboardGap(): number {
+  return visualViewportGap(viewportMetrics());
+}
+
+function measureKeyboardInset(): number {
+  return keyboardInsetFromViewport(viewportMetrics());
+}
+
+type SearchBarPull = {
+  active: boolean;
+  riding: boolean;
+  didBlur: boolean;
+  x: number;
+  y: number;
+  dx: number;
+  dy: number;
+  startInset: number;
+  rideCeiling: number;
+  rideStartedAt: number;
+};
+
+const IDLE_SEARCH_PULL: SearchBarPull = {
+  active: false,
+  riding: false,
+  didBlur: false,
+  x: 0,
+  y: 0,
+  dx: 0,
+  dy: 0,
+  startInset: 0,
+  rideCeiling: 0,
+  rideStartedAt: 0,
+};
 
 function BibleJumpGrid({
   onPick,
@@ -385,7 +418,7 @@ export function AppShell() {
   const lastKeyboardInsetRef = useRef(0);
   const searchFocusPointerRef = useRef(false);
   const searchFocusLiftTimerRef = useRef(0);
-  const searchPullRef = useRef({ active: false, x: 0, y: 0, dy: 0 });
+  const searchPullRef = useRef<SearchBarPull>({ ...IDLE_SEARCH_PULL });
   const keyboardChaseRafRef = useRef(0);
   const [jumpOpen, setJumpOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
@@ -440,14 +473,44 @@ export function AppShell() {
 
   const applyKeyboardInset = (inset: number) => {
     const overlay = !isSidebarViewport();
+    const pull = searchPullRef.current;
+    const liveGap = overlay ? measureKeyboardGap() : 0;
+    let lift = overlay ? inset : 0;
+    if (overlay && pull.active) {
+      lift = pullingSearchBarLift({
+        frozenInset: pull.startInset,
+        fingerDy: pull.dy,
+        liveGap,
+        followKeyboard: pull.didBlur,
+      });
+    } else if (overlay && pull.riding) {
+      const elapsed = performance.now() - pull.rideStartedAt;
+      lift = ridingSearchBarLift({
+        liveGap,
+        rideCeiling: pull.rideCeiling,
+        startGap: pull.startInset,
+        elapsedMs: elapsed,
+      });
+      const keyboardGone = liveGap < 20;
+      const rideTimedOut = elapsed >= KEYBOARD_CHASE_MS;
+      if (keyboardGone || rideTimedOut) {
+        searchPullRef.current = { ...IDLE_SEARCH_PULL };
+        searchHoldCompactRef.current = false;
+        lift = keyboardGone ? 0 : inset;
+      } else if (elapsed >= KEYBOARD_CLOSE_MS && liveGap >= pull.startInset - 8) {
+        // visualViewport is still stuck at the open height; stay down until it catches up.
+        lift = 0;
+      }
+    }
     const compact = shouldCompactLibraryChrome({
       overlayLayout: overlay,
       searchFocused: searchFocusedRef.current,
-      holdCompact: searchHoldCompactRef.current,
-      keyboardInset: inset,
+      holdCompact: searchHoldCompactRef.current || pull.active || pull.riding,
+      keyboardInset: Math.max(inset, lift),
     });
-    const lift = overlay ? inset : 0;
-    if (isSoftwareKeyboardOpen(inset)) lastKeyboardInsetRef.current = inset;
+    if (isSoftwareKeyboardOpen(inset) && !pull.active && !pull.riding) {
+      lastKeyboardInsetRef.current = inset;
+    }
 
     const footer = footerRef.current;
     const shell = shellRef.current;
@@ -465,6 +528,7 @@ export function AppShell() {
         footer.style.right = "";
         footer.style.bottom = "";
       }
+      footer.style.transform = "";
       footer.toggleAttribute("data-keyboard", compact);
     }
     if (shell) {
@@ -472,11 +536,7 @@ export function AppShell() {
       shell.toggleAttribute("data-keyboard", compact);
     }
     if (scroll) scroll.style.paddingBottom = lift ? `${lift}px` : "";
-    if (compact) applyChrome(0);
-    const pull = searchPullRef.current;
-    if (footer && pull.active && pull.dy > 0) {
-      footer.style.transform = `translate3d(0, ${pull.dy}px, 0)`;
-    }
+    if (compact && !pull.active) applyChrome(0);
   };
 
   const blurSearch = () => {
@@ -485,7 +545,9 @@ export function AppShell() {
 
   const lockTimelinePointers = (lock: boolean) => {
     const scroll = scrollRef.current;
-    if (scroll) scroll.style.pointerEvents = lock ? "none" : "";
+    if (!scroll) return;
+    scroll.style.pointerEvents = lock ? "none" : "";
+    scroll.style.overflowY = lock ? "hidden" : "";
   };
 
   const clearSearchFocusLiftTimer = () => {
@@ -507,7 +569,8 @@ export function AppShell() {
     const until = performance.now() + KEYBOARD_CHASE_MS;
     const tick = (now: number) => {
       applyKeyboardInset(measureKeyboardInset());
-      if (now < until) {
+      const riding = searchPullRef.current.riding;
+      if (now < until || riding) {
         keyboardChaseRafRef.current = requestAnimationFrame(tick);
       } else {
         keyboardChaseRafRef.current = 0;
@@ -522,7 +585,9 @@ export function AppShell() {
     clearSearchFocusLiftTimer();
     searchFocusLiftTimerRef.current = window.setTimeout(() => {
       searchFocusLiftTimerRef.current = 0;
-      lockTimelinePointers(false);
+      if (!searchPullRef.current.active && !searchPullRef.current.riding) {
+        lockTimelinePointers(false);
+      }
       if (searchFocusedRef.current) {
         applyKeyboardInset(Math.max(measureKeyboardInset(), lastKeyboardInsetRef.current));
         startKeyboardChase();
@@ -532,33 +597,64 @@ export function AppShell() {
 
   const moveSearchBarPull = (clientX: number, clientY: number) => {
     const pull = searchPullRef.current;
-    if (!pull.active || document.activeElement !== searchRef.current) return false;
+    if (!pull.active) return false;
     const dy = clientY - pull.y;
     const dx = clientX - pull.x;
     pull.dy = dy;
-    const footer = footerRef.current;
-    if (footer && dy > 0) footer.style.transform = `translate3d(0, ${dy}px, 0)`;
+    pull.dx = dx;
+    applyKeyboardInset(measureKeyboardInset());
     if (
+      !pull.didBlur &&
       shouldPullDismissSearchBar({
         gestureActive: true,
         fingerDy: dy,
         fingerDx: dx,
       })
     ) {
-      pull.active = false;
-      pull.dy = 0;
-      if (footer) footer.style.transform = "";
+      pull.didBlur = true;
       blurSearch();
-      return true;
     }
-    return false;
+    return shouldCaptureSearchBarPull({
+      gestureActive: true,
+      fingerDy: dy,
+      fingerDx: dx,
+    });
   };
 
   const endSearchBarPull = () => {
     const pull = searchPullRef.current;
-    if (footerRef.current && pull.active) footerRef.current.style.transform = "";
-    pull.active = false;
-    pull.dy = 0;
+    if (pull.riding) return;
+    if (!pull.active) return;
+    const dismiss =
+      pull.didBlur ||
+      shouldPullDismissSearchBar({
+        gestureActive: true,
+        fingerDy: pull.dy,
+        fingerDx: pull.dx,
+      });
+    if (dismiss) {
+      pull.active = false;
+      pull.riding = true;
+      pull.rideCeiling = pullingSearchBarLift({
+        frozenInset: pull.startInset,
+        fingerDy: pull.dy,
+        liveGap: measureKeyboardGap(),
+        followKeyboard: true,
+      });
+      pull.rideStartedAt = performance.now();
+      pull.dy = 0;
+      if (!pull.didBlur) {
+        pull.didBlur = true;
+        blurSearch();
+      }
+      lockTimelinePointers(false);
+      applyKeyboardInset(measureKeyboardInset());
+      startKeyboardChase();
+      return;
+    }
+    searchPullRef.current = { ...IDLE_SEARCH_PULL };
+    lockTimelinePointers(false);
+    applyKeyboardInset(measureKeyboardInset());
   };
 
   const settleChrome = () => {
@@ -712,16 +808,17 @@ export function AppShell() {
       }
     };
     const onRelease = () => {
+      endSearchBarPullRef.current();
       if (pointerDownRef.current) {
         pointerDownRef.current = false;
         scheduleChromeSettleRef.current();
       }
       releaseSearchFocusPointerRef.current();
-      endSearchBarPullRef.current();
     };
     el?.addEventListener("scrollend", onScrollEnd);
     el?.addEventListener("pointerdown", onPointerDown);
-    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointermove", onPointerMove, { passive: false });
+    window.addEventListener("touchmove", onTouchMove, { passive: false, capture: true });
     footer?.addEventListener("touchmove", onTouchMove, { passive: false });
     window.addEventListener("pointerup", onRelease, true);
     window.addEventListener("pointercancel", onRelease, true);
@@ -731,6 +828,7 @@ export function AppShell() {
       el?.removeEventListener("scrollend", onScrollEnd);
       el?.removeEventListener("pointerdown", onPointerDown);
       window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("touchmove", onTouchMove, true);
       footer?.removeEventListener("touchmove", onTouchMove);
       window.removeEventListener("pointerup", onRelease, true);
       window.removeEventListener("pointercancel", onRelease, true);
@@ -752,7 +850,17 @@ export function AppShell() {
     searchFocusPointerRef.current = true;
     lockTimelinePointers(true);
     if (document.activeElement === searchRef.current) {
-      searchPullRef.current = { active: true, x: e.clientX, y: e.clientY, dy: 0 };
+      searchPullRef.current = {
+        ...IDLE_SEARCH_PULL,
+        active: true,
+        x: e.clientX,
+        y: e.clientY,
+        startInset: Math.max(
+          measureKeyboardInset(),
+          lastKeyboardInsetRef.current,
+          measureKeyboardGap(),
+        ),
+      };
     }
   };
 
@@ -774,12 +882,12 @@ export function AppShell() {
   const onSearchBlur = () => {
     searchFocusedRef.current = false;
     searchHoldCompactRef.current = true;
-    endSearchBarPull();
     applyKeyboardInset(measureKeyboardInset());
     startKeyboardChase();
     if (searchHoldTimerRef.current) clearTimeout(searchHoldTimerRef.current);
     searchHoldTimerRef.current = window.setTimeout(() => {
       searchHoldTimerRef.current = 0;
+      if (searchPullRef.current.active || searchPullRef.current.riding) return;
       searchHoldCompactRef.current = false;
       applyKeyboardInset(measureKeyboardInset());
     }, KEYBOARD_BLUR_HOLD_MS);

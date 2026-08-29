@@ -141,12 +141,12 @@
  * padding, and the jump dock so the search row sits on the keyboard.
  */
 .library-nav[data-keyboard] {
-  padding-bottom: 0.375rem;
-  touch-action: pan-y;
+  padding-bottom: 0;
+  touch-action: none;
 }
 
 .library-nav[data-keyboard] input[type="search"] {
-  touch-action: pan-y;
+  touch-action: none;
 }
 
 .library-nav[data-keyboard] .library-tabs {

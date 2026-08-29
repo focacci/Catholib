@@ -15,40 +15,35 @@ export const KEYBOARD_INSET_THRESHOLD_PX = 80;
 export const SEARCH_BAR_PULL_DISMISS_PX = 24;
 
 /** Keep compact chrome while the keyboard finishes closing after blur. */
-export const KEYBOARD_BLUR_HOLD_MS = 280;
+export const KEYBOARD_BLUR_HOLD_MS = 420;
 
 /** Wait for the focusing tap to finish before lifting chrome, so the click cannot hit a card. */
 export const SEARCH_FOCUS_LIFT_DELAY_MS = 50;
 
 /**
- * iOS 26 Liquid Glass form accessory (arrows + checkmark) overlays the bottom
- * of the visual viewport. Web pages cannot hide it; lift search above it.
+ * iOS keyboard hide duration. visualViewport often jumps to 0 at the end of
+ * the animation; interpolate so the search bar rides down instead of snapping.
  */
-export const IOS_KEYBOARD_ACCESSORY_PX = 54;
+export const KEYBOARD_CLOSE_MS = 380;
 
 /** Follow the keyboard animation after focus; iOS 26 visualViewport events can lag. */
 export const KEYBOARD_CHASE_MS = 800;
 
-export function isAppleTouchDevice(args: {
-  userAgent: string;
-  platform: string;
-  maxTouchPoints: number;
-}): boolean {
-  if (/iPhone|iPad|iPod/i.test(args.userAgent)) return true;
-  return args.platform === "MacIntel" && args.maxTouchPoints > 1;
-}
-
-export function appleKeyboardAccessoryPx(args: {
-  userAgent: string;
-  platform: string;
-  maxTouchPoints: number;
-}): number {
-  return isAppleTouchDevice(args) ? IOS_KEYBOARD_ACCESSORY_PX : 0;
-}
-
 /** Prefer the unshrunk layout height when innerHeight collapses with the keyboard. */
 export function layoutViewportBottom(args: { clientHeight: number; innerHeight: number }): number {
   return Math.max(args.clientHeight || 0, args.innerHeight || 0);
+}
+
+/** Raw gap between the visual viewport and the layout bottom (no keyboard threshold). */
+export function visualViewportGap(args: {
+  layoutBottom: number;
+  visualHeight: number;
+  visualOffsetTop: number;
+  virtualKeyboardHeight?: number;
+}): number {
+  const visual = Math.max(0, args.layoutBottom - args.visualHeight - args.visualOffsetTop);
+  const virtualKb = Math.max(0, args.virtualKeyboardHeight ?? 0);
+  return Math.max(visual, virtualKb);
 }
 
 export function keyboardInsetFromViewport(args: {
@@ -56,13 +51,10 @@ export function keyboardInsetFromViewport(args: {
   visualHeight: number;
   visualOffsetTop: number;
   virtualKeyboardHeight?: number;
-  accessoryInset?: number;
 }): number {
-  const visual = Math.max(0, args.layoutBottom - args.visualHeight - args.visualOffsetTop);
-  const virtualKb = Math.max(0, args.virtualKeyboardHeight ?? 0);
-  const base = Math.max(visual, virtualKb);
+  const base = visualViewportGap(args);
   if (!isSoftwareKeyboardOpen(base)) return 0;
-  return base + Math.max(0, args.accessoryInset ?? 0);
+  return base;
 }
 
 /** Pin overlay search chrome to the layout viewport, not a shrinking dvh shell. */
@@ -72,7 +64,7 @@ export function overlaySearchBarPinStyle(lift: number): {
   right: "0px";
   bottom: string;
 } | null {
-  if (lift <= 0) return null;
+  if (lift <= 0.5) return null;
   return { position: "fixed", left: "0px", right: "0px", bottom: `${lift}px` };
 }
 
@@ -104,4 +96,54 @@ export function shouldPullDismissSearchBar(args: {
   if (!args.gestureActive) return false;
   const threshold = args.thresholdPx ?? SEARCH_BAR_PULL_DISMISS_PX;
   return args.fingerDy >= threshold && args.fingerDy >= Math.abs(args.fingerDx);
+}
+
+/** Capture the gesture before the timeline behind the bar can scroll. */
+export function shouldCaptureSearchBarPull(args: {
+  gestureActive: boolean;
+  fingerDy: number;
+  fingerDx: number;
+}): boolean {
+  if (!args.gestureActive) return false;
+  if (args.fingerDy <= 0) return false;
+  return args.fingerDy >= Math.abs(args.fingerDx);
+}
+
+/** While dragging, the bar follows the finger down from the open-keyboard inset. */
+export function pullingSearchBarLift(args: {
+  frozenInset: number;
+  fingerDy: number;
+  liveGap: number;
+  followKeyboard: boolean;
+}): number {
+  const fromFinger = Math.max(0, args.frozenInset - Math.max(0, args.fingerDy));
+  if (!args.followKeyboard) return fromFinger;
+  return Math.max(0, Math.min(fromFinger, args.liveGap));
+}
+
+function easeOutCubic(t: number): number {
+  const x = Math.min(1, Math.max(0, t));
+  return 1 - (1 - x) ** 3;
+}
+
+/**
+ * After release, ride the keyboard closed. Prefer the live visual-viewport gap
+ * once it actually shrinks; until then (iOS often reports nothing until the
+ * end) interpolate from the finger's last lift so the bar does not sit still
+ * and then snap.
+ */
+export function ridingSearchBarLift(args: {
+  liveGap: number;
+  rideCeiling: number;
+  startGap: number;
+  elapsedMs: number;
+  closeMs?: number;
+}): number {
+  const ceiling = Math.max(0, args.rideCeiling);
+  const live = Math.max(0, args.liveGap);
+  const keyboardMoved = live < args.startGap - 8;
+  if (keyboardMoved) return Math.min(live, ceiling);
+  const duration = args.closeMs ?? KEYBOARD_CLOSE_MS;
+  const animated = ceiling * (1 - easeOutCubic(args.elapsedMs / duration));
+  return Math.max(0, Math.min(ceiling, animated));
 }

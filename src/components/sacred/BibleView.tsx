@@ -17,9 +17,10 @@ import {
   isBookHeaderStuck,
   pinSectionToScrollerTop,
 } from "@/lib/timeline/book-collapse-scroll";
-import { estimateChapterBlockHeight } from "@/lib/timeline/viewport-gate";
+import { useTimelineCardWidth } from "@/lib/timeline/card-width";
 import { useTimeline } from "@/lib/timeline/store";
 import type { BibleBook, FilterId, TimelineArtifact } from "@/lib/timeline/types";
+import { estimateChapterBlockHeight } from "@/lib/timeline/viewport-gate";
 import { cn } from "@/lib/utils";
 import { ArtifactCard } from "./ArtifactCard";
 import { ViewportGate } from "./ViewportGate";
@@ -71,6 +72,7 @@ const BookSection = memo(function BookSection({
   expanded,
   hitCount,
   nameMatch,
+  cardWidth,
   onToggle,
   onOpen,
 }: {
@@ -80,6 +82,7 @@ const BookSection = memo(function BookSection({
   expanded: boolean;
   hitCount: number;
   nameMatch: boolean;
+  cardWidth: number;
   onToggle: (name: string) => void;
   onOpen: (a: TimelineArtifact) => void;
 }) {
@@ -179,7 +182,7 @@ const BookSection = memo(function BookSection({
               key={ch.chapter}
               id={`ch-${book.abbreviation}-${ch.chapter}`}
               className="relative scroll-mt-[calc(var(--chrome-h,0px)+3.5rem)] px-2 pt-4 pb-3"
-              estimateHeight={estimateChapterBlockHeight(ch)}
+              estimateHeight={estimateChapterBlockHeight(ch, cardWidth)}
             >
               <div className="mb-2.5 pl-[var(--rail-pad)]">
                 <p className="font-serif text-base font-semibold text-fg">
@@ -233,6 +236,7 @@ export const BibleView = memo(function BibleView() {
   const expandedBooks = useTimeline((s) => s.expandedBooks);
   const toggleBook = useTimeline((s) => s.toggleBook);
   const openArtifact = useTimeline((s) => s.openArtifact);
+  const cardWidth = useTimelineCardWidth();
 
   const matches = useMemo(
     () => matchBibleBooks(BIBLE_BOOKS, query, filter),
@@ -265,6 +269,7 @@ export const BibleView = memo(function BibleView() {
           expanded={row.expanded}
           hitCount={row.hitCount}
           nameMatch={row.nameMatch}
+          cardWidth={cardWidth}
           onToggle={toggleBook}
           onOpen={openArtifact}
         />

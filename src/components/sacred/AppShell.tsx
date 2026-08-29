@@ -451,8 +451,8 @@ export function AppShell() {
     const header = headerRef.current;
     const footer = footerRef.current;
     const shell = shellRef.current;
-    const headerH = headerHRef.current;
-    const footerH = footerHRef.current;
+    const headerH = header?.offsetHeight || headerHRef.current;
+    const footerH = footer?.offsetHeight || footerHRef.current;
     const maxOffset = Math.max(headerH, footerH);
     const clamp = (offset: number) => (overlay ? Math.max(0, Math.min(maxOffset, offset)) : 0);
     headerOffsetRef.current = clamp(next?.header ?? headerOffsetRef.current);
@@ -510,11 +510,13 @@ export function AppShell() {
   };
 
   const hideFooterAfterQueryCleared = () => {
+    const headerH = headerRef.current?.offsetHeight || headerHRef.current;
+    const footerH = footerRef.current?.offsetHeight || footerHRef.current;
     animateChromeTo({
       header: headerOffsetRef.current,
       footer: chromeOffsetWhenQueryCleared({
         scrollTop: lastScrollRef.current,
-        maxOffset: Math.max(headerHRef.current, footerHRef.current),
+        maxOffset: Math.max(headerH, footerH),
       }),
     });
   };

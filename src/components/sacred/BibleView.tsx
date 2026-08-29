@@ -23,6 +23,7 @@ import {
 } from "@/lib/timeline/viewport-gate";
 import { cn } from "@/lib/utils";
 import { ArtifactColumns } from "./ArtifactColumns";
+import { StickyGroupHeader, StickyItemHeader, StickyLeafHeader } from "./StickyHeaders";
 import { ViewportGate } from "./ViewportGate";
 
 function ChapterIndex({ book, onJump }: { book: BibleBook; onJump: (chapter: number) => void }) {
@@ -122,35 +123,43 @@ const BookSection = memo(function BookSection({
   };
 
   return (
-    <section ref={sectionRef} id={`book-${book.name}`} className="scroll-mt-[var(--chrome-h,0px)]">
-      <button
-        ref={headerRef}
-        type="button"
-        onClick={handleToggle}
-        className="sticky top-[var(--chrome-h,0px)] z-10 flex min-h-12 w-full items-center gap-2.5 border-b border-line bg-bg px-2"
-        aria-expanded={expanded}
-        aria-label={`${book.abbreviation} ${book.name}, ${period.label}`}
-      >
-        <span
-          className="flex h-8 min-w-8 shrink-0 items-center justify-center rounded-sm px-1 font-serif text-xs font-semibold"
-          style={periodBadgeStyle(book.name)}
-          title={period.label}
+    <section
+      ref={sectionRef}
+      id={`book-${book.name}`}
+      className="scroll-mt-[calc(var(--chrome-h,0px)+var(--sticky-l1))]"
+    >
+      <StickyItemHeader className="h-[var(--sticky-l2)] border-b border-line">
+        <button
+          ref={headerRef}
+          type="button"
+          onClick={handleToggle}
+          className="flex h-full w-full items-center gap-2.5 px-2"
+          aria-expanded={expanded}
+          aria-label={`${book.abbreviation} ${book.name}, ${period.label}`}
         >
-          {book.abbreviation}
-        </span>
-        <span className="min-w-0 flex-1 truncate text-left font-serif text-lg font-semibold leading-tight text-fg">
-          {book.name}
-        </span>
-        {hitCount > 0 && (
-          <span className="shrink-0 font-sans text-sm tabular-nums text-gold-dim">{hitCount}</span>
-        )}
-        <ChevronDown
-          className={cn(
-            "size-5 shrink-0 text-muted transition-transform duration-250 ease-[var(--ease-out)]",
-            expanded && "rotate-180",
+          <span
+            className="flex h-8 min-w-8 shrink-0 items-center justify-center rounded-sm px-1 font-serif text-xs font-semibold"
+            style={periodBadgeStyle(book.name)}
+            title={period.label}
+          >
+            {book.abbreviation}
+          </span>
+          <span className="min-w-0 flex-1 truncate text-left font-serif text-lg font-semibold leading-tight text-fg">
+            {book.name}
+          </span>
+          {hitCount > 0 && (
+            <span className="shrink-0 font-sans text-sm tabular-nums text-gold-dim">
+              {hitCount}
+            </span>
           )}
-        />
-      </button>
+          <ChevronDown
+            className={cn(
+              "size-5 shrink-0 text-muted transition-transform duration-250 ease-[var(--ease-out)]",
+              expanded && "rotate-180",
+            )}
+          />
+        </button>
+      </StickyItemHeader>
 
       {expanded && (
         <div className="relative border-b border-line" style={{ overflowAnchor: "none" }}>
@@ -168,45 +177,52 @@ const BookSection = memo(function BookSection({
           )}
 
           {matchingChapters.map((ch) => (
-            <ViewportGate
+            <section
               key={ch.chapter}
               id={`ch-${book.abbreviation}-${ch.chapter}`}
-              className="relative scroll-mt-[calc(var(--chrome-h,0px)+3.5rem)] px-2 pt-4 pb-3"
-              estimateHeight={
-                dualColumn
-                  ? estimateDualChapterBlockHeight(ch, cardWidth, artworkWidth)
-                  : estimateChapterBlockHeight(ch, cardWidth)
-              }
+              className="relative scroll-mt-[calc(var(--chrome-h,0px)+var(--sticky-l1)+var(--sticky-l2))]"
             >
-              <ArtifactColumns
-                artifacts={ch.artifacts}
-                context={`${book.name} ${ch.chapter}`}
-                onOpen={onOpen}
-                heading={
-                  <div className="pl-[var(--rail-pad)]">
-                    <p className="font-serif text-base font-semibold text-fg">
+              <StickyLeafHeader className="px-2">
+                <div className="flex flex-col pl-[var(--rail-pad)] dual:flex-row dual:items-center dual:justify-between dual:gap-x-4">
+                  <p className="flex h-10 min-w-0 items-center font-serif text-base font-semibold text-fg dual:h-11 dual:flex-1">
+                    <span className="min-w-0 truncate">
                       Chapter {ch.chapter}
                       {ch.heading ? ` · ${ch.heading}` : ""}
-                    </p>
-                    <div className="mt-0.5 flex flex-wrap items-center gap-x-4">
-                      {bibleVersionLinks(book.name, ch.chapter).map((version) => (
-                        <a
-                          key={version.id}
-                          href={version.href}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex min-h-11 items-center gap-1 text-base text-gold"
-                          aria-label={`Read ${book.name} ${ch.chapter} in ${version.label}`}
-                        >
-                          {version.label}
-                          <ExternalLink className="size-3.5" />
-                        </a>
-                      ))}
-                    </div>
+                    </span>
+                  </p>
+                  <div className="flex flex-wrap items-center gap-x-4 dual:shrink-0 dual:justify-end">
+                    {bibleVersionLinks(book.name, ch.chapter).map((version) => (
+                      <a
+                        key={version.id}
+                        href={version.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex min-h-11 items-center gap-1 text-base text-gold"
+                        aria-label={`Read ${book.name} ${ch.chapter} in ${version.label}`}
+                      >
+                        {version.label}
+                        <ExternalLink className="size-3.5" />
+                      </a>
+                    ))}
                   </div>
-                }
-              />
-            </ViewportGate>
+                </div>
+              </StickyLeafHeader>
+              <div className="px-2 pt-[var(--sticky-fade)] pb-3">
+                <ViewportGate
+                  estimateHeight={
+                    dualColumn
+                      ? estimateDualChapterBlockHeight(ch, cardWidth, artworkWidth)
+                      : estimateChapterBlockHeight(ch, cardWidth)
+                  }
+                >
+                  <ArtifactColumns
+                    artifacts={ch.artifacts}
+                    context={`${book.name} ${ch.chapter}`}
+                    onOpen={onOpen}
+                  />
+                </ViewportGate>
+              </div>
+            </section>
           ))}
 
           {q && matchingChapters.length === 0 && nameMatch && (
@@ -237,29 +253,30 @@ export const BibleView = memo(function BibleView() {
   const ot = useMemo(() => rows.filter((row) => row.book.testament === "OT"), [rows]);
   const nt = useMemo(() => rows.filter((row) => row.book.testament === "NT"), [rows]);
 
-  const renderGroup = (label: string, group: typeof rows) => (
-    <div>
-      <p className="px-2 py-2.5 font-serif text-sm tracking-[0.2em] text-gold-dim uppercase">
-        {label}
-      </p>
-      {group.map((row) => (
-        <BookSection
-          key={row.book.name}
-          book={row.book}
-          query={query}
-          filter={filter}
-          expanded={row.expanded}
-          hitCount={row.hitCount}
-          nameMatch={row.nameMatch}
-          cardWidth={cardWidth}
-          artworkWidth={artworkWidth}
-          dualColumn={dualColumn}
-          onToggle={toggleBook}
-          onOpen={openArtifact}
-        />
-      ))}
-    </div>
-  );
+  const renderGroup = (label: string, group: typeof rows) => {
+    if (group.length === 0) return null;
+    return (
+      <div>
+        <StickyGroupHeader>{label}</StickyGroupHeader>
+        {group.map((row) => (
+          <BookSection
+            key={row.book.name}
+            book={row.book}
+            query={query}
+            filter={filter}
+            expanded={row.expanded}
+            hitCount={row.hitCount}
+            nameMatch={row.nameMatch}
+            cardWidth={cardWidth}
+            artworkWidth={artworkWidth}
+            dualColumn={dualColumn}
+            onToggle={toggleBook}
+            onOpen={openArtifact}
+          />
+        ))}
+      </div>
+    );
+  };
 
   return (
     <div className="pb-[40vh]">

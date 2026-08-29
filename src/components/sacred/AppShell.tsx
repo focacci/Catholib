@@ -1,4 +1,12 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   BookOpen,
@@ -37,6 +45,14 @@ import {
   nextChromeHideOffset,
   visibleChromeSize,
 } from "@/lib/timeline/chrome-scroll";
+import {
+  KEYBOARD_BLUR_HOLD_MS,
+  SEARCH_FOCUS_LIFT_DELAY_MS,
+  isSoftwareKeyboardOpen,
+  keyboardInsetFromViewport,
+  shouldCompactLibraryChrome,
+  shouldPullDismissSearchBar,
+} from "@/lib/timeline/keyboard-inset";
 import { cn } from "@/lib/utils";
 import { AboutPanel } from "./AboutPanel";
 import { ArtifactSheet } from "./ArtifactSheet";
@@ -66,6 +82,26 @@ const VIEWS: { id: ViewMode; label: string; Icon: typeof BookOpen }[] = [
   { id: "church", label: "Church", Icon: Church },
   { id: "missal", label: "Missal", Icon: CalendarDays },
 ];
+
+type VirtualKeyboardNav = Navigator & {
+  virtualKeyboard?: {
+    overlaysContent: boolean;
+    boundingRect: { height: number };
+    addEventListener(type: "geometrychange", listener: () => void): void;
+    removeEventListener(type: "geometrychange", listener: () => void): void;
+  };
+};
+
+function measureKeyboardInset(): number {
+  const vv = window.visualViewport;
+  const vk = (navigator as VirtualKeyboardNav).virtualKeyboard;
+  return keyboardInsetFromViewport({
+    innerHeight: window.innerHeight,
+    visualHeight: vv?.height ?? window.innerHeight,
+    visualOffsetTop: vv?.offsetTop ?? 0,
+    virtualKeyboardHeight: vk?.boundingRect.height ?? 0,
+  });
+}
 
 function BibleJumpGrid({
   onPick,
@@ -330,6 +366,13 @@ export function AppShell() {
   const footerHRef = useRef(108);
   const settleRafRef = useRef(0);
   const settleTimerRef = useRef(0);
+  const searchFocusedRef = useRef(false);
+  const searchHoldCompactRef = useRef(false);
+  const searchHoldTimerRef = useRef(0);
+  const lastKeyboardInsetRef = useRef(0);
+  const searchFocusPointerRef = useRef(false);
+  const searchFocusLiftTimerRef = useRef(0);
+  const searchPullRef = useRef({ active: false, x: 0, y: 0, dy: 0 });
   const [jumpOpen, setJumpOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [headerH, setHeaderH] = useState(48);
@@ -381,6 +424,96 @@ export function AppShell() {
     shell?.style.setProperty("--footer-h", `${footerVisible}px`);
   };
 
+  const applyKeyboardInset = (inset: number) => {
+    const overlay = !isSidebarViewport();
+    const compact = shouldCompactLibraryChrome({
+      overlayLayout: overlay,
+      searchFocused: searchFocusedRef.current,
+      holdCompact: searchHoldCompactRef.current,
+      keyboardInset: inset,
+    });
+    const lift = overlay ? inset : 0;
+    if (isSoftwareKeyboardOpen(inset)) lastKeyboardInsetRef.current = inset;
+
+    const footer = footerRef.current;
+    const shell = shellRef.current;
+    const scroll = scrollRef.current;
+    if (footer) {
+      footer.style.bottom = lift ? `${lift}px` : "";
+      footer.toggleAttribute("data-keyboard", compact);
+    }
+    if (shell) {
+      shell.style.setProperty("--keyboard-inset", `${lift}px`);
+      shell.toggleAttribute("data-keyboard", compact);
+    }
+    if (scroll) scroll.style.paddingBottom = lift ? `${lift}px` : "";
+    if (compact) applyChrome(0);
+    const pull = searchPullRef.current;
+    if (footer && pull.active && pull.dy > 0) {
+      footer.style.transform = `translate3d(0, ${pull.dy}px, 0)`;
+    }
+  };
+
+  const blurSearch = () => {
+    searchRef.current?.blur();
+  };
+
+  const lockTimelinePointers = (lock: boolean) => {
+    const scroll = scrollRef.current;
+    if (scroll) scroll.style.pointerEvents = lock ? "none" : "";
+  };
+
+  const clearSearchFocusLiftTimer = () => {
+    if (searchFocusLiftTimerRef.current) {
+      clearTimeout(searchFocusLiftTimerRef.current);
+      searchFocusLiftTimerRef.current = 0;
+    }
+  };
+
+  const releaseSearchFocusPointer = () => {
+    if (!searchFocusPointerRef.current) return;
+    searchFocusPointerRef.current = false;
+    clearSearchFocusLiftTimer();
+    searchFocusLiftTimerRef.current = window.setTimeout(() => {
+      searchFocusLiftTimerRef.current = 0;
+      lockTimelinePointers(false);
+      if (searchFocusedRef.current) {
+        applyKeyboardInset(Math.max(measureKeyboardInset(), lastKeyboardInsetRef.current));
+      }
+    }, SEARCH_FOCUS_LIFT_DELAY_MS);
+  };
+
+  const moveSearchBarPull = (clientX: number, clientY: number) => {
+    const pull = searchPullRef.current;
+    if (!pull.active || document.activeElement !== searchRef.current) return false;
+    const dy = clientY - pull.y;
+    const dx = clientX - pull.x;
+    pull.dy = dy;
+    const footer = footerRef.current;
+    if (footer && dy > 0) footer.style.transform = `translate3d(0, ${dy}px, 0)`;
+    if (
+      shouldPullDismissSearchBar({
+        gestureActive: true,
+        fingerDy: dy,
+        fingerDx: dx,
+      })
+    ) {
+      pull.active = false;
+      pull.dy = 0;
+      if (footer) footer.style.transform = "";
+      blurSearch();
+      return true;
+    }
+    return false;
+  };
+
+  const endSearchBarPull = () => {
+    const pull = searchPullRef.current;
+    if (footerRef.current && pull.active) footerRef.current.style.transform = "";
+    pull.active = false;
+    pull.dy = 0;
+  };
+
   const settleChrome = () => {
     if (isSidebarViewport() || pointerDownRef.current) return;
     const maxOffset = Math.max(headerHRef.current, footerHRef.current);
@@ -419,6 +552,14 @@ export function AppShell() {
   scheduleChromeSettleRef.current = scheduleChromeSettle;
   const settleChromeRef = useRef(settleChrome);
   settleChromeRef.current = settleChrome;
+  const applyKeyboardInsetRef = useRef(applyKeyboardInset);
+  applyKeyboardInsetRef.current = applyKeyboardInset;
+  const releaseSearchFocusPointerRef = useRef(releaseSearchFocusPointer);
+  releaseSearchFocusPointerRef.current = releaseSearchFocusPointer;
+  const moveSearchBarPullRef = useRef(moveSearchBarPull);
+  moveSearchBarPullRef.current = moveSearchBarPull;
+  const endSearchBarPullRef = useRef(endSearchBarPull);
+  endSearchBarPullRef.current = endSearchBarPull;
 
   useLayoutEffect(() => {
     const header = headerRef.current;
@@ -440,6 +581,41 @@ export function AppShell() {
     return () => ro.disconnect();
   }, [isSidebar]);
 
+  useEffect(() => {
+    const vk = (navigator as VirtualKeyboardNav).virtualKeyboard;
+    if (vk) {
+      try {
+        vk.overlaysContent = true;
+      } catch {
+        /* Safari ignores this API */
+      }
+    }
+    const sync = () => {
+      if (window.scrollY) window.scrollTo(0, 0);
+      applyKeyboardInsetRef.current(measureKeyboardInset());
+    };
+    sync();
+    const vv = window.visualViewport;
+    vv?.addEventListener("resize", sync);
+    vv?.addEventListener("scroll", sync);
+    vk?.addEventListener("geometrychange", sync);
+    window.addEventListener("resize", sync);
+    return () => {
+      vv?.removeEventListener("resize", sync);
+      vv?.removeEventListener("scroll", sync);
+      vk?.removeEventListener("geometrychange", sync);
+      window.removeEventListener("resize", sync);
+      if (searchHoldTimerRef.current) {
+        clearTimeout(searchHoldTimerRef.current);
+        searchHoldTimerRef.current = 0;
+      }
+      if (searchFocusLiftTimerRef.current) {
+        clearTimeout(searchFocusLiftTimerRef.current);
+        searchFocusLiftTimerRef.current = 0;
+      }
+    };
+  }, [isSidebar]);
+
   const hitCounts = useMemo(() => countHitsByView(query, filter), [filter, query]);
   const otherViews = (["bible", "church", "missal"] as const).filter(
     (id) => id !== view && hitCounts[id] > 0,
@@ -452,6 +628,7 @@ export function AppShell() {
     cancelChromeAnimation();
     cancelChromeSettleTimer();
     applyChrome(0);
+    if (searchFocusedRef.current) blurSearch();
     setFilterOpen(false);
     setJumpOpen(false);
   }, [view]);
@@ -462,6 +639,7 @@ export function AppShell() {
 
   useEffect(() => {
     const el = scrollRef.current;
+    const footer = footerRef.current;
     const onScrollEnd = () => {
       if (!pointerDownRef.current) settleChromeRef.current();
     };
@@ -470,13 +648,30 @@ export function AppShell() {
       cancelChromeAnimation();
       cancelChromeSettleTimer();
     };
+    const onPointerMove = (e: PointerEvent) => {
+      if (moveSearchBarPullRef.current(e.clientX, e.clientY) && e.cancelable) {
+        e.preventDefault();
+      }
+    };
+    const onTouchMove = (e: TouchEvent) => {
+      const touch = e.touches[0];
+      if (!touch) return;
+      if (moveSearchBarPullRef.current(touch.clientX, touch.clientY) && e.cancelable) {
+        e.preventDefault();
+      }
+    };
     const onRelease = () => {
-      if (!pointerDownRef.current) return;
-      pointerDownRef.current = false;
-      scheduleChromeSettleRef.current();
+      if (pointerDownRef.current) {
+        pointerDownRef.current = false;
+        scheduleChromeSettleRef.current();
+      }
+      releaseSearchFocusPointerRef.current();
+      endSearchBarPullRef.current();
     };
     el?.addEventListener("scrollend", onScrollEnd);
     el?.addEventListener("pointerdown", onPointerDown);
+    window.addEventListener("pointermove", onPointerMove);
+    footer?.addEventListener("touchmove", onTouchMove, { passive: false });
     window.addEventListener("pointerup", onRelease, true);
     window.addEventListener("pointercancel", onRelease, true);
     window.addEventListener("mouseup", onRelease, true);
@@ -484,6 +679,8 @@ export function AppShell() {
     return () => {
       el?.removeEventListener("scrollend", onScrollEnd);
       el?.removeEventListener("pointerdown", onPointerDown);
+      window.removeEventListener("pointermove", onPointerMove);
+      footer?.removeEventListener("touchmove", onTouchMove);
       window.removeEventListener("pointerup", onRelease, true);
       window.removeEventListener("pointercancel", onRelease, true);
       window.removeEventListener("mouseup", onRelease, true);
@@ -499,20 +696,62 @@ export function AppShell() {
     cancelChromeSettleTimer();
   };
 
+  const onSearchChromePointerDown = (e: ReactPointerEvent<HTMLElement>) => {
+    if (isSidebarViewport()) return;
+    searchFocusPointerRef.current = true;
+    lockTimelinePointers(true);
+    if (document.activeElement === searchRef.current) {
+      searchPullRef.current = { active: true, x: e.clientX, y: e.clientY, dy: 0 };
+    }
+  };
+
+  const onSearchFocus = () => {
+    searchFocusedRef.current = true;
+    searchHoldCompactRef.current = false;
+    if (searchHoldTimerRef.current) {
+      clearTimeout(searchHoldTimerRef.current);
+      searchHoldTimerRef.current = 0;
+    }
+    setFilterOpen(false);
+    setJumpOpen(false);
+    if (!searchFocusPointerRef.current) {
+      applyKeyboardInset(Math.max(measureKeyboardInset(), lastKeyboardInsetRef.current));
+    }
+  };
+
+  const onSearchBlur = () => {
+    searchFocusedRef.current = false;
+    searchHoldCompactRef.current = true;
+    endSearchBarPull();
+    applyKeyboardInset(measureKeyboardInset());
+    if (searchHoldTimerRef.current) clearTimeout(searchHoldTimerRef.current);
+    searchHoldTimerRef.current = window.setTimeout(() => {
+      searchHoldTimerRef.current = 0;
+      searchHoldCompactRef.current = false;
+      applyKeyboardInset(measureKeyboardInset());
+    }, KEYBOARD_BLUR_HOLD_MS);
+  };
+
   const onScroll = () => {
     const el = scrollRef.current;
     if (!el || isSidebarViewport()) return;
     cancelChromeAnimation();
-    if (document.activeElement === searchRef.current) {
-      applyChrome(0);
-      lastScrollRef.current = Math.max(0, el.scrollTop);
-      lastDeltaRef.current = 0;
-      return;
-    }
     const y = Math.max(0, el.scrollTop);
     const delta = y - lastScrollRef.current;
     lastScrollRef.current = y;
     if (delta !== 0) lastDeltaRef.current = delta;
+    if (
+      document.activeElement === searchRef.current ||
+      shouldCompactLibraryChrome({
+        overlayLayout: true,
+        searchFocused: searchFocusedRef.current,
+        holdCompact: searchHoldCompactRef.current,
+        keyboardInset: measureKeyboardInset(),
+      })
+    ) {
+      applyChrome(0);
+      return;
+    }
     const maxOffset = Math.max(headerHRef.current, footerHRef.current);
     const prev = chromeOffsetRef.current;
     const next = nextChromeHideOffset({
@@ -620,8 +859,9 @@ export function AppShell() {
 
           <nav
             ref={footerRef}
-            className="shrink-0 border-t border-line bg-bg pb-[max(0.5rem,env(safe-area-inset-bottom))] max-lg:absolute max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-20 max-lg:will-change-transform"
+            className="library-nav shrink-0 border-t border-line bg-bg pb-[max(0.5rem,env(safe-area-inset-bottom))] max-lg:absolute max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-20 max-lg:will-change-transform"
             aria-label="Library"
+            onPointerDown={onSearchChromePointerDown}
           >
             {query.trim() && (
               <p className="px-3 pt-2 text-sm text-muted">
@@ -658,8 +898,22 @@ export function AppShell() {
                 <input
                   ref={searchRef}
                   type="search"
+                  inputMode="search"
+                  enterKeyHint="search"
+                  autoComplete="off"
+                  autoCorrect="off"
+                  autoCapitalize="none"
+                  spellCheck={false}
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
+                  onFocus={onSearchFocus}
+                  onBlur={onSearchBlur}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      e.currentTarget.blur();
+                    }
+                  }}
                   placeholder="Search"
                   className="h-10 w-full rounded-md border border-line-strong bg-elevated pr-9 pl-8 text-base text-fg outline-none placeholder:text-subtle focus:border-gold"
                 />
@@ -683,7 +937,7 @@ export function AppShell() {
               />
             </div>
 
-            <div className="px-3 pt-2">
+            <div className="library-tabs px-3 pt-2">
               <div
                 role="tablist"
                 aria-label="Timeline view"
@@ -711,6 +965,12 @@ export function AppShell() {
               </div>
             </div>
           </nav>
+
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 bottom-0 z-[19] bg-bg lg:hidden"
+            style={{ height: "var(--keyboard-inset, 0px)" }}
+          />
 
           <div
             className="timeline-fab-dock pointer-events-none absolute inset-x-0 z-30 px-[max(0.75rem,var(--safe-x))] lg:hidden"

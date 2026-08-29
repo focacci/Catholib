@@ -1025,9 +1025,10 @@ export function AppShell() {
   };
 
   const onClearSearchPointerDown = (e: ReactPointerEvent<HTMLButtonElement>) => {
+    // Prevent focus only. Clearing on pointerdown unmounts this control and the
+    // rest of the tap lands on the input, which reopens the keyboard.
     e.preventDefault();
     e.stopPropagation();
-    clearSearchQuery();
   };
 
   const onScroll = () => {
@@ -1239,7 +1240,7 @@ export function AppShell() {
                         e.stopPropagation();
                         clearSearchQuery();
                       }}
-                      className="absolute top-1/2 right-0.5 flex size-8 -translate-y-1/2 items-center justify-center text-muted"
+                      className="absolute top-1/2 right-0.5 z-10 flex size-8 -translate-y-1/2 items-center justify-center text-muted"
                       aria-label="Clear search"
                     >
                       <X className="size-3.5" />

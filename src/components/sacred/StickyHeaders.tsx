@@ -1,15 +1,6 @@
 import type { ComponentProps } from "react";
 import { cn } from "@/lib/utils";
 
-function HeaderFade() {
-  return (
-    <div
-      aria-hidden
-      className="pointer-events-none absolute inset-x-0 top-full h-[var(--sticky-fade)] bg-gradient-to-b from-bg to-transparent"
-    />
-  );
-}
-
 export function StickyGroupHeader({ className, children, ...props }: ComponentProps<"p">) {
   return (
     <p
@@ -36,12 +27,12 @@ export function StickyItemHeader({
       className={cn(
         "sticky z-20 bg-bg",
         nested ? "top-[calc(var(--chrome-h,0px)+var(--sticky-l1))]" : "top-[var(--chrome-h,0px)]",
+        fade && "sticky-header-fade",
         className,
       )}
       {...props}
     >
       {children}
-      {fade ? <HeaderFade /> : null}
     </div>
   );
 }
@@ -50,13 +41,12 @@ export function StickyLeafHeader({ className, children, ...props }: ComponentPro
   return (
     <div
       className={cn(
-        "sticky top-[calc(var(--chrome-h,0px)+var(--sticky-l1)+var(--sticky-l2))] z-10 bg-bg",
+        "sticky-header-fade sticky top-[calc(var(--chrome-h,0px)+var(--sticky-l1)+var(--sticky-l2))] z-10 bg-bg",
         className,
       )}
       {...props}
     >
       {children}
-      <HeaderFade />
     </div>
   );
 }

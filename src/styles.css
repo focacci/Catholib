@@ -58,7 +58,7 @@
   /* Nested sticky headers: group (testament/era/kind) then item (book). */
   --sticky-l1: 2.5rem;
   --sticky-l2: 3rem;
-  --sticky-fade: 1.75rem;
+  --sticky-fade: 2.25rem;
 }
 
 @layer base {
@@ -131,6 +131,21 @@
     var(--color-gold-dim) 8%,
     var(--color-gold-dim) 92%,
     transparent
+  );
+}
+
+.sticky-header-fade::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  top: 100%;
+  height: var(--sticky-fade);
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    var(--color-bg) 0%,
+    color-mix(in oklab, var(--color-bg) 78%, transparent) 42%,
+    transparent 100%
   );
 }
 

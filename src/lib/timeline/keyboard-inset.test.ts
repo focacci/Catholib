@@ -207,7 +207,7 @@ describe("shouldCompactLibraryChrome", () => {
 });
 
 describe("shouldHoldOverlayChrome", () => {
-  it("keeps overlay chrome visible while the search query is non-empty", () => {
+  it("keeps the overlay footer visible while the search query is non-empty", () => {
     assert.equal(
       shouldHoldOverlayChrome({
         overlayLayout: true,

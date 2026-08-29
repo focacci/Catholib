@@ -98,7 +98,7 @@ export function shouldCompactLibraryChrome(args: {
   return args.searchFocused || args.holdCompact || isSoftwareKeyboardOpen(args.keyboardInset);
 }
 
-/** Keep overlay chrome on-screen while searching, including a non-empty query. */
+/** Keep the overlay footer on-screen while searching, including a non-empty query. */
 export function shouldHoldOverlayChrome(args: {
   overlayLayout: boolean;
   searchFocused: boolean;

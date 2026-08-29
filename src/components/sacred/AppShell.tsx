@@ -42,7 +42,7 @@ import {
   chromeOffsetWhenQueryCleared,
   chromeSettleOffset,
   interpolateChromeOffset,
-  nextChromeHideOffset,
+  nextOverlayChromeOffsets,
   visibleChromeSize,
 } from "@/lib/timeline/chrome-scroll";
 import {
@@ -410,7 +410,8 @@ export function AppShell() {
   const lastScrollRef = useRef(0);
   const lastDeltaRef = useRef(0);
   const pointerDownRef = useRef(false);
-  const chromeOffsetRef = useRef(0);
+  const headerOffsetRef = useRef(0);
+  const footerOffsetRef = useRef(0);
   const headerHRef = useRef(48);
   const footerHRef = useRef(108);
   const settleRafRef = useRef(0);
@@ -445,7 +446,7 @@ export function AppShell() {
     }
   };
 
-  const applyChrome = (offset: number) => {
+  const applyChrome = (next?: { header?: number; footer?: number }) => {
     const overlay = !isSidebarViewport();
     const header = headerRef.current;
     const footer = footerRef.current;
@@ -453,29 +454,69 @@ export function AppShell() {
     const headerH = headerHRef.current;
     const footerH = footerHRef.current;
     const maxOffset = Math.max(headerH, footerH);
-    const next = overlay ? Math.max(0, Math.min(maxOffset, offset)) : 0;
-    chromeOffsetRef.current = next;
-    const progress = overlay ? chromeHideProgress(next, maxOffset) : 0;
-    const headerVisible = overlay ? visibleChromeSize(progress, headerH) : 0;
-    const footerVisible = overlay ? visibleChromeSize(progress, footerH) : 0;
+    const clamp = (offset: number) => (overlay ? Math.max(0, Math.min(maxOffset, offset)) : 0);
+    headerOffsetRef.current = clamp(next?.header ?? headerOffsetRef.current);
+    footerOffsetRef.current = clamp(next?.footer ?? footerOffsetRef.current);
+    const headerProgress = overlay ? chromeHideProgress(headerOffsetRef.current, maxOffset) : 0;
+    const footerProgress = overlay ? chromeHideProgress(footerOffsetRef.current, maxOffset) : 0;
+    const headerVisible = overlay ? visibleChromeSize(headerProgress, headerH) : 0;
+    const footerVisible = overlay ? visibleChromeSize(footerProgress, footerH) : 0;
     const headerGone = overlay && chromeFullyHidden(headerVisible);
     const footerGone = overlay && chromeFullyHidden(footerVisible);
 
     if (header) {
       header.style.transform =
-        overlay && progress ? `translate3d(0, ${-progress * headerH}px, 0)` : "";
+        overlay && headerProgress ? `translate3d(0, ${-headerProgress * headerH}px, 0)` : "";
       header.toggleAttribute("inert", headerGone);
       header.style.pointerEvents = headerGone ? "none" : "";
     }
     if (footer) {
       footer.style.transform =
-        overlay && progress ? `translate3d(0, ${progress * footerH}px, 0)` : "";
-      footer.style.willChange = overlay && progress ? "transform" : "";
+        overlay && footerProgress ? `translate3d(0, ${footerProgress * footerH}px, 0)` : "";
+      footer.style.willChange = overlay && footerProgress ? "transform" : "";
       footer.toggleAttribute("inert", footerGone);
       footer.style.pointerEvents = footerGone ? "none" : "";
     }
     shell?.style.setProperty("--chrome-h", `${headerVisible}px`);
     shell?.style.setProperty("--footer-h", `${footerVisible}px`);
+  };
+
+  const animateChromeTo = (target: { header: number; footer: number }) => {
+    const startHeader = headerOffsetRef.current;
+    const startFooter = footerOffsetRef.current;
+    if (
+      Math.abs(target.header - startHeader) < 0.5 &&
+      Math.abs(target.footer - startFooter) < 0.5
+    ) {
+      applyChrome(target);
+      return;
+    }
+    cancelChromeAnimation();
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      applyChrome(target);
+      return;
+    }
+    const t0 = performance.now();
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - t0) / CHROME_SETTLE_MS);
+      applyChrome({
+        header: interpolateChromeOffset(startHeader, target.header, t),
+        footer: interpolateChromeOffset(startFooter, target.footer, t),
+      });
+      if (t < 1) settleRafRef.current = requestAnimationFrame(tick);
+      else settleRafRef.current = 0;
+    };
+    settleRafRef.current = requestAnimationFrame(tick);
+  };
+
+  const hideFooterAfterQueryCleared = () => {
+    animateChromeTo({
+      header: headerOffsetRef.current,
+      footer: chromeOffsetWhenQueryCleared({
+        scrollTop: lastScrollRef.current,
+        maxOffset: Math.max(headerHRef.current, footerHRef.current),
+      }),
+    });
   };
 
   const applyKeyboardInset = (inset: number) => {
@@ -553,7 +594,7 @@ export function AppShell() {
       shell.toggleAttribute("data-keyboard", compact);
     }
     if (scroll) scroll.style.paddingBottom = lift ? `${lift}px` : "";
-    if (compact && !pull.active) applyChrome(0);
+    if (compact && !pull.active) applyChrome({ footer: 0 });
   };
 
   const blurSearch = () => {
@@ -690,40 +731,35 @@ export function AppShell() {
 
   const settleChrome = () => {
     if (isSidebarViewport() || pointerDownRef.current) return;
-    if (
-      shouldHoldOverlayChrome({
-        overlayLayout: true,
-        searchFocused: searchFocusedRef.current,
-        holdCompact: searchHoldCompactRef.current,
-        keyboardInset: measureKeyboardInset(),
-        hasQuery: Boolean(useTimeline.getState().query.trim()),
-      })
-    ) {
-      applyChrome(0);
-      return;
-    }
+    const holdFooter = shouldHoldOverlayChrome({
+      overlayLayout: true,
+      searchFocused: searchFocusedRef.current,
+      holdCompact: searchHoldCompactRef.current,
+      keyboardInset: measureKeyboardInset(),
+      hasQuery: Boolean(useTimeline.getState().query.trim()),
+    });
     const maxOffset = Math.max(headerHRef.current, footerHRef.current);
-    const target = chromeSettleOffset({
-      offset: chromeOffsetRef.current,
+    const headerTarget = chromeSettleOffset({
+      offset: headerOffsetRef.current,
       maxOffset,
       scrollTop: lastScrollRef.current,
       lastDelta: lastDeltaRef.current,
     });
-    if (Math.abs(target - chromeOffsetRef.current) < 0.5) return;
-    cancelChromeAnimation();
-    const start = chromeOffsetRef.current;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      applyChrome(target);
+    const footerTarget = holdFooter
+      ? 0
+      : chromeSettleOffset({
+          offset: footerOffsetRef.current,
+          maxOffset,
+          scrollTop: lastScrollRef.current,
+          lastDelta: lastDeltaRef.current,
+        });
+    if (
+      Math.abs(headerTarget - headerOffsetRef.current) < 0.5 &&
+      Math.abs(footerTarget - footerOffsetRef.current) < 0.5
+    ) {
       return;
     }
-    const t0 = performance.now();
-    const tick = (now: number) => {
-      const t = Math.min(1, (now - t0) / CHROME_SETTLE_MS);
-      applyChrome(interpolateChromeOffset(start, target, t));
-      if (t < 1) settleRafRef.current = requestAnimationFrame(tick);
-      else settleRafRef.current = 0;
-    };
-    settleRafRef.current = requestAnimationFrame(tick);
+    animateChromeTo({ header: headerTarget, footer: footerTarget });
   };
 
   const scheduleChromeSettle = () => {
@@ -758,7 +794,7 @@ export function AppShell() {
       footerHRef.current = nextFooter;
       setHeaderH(nextHeader);
       setFooterH(nextFooter);
-      applyChrome(chromeOffsetRef.current);
+      applyChrome();
     };
     update();
     const ro = new ResizeObserver(update);
@@ -825,7 +861,7 @@ export function AppShell() {
     lastDeltaRef.current = 0;
     cancelChromeAnimation();
     cancelChromeSettleTimer();
-    applyChrome(0);
+    applyChrome({ header: 0, footer: 0 });
     setFilterOpen(false);
     setJumpOpen(false);
   }, [view]);
@@ -841,15 +877,11 @@ export function AppShell() {
         hasQuery: Boolean(query.trim()),
       })
     ) {
-      applyChrome(0);
+      cancelChromeAnimation();
+      applyChrome({ footer: 0 });
       return;
     }
-    applyChrome(
-      chromeOffsetWhenQueryCleared({
-        scrollTop: lastScrollRef.current,
-        maxOffset: Math.max(headerHRef.current, footerHRef.current),
-      }),
-    );
+    hideFooterAfterQueryCleared();
   }, [query]);
 
   useEffect(() => {
@@ -967,12 +999,7 @@ export function AppShell() {
       searchHoldCompactRef.current = false;
       applyKeyboardInset(measureKeyboardInset());
       if (!useTimeline.getState().query.trim()) {
-        applyChrome(
-          chromeOffsetWhenQueryCleared({
-            scrollTop: lastScrollRef.current,
-            maxOffset: Math.max(headerHRef.current, footerHRef.current),
-          }),
-        );
+        hideFooterAfterQueryCleared();
       }
     }, KEYBOARD_BLUR_HOLD_MS);
   };
@@ -985,27 +1012,23 @@ export function AppShell() {
     const delta = y - lastScrollRef.current;
     lastScrollRef.current = y;
     if (delta !== 0) lastDeltaRef.current = delta;
-    if (
-      shouldHoldOverlayChrome({
-        overlayLayout: true,
-        searchFocused: searchFocusedRef.current,
-        holdCompact: searchHoldCompactRef.current,
-        keyboardInset: measureKeyboardInset(),
-        hasQuery: Boolean(query.trim()),
-      })
-    ) {
-      applyChrome(0);
-      return;
-    }
+    const holdFooter = shouldHoldOverlayChrome({
+      overlayLayout: true,
+      searchFocused: searchFocusedRef.current,
+      holdCompact: searchHoldCompactRef.current,
+      keyboardInset: measureKeyboardInset(),
+      hasQuery: Boolean(query.trim()),
+    });
     const maxOffset = Math.max(headerHRef.current, footerHRef.current);
-    const prev = chromeOffsetRef.current;
-    const next = nextChromeHideOffset({
-      prev,
+    const next = nextOverlayChromeOffsets({
+      headerPrev: headerOffsetRef.current,
+      footerPrev: footerOffsetRef.current,
       delta,
       scrollTop: y,
       maxOffset,
+      holdFooter,
     });
-    if (prev < 1 && next > 1) setFilterOpen(false);
+    if (headerOffsetRef.current < 1 && next.header > 1) setFilterOpen(false);
     applyChrome(next);
     if (!pointerDownRef.current) scheduleChromeSettle();
   };

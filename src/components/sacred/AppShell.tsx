@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import { BIBLE_BOOKS } from "@/lib/timeline/bible";
 import { periodBadgeStyle, periodForBook } from "@/lib/timeline/bible-periods";
-import { CHURCH_ENTRIES } from "@/lib/timeline/church";
+import { CHURCH_ERA_NAMES, CHURCH_JUMPS, eraNameForEntryId } from "@/lib/timeline/church-view";
 import { missalJumpItems } from "@/lib/timeline/missal";
 import { countHitsByView, searchHitStripItems } from "@/lib/timeline/search";
 import { areAllBooksExpanded, useTimeline } from "@/lib/timeline/store";
@@ -71,19 +71,6 @@ import { BibleView } from "./BibleView";
 import { ChurchView } from "./ChurchView";
 import { DayHeader } from "./DayHeader";
 import { MissalView } from "./MissalView";
-
-const CHURCH_JUMPS = (() => {
-  const seen = new Set<string>();
-  const items: { id: string; label: string }[] = [];
-  for (const entry of CHURCH_ENTRIES) {
-    const label = entry.era ?? entry.title;
-    if (seen.has(label)) continue;
-    seen.add(label);
-    items.push({ id: entry.id, label });
-  }
-  items.push({ id: "francis", label: "Today" });
-  return items;
-})();
 
 const MISSAL_JUMPS = missalJumpItems();
 
@@ -202,9 +189,11 @@ function BibleJumpGrid({
 function SectionJumpList({
   items,
   onPick,
+  compact,
 }: {
-  items: { id: string; label: string }[];
+  items: { id: string; label: string; range?: string }[];
   onPick: (id: string) => void;
+  compact?: boolean;
 }) {
   return (
     <div className="py-1">
@@ -213,45 +202,59 @@ function SectionJumpList({
           key={opt.id}
           type="button"
           onClick={() => onPick(opt.id)}
-          className="flex h-12 w-full items-center px-4 text-left text-base text-fg hover:bg-gold-soft"
+          className={cn(
+            "flex w-full items-start gap-3 px-4 text-left text-fg hover:bg-gold-soft",
+            compact ? "min-h-11 py-2 text-sm" : "min-h-12 py-2.5 text-base",
+          )}
         >
-          {opt.label}
+          <span className="min-w-0 flex-1 leading-snug">{opt.label}</span>
+          {opt.range ? (
+            <span className="shrink-0 pt-0.5 tabular-nums text-gold-dim">{opt.range}</span>
+          ) : null}
         </button>
       ))}
     </div>
   );
 }
 
-function BookExpandControls({ compact }: { compact?: boolean }) {
-  const expandedBooks = useTimeline((s) => s.expandedBooks);
-  const expandAllBooks = useTimeline((s) => s.expandAllBooks);
-  const collapseAllBooks = useTimeline((s) => s.collapseAllBooks);
-  const allOpen = areAllBooksExpanded(expandedBooks);
-
+function ExpandControls({
+  compact,
+  allOpen,
+  allClosed,
+  noun,
+  onCollapse,
+  onExpand,
+}: {
+  compact?: boolean;
+  allOpen: boolean;
+  allClosed: boolean;
+  noun: string;
+  onCollapse: () => void;
+  onExpand: () => void;
+}) {
   if (compact) {
-    const allClosed = Object.values(expandedBooks).every((open) => !open);
     return (
       <div
         className="flex h-12 overflow-hidden rounded-full bg-elevated shadow-fab"
         role="group"
-        aria-label="Expand or collapse all books"
+        aria-label={`Expand or collapse all ${noun}`}
       >
         <button
           type="button"
-          onClick={collapseAllBooks}
+          onClick={onCollapse}
           disabled={allClosed}
           className="flex h-full w-12 items-center justify-center text-gold transition-colors duration-150 hover:bg-gold-soft disabled:opacity-40"
-          aria-label="Collapse all books"
+          aria-label={`Collapse all ${noun}`}
         >
           <ChevronsDownUp className="size-5" strokeWidth={1.75} />
         </button>
         <span className="my-2 w-px shrink-0 bg-line" aria-hidden />
         <button
           type="button"
-          onClick={expandAllBooks}
+          onClick={onExpand}
           disabled={allOpen}
           className="flex h-full w-12 items-center justify-center text-gold transition-colors duration-150 hover:bg-gold-soft disabled:opacity-40"
-          aria-label="Expand all books"
+          aria-label={`Expand all ${noun}`}
         >
           <ChevronsUpDown className="size-5" strokeWidth={1.75} />
         </button>
@@ -263,15 +266,15 @@ function BookExpandControls({ compact }: { compact?: boolean }) {
     <div className="grid grid-cols-2 gap-1 px-3 py-2">
       <button
         type="button"
-        onClick={collapseAllBooks}
-        disabled={Object.values(expandedBooks).every((open) => !open)}
+        onClick={onCollapse}
+        disabled={allClosed}
         className="flex h-10 items-center justify-center rounded-md border border-line-strong bg-elevated px-2 text-xs font-medium text-muted transition-colors duration-150 hover:text-fg disabled:opacity-40"
       >
         Collapse all
       </button>
       <button
         type="button"
-        onClick={expandAllBooks}
+        onClick={onExpand}
         disabled={allOpen}
         className="flex h-10 items-center justify-center rounded-md border border-line-strong bg-elevated px-2 text-xs font-medium text-muted transition-colors duration-150 hover:text-fg disabled:opacity-40"
       >
@@ -279,6 +282,44 @@ function BookExpandControls({ compact }: { compact?: boolean }) {
       </button>
     </div>
   );
+}
+
+function ViewExpandControls({ compact }: { compact?: boolean }) {
+  const view = useTimeline((s) => s.view);
+  const expandedBooks = useTimeline((s) => s.expandedBooks);
+  const expandAllBooks = useTimeline((s) => s.expandAllBooks);
+  const collapseAllBooks = useTimeline((s) => s.collapseAllBooks);
+  const expandedEras = useTimeline((s) => s.expandedEras);
+  const expandAllEras = useTimeline((s) => s.expandAllEras);
+  const collapseAllEras = useTimeline((s) => s.collapseAllEras);
+
+  if (view === "bible") {
+    return (
+      <ExpandControls
+        compact={compact}
+        noun="books"
+        allOpen={areAllBooksExpanded(expandedBooks)}
+        allClosed={Object.values(expandedBooks).every((open) => !open)}
+        onCollapse={collapseAllBooks}
+        onExpand={expandAllBooks}
+      />
+    );
+  }
+
+  if (view === "church") {
+    return (
+      <ExpandControls
+        compact={compact}
+        noun="eras"
+        allOpen={areAllBooksExpanded(expandedEras, CHURCH_ERA_NAMES)}
+        allClosed={CHURCH_ERA_NAMES.every((name) => !expandedEras[name])}
+        onCollapse={collapseAllEras}
+        onExpand={expandAllEras}
+      />
+    );
+  }
+
+  return null;
 }
 
 function FilterMenu({
@@ -381,9 +422,9 @@ function JumpBody({
 }) {
   if (view === "bible") return <BibleJumpGrid onPick={onBook} compact={compact} />;
   if (view === "church") {
-    return <SectionJumpList items={CHURCH_JUMPS} onPick={onChurch} />;
+    return <SectionJumpList items={CHURCH_JUMPS} onPick={onChurch} compact={compact} />;
   }
-  return <SectionJumpList items={MISSAL_JUMPS} onPick={onMissal} />;
+  return <SectionJumpList items={MISSAL_JUMPS} onPick={onMissal} compact={compact} />;
 }
 
 export function AppShell() {
@@ -400,6 +441,7 @@ export function AppShell() {
   const aboutOpen = useTimeline((s) => s.aboutOpen);
   const setAboutOpen = useTimeline((s) => s.setAboutOpen);
   const expandBook = useTimeline((s) => s.expandBook);
+  const expandEra = useTimeline((s) => s.expandEra);
 
   const shellRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLElement>(null);
@@ -1070,8 +1112,14 @@ export function AppShell() {
 
   const jumpToAnchor = (prefix: string, id: string) => {
     setJumpOpen(false);
+    if (prefix === "era") {
+      const era = eraNameForEntryId(id);
+      if (era) expandEra(era, true);
+    }
     requestAnimationFrame(() => {
-      document.getElementById(`${prefix}-${id}`)?.scrollIntoView({ block: "start" });
+      requestAnimationFrame(() => {
+        document.getElementById(`${prefix}-${id}`)?.scrollIntoView({ block: "start" });
+      });
     });
   };
 
@@ -1113,11 +1161,11 @@ export function AppShell() {
               onMissal={(id) => jumpToAnchor("missal", id)}
             />
           </div>
-          {view === "bible" && (
+          {view === "bible" || view === "church" ? (
             <div className="border-t border-line">
-              <BookExpandControls />
+              <ViewExpandControls />
             </div>
-          )}
+          ) : null}
           <div className="border-t border-line p-3">
             <button
               type="button"
@@ -1296,7 +1344,7 @@ export function AppShell() {
           />
 
           <div
-            className="timeline-fab-dock pointer-events-none absolute inset-x-0 z-30 px-[max(0.75rem,var(--safe-x))] lg:hidden"
+            className="timeline-fab-dock pointer-events-none absolute inset-x-0 z-40 px-[max(0.75rem,var(--safe-x))] lg:hidden"
             style={{ bottom: "var(--footer-h, 0px)" }}
           >
             <div className="pointer-events-auto relative mx-auto w-full max-w-xl">
@@ -1308,8 +1356,10 @@ export function AppShell() {
                     exit={{ opacity: 0, y: 8, scale: 0.97 }}
                     transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
                     className={cn(
-                      "absolute bottom-14 max-h-[min(28rem,50dvh)] overflow-y-auto rounded-lg bg-elevated shadow-[var(--shadow-border)]",
-                      view === "bible" ? "inset-x-0" : "left-1/2 w-72 -translate-x-1/2",
+                      "absolute inset-x-0 bottom-14 overflow-y-auto rounded-lg bg-elevated shadow-[var(--shadow-border)]",
+                      view === "bible"
+                        ? "max-h-[min(28rem,50dvh)]"
+                        : "max-h-[calc(100dvh-var(--footer-h,0px)-5.5rem-env(safe-area-inset-top,0px))]",
                     )}
                   >
                     <JumpBody
@@ -1332,7 +1382,7 @@ export function AppShell() {
                   Jump to…
                 </button>
                 <div className="flex justify-end">
-                  {view === "bible" && <BookExpandControls compact />}
+                  {(view === "bible" || view === "church") && <ViewExpandControls compact />}
                 </div>
               </div>
             </div>

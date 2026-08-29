@@ -41,4 +41,21 @@ describe("areAllBooksExpanded", () => {
       false,
     );
   });
+
+  it("is true when every Church era is open", () => {
+    assert.equal(
+      areAllBooksExpanded({ "Apostolic Age": true, Contemporary: true }, [
+        "Apostolic Age",
+        "Contemporary",
+      ]),
+      true,
+    );
+    assert.equal(
+      areAllBooksExpanded({ "Apostolic Age": true, Contemporary: false }, [
+        "Apostolic Age",
+        "Contemporary",
+      ]),
+      false,
+    );
+  });
 });

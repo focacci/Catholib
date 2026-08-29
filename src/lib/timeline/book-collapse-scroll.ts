@@ -45,7 +45,10 @@ function cssVarPx(element: Element, property: string): number {
   return cssLengthToPx(value, rootFontSize);
 }
 
-export function pinSectionToScrollerTop(section: HTMLElement): void {
+export function pinSectionToScrollerTop(
+  section: HTMLElement,
+  opts?: { nested?: boolean },
+): void {
   const scroller = document.getElementById("timeline-scroll");
   if (!(scroller instanceof HTMLElement)) {
     section.scrollIntoView({ block: "start" });
@@ -54,7 +57,7 @@ export function pinSectionToScrollerTop(section: HTMLElement): void {
   const cssChrome = cssVarPx(scroller, "--chrome-h");
   const header = document.getElementById("timeline-chrome");
   const headerHeight = header instanceof HTMLElement ? header.offsetHeight : cssChrome;
-  const groupHeaderPx = cssVarPx(scroller, "--sticky-l1");
+  const groupHeaderPx = opts?.nested === false ? 0 : cssVarPx(scroller, "--sticky-l1");
   const chromeHeight = collapsePinStackOffset(cssChrome, headerHeight, groupHeaderPx);
   const top = scrollerTopForSection({
     scrollTop: scroller.scrollTop,

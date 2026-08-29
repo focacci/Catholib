@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { BIBLE_BOOKS } from "./bible.ts";
+import { CHURCH_ERA_NAMES } from "./church-view.ts";
 import type { FilterId, TimelineArtifact, ViewMode } from "./types.ts";
 
 interface TimelineState {
@@ -9,6 +10,7 @@ interface TimelineState {
   selected: TimelineArtifact | null;
   aboutOpen: boolean;
   expandedBooks: Record<string, boolean>;
+  expandedEras: Record<string, boolean>;
   setView: (view: ViewMode) => void;
   setFilter: (filter: FilterId) => void;
   setQuery: (query: string) => void;
@@ -19,6 +21,10 @@ interface TimelineState {
   expandBook: (name: string, open?: boolean) => void;
   expandAllBooks: () => void;
   collapseAllBooks: () => void;
+  toggleEra: (name: string) => void;
+  expandEra: (name: string, open?: boolean) => void;
+  expandAllEras: () => void;
+  collapseAllEras: () => void;
 }
 
 const BOOK_NAMES = BIBLE_BOOKS.map((book) => book.name);
@@ -53,6 +59,8 @@ export function areAllBooksExpanded(
   return names.length > 0 && names.every((name) => expanded[name]);
 }
 
+const DEFAULT_EXPANDED_ERAS = mapAllBooks(CHURCH_ERA_NAMES, true);
+
 export const useTimeline = create<TimelineState>((set) => ({
   view: "bible",
   filter: "all",
@@ -60,6 +68,7 @@ export const useTimeline = create<TimelineState>((set) => ({
   selected: null,
   aboutOpen: false,
   expandedBooks: DEFAULT_EXPANDED,
+  expandedEras: DEFAULT_EXPANDED_ERAS,
   setView: (view) => set({ view, filter: "all" }),
   setFilter: (filter) => set({ filter }),
   setQuery: (query) => set({ query }),
@@ -76,4 +85,14 @@ export const useTimeline = create<TimelineState>((set) => ({
     })),
   expandAllBooks: () => set({ expandedBooks: mapAllBooks(BOOK_NAMES, true) }),
   collapseAllBooks: () => set({ expandedBooks: mapAllBooks(BOOK_NAMES, false) }),
+  toggleEra: (name) =>
+    set((s) => ({
+      expandedEras: { ...s.expandedEras, [name]: !s.expandedEras[name] },
+    })),
+  expandEra: (name, open = true) =>
+    set((s) => ({
+      expandedEras: { ...s.expandedEras, [name]: open },
+    })),
+  expandAllEras: () => set({ expandedEras: mapAllBooks(CHURCH_ERA_NAMES, true) }),
+  collapseAllEras: () => set({ expandedEras: mapAllBooks(CHURCH_ERA_NAMES, false) }),
 }));

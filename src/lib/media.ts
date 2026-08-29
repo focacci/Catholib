@@ -1,10 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 
 /** Tailwind `md` — treat this width and above as desktop. */
 export const DESKTOP_MQ = "(min-width: 768px)";
 
 /** Tailwind `lg` — sidebar jump list; header and footer stay put. */
 export const SIDEBAR_MQ = "(min-width: 1024px)";
+
+/**
+ * Two-column content: desktop widths, or any landscape viewport (phones
+ * included). Must stay aligned with the `dual` variant in `styles.css`.
+ */
+export const DUAL_COLUMN_MQ = "(min-width: 768px), (orientation: landscape)";
 
 export function isDesktopViewport(): boolean {
   return typeof window !== "undefined" && window.matchMedia(DESKTOP_MQ).matches;
@@ -20,6 +26,22 @@ export function useIsDesktop(): boolean {
     return () => mq.removeEventListener("change", update);
   }, []);
   return desktop;
+}
+
+export function isDualColumnViewport(): boolean {
+  return typeof window !== "undefined" && window.matchMedia(DUAL_COLUMN_MQ).matches;
+}
+
+export function useDualColumn(): boolean {
+  const [dual, setDual] = useState(isDualColumnViewport);
+  useLayoutEffect(() => {
+    const mq = window.matchMedia(DUAL_COLUMN_MQ);
+    const update = () => setDual(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+  return dual;
 }
 
 export function isSidebarViewport(): boolean {

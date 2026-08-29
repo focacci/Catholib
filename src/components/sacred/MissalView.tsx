@@ -5,7 +5,7 @@ import { sectionArtifactsForQuery } from "@/lib/timeline/search";
 import { useTimeline } from "@/lib/timeline/store";
 import { MISSAL_KIND_LABEL } from "@/lib/timeline/types";
 import { estimateSectionBodyHeight } from "@/lib/timeline/viewport-gate";
-import { ArtifactCard } from "./ArtifactCard";
+import { ArtifactColumns } from "./ArtifactColumns";
 import { TodayOffice } from "./TodayOffice";
 import { ViewportGate } from "./ViewportGate";
 
@@ -21,12 +21,7 @@ export const MissalView = memo(function MissalView() {
     return catalog
       .map((section, index) => {
         const haystack = `${section.title} ${section.subtitle ?? ""} ${section.kind} ${MISSAL_KIND_LABEL[section.kind]}`;
-        const visible = sectionArtifactsForQuery(
-          section.artifacts,
-          q,
-          filter,
-          haystack,
-        );
+        const visible = sectionArtifactsForQuery(section.artifacts, q, filter, haystack);
         if (visible.length === 0) return null;
         const showKind = section.kind !== catalog[index - 1]?.kind;
         return { section, visible, showKind };
@@ -37,8 +32,8 @@ export const MissalView = memo(function MissalView() {
   if (sections.length === 0) {
     return (
       <p className="px-4 py-16 text-center text-sm text-muted">
-        No Missal entries match these filters. Catalog cards from Missale Meum,
-        plus today's rosary from the Rosary Center.
+        No Missal entries match these filters. Catalog cards from Missale Meum, plus today's rosary
+        from the Rosary Center.
       </p>
     );
   }
@@ -61,34 +56,28 @@ export const MissalView = memo(function MissalView() {
             </p>
           )}
           <div className="px-2 pb-5">
-            {section.id !== "today" && (
-              <div className="flex items-baseline gap-3 pl-[var(--rail-pad)]">
-                <h3 className="font-serif text-lg font-semibold leading-snug text-fg">
-                  {section.title}
-                </h3>
-              </div>
-            )}
-            {section.id === "today" ? (
-              <div className="pl-[var(--rail-pad)]">
-                <TodayOffice />
-              </div>
-            ) : section.subtitle ? (
-              <p className="pl-[var(--rail-pad)] pt-1 text-sm text-muted">
-                {section.subtitle}
-              </p>
-            ) : null}
             <ViewportGate
-              className="mt-2.5 flex flex-col gap-2 pl-[var(--rail-pad)]"
+              className="pt-0"
               estimateHeight={estimateSectionBodyHeight(visible, cardWidth)}
             >
-              {visible.map((a) => (
-                <ArtifactCard
-                  key={a.id}
-                  artifact={a}
-                  context={section.title}
-                  onOpen={openArtifact}
-                />
-              ))}
+              <ArtifactColumns
+                artifacts={visible}
+                context={section.title}
+                onOpen={openArtifact}
+                heading={
+                  section.id === "today" ? undefined : (
+                    <div className="pl-[var(--rail-pad)]">
+                      <h3 className="font-serif text-lg font-semibold leading-snug text-fg">
+                        {section.title}
+                      </h3>
+                      {section.subtitle ? (
+                        <p className="pt-1 text-sm text-muted">{section.subtitle}</p>
+                      ) : null}
+                    </div>
+                  )
+                }
+                side={section.id === "today" ? <TodayOffice /> : undefined}
+              />
             </ViewportGate>
           </div>
         </section>

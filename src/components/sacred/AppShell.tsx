@@ -606,7 +606,7 @@ export function AppShell() {
               className="h-full overflow-y-auto [overflow-anchor:none]"
             >
               {!isSidebar && <div aria-hidden className="shrink-0" style={{ height: headerH }} />}
-              <div className="mx-auto w-full max-w-xl">
+              <div className="mx-auto w-full max-w-xl dual:max-w-6xl">
                 {view === "bible" ? (
                   <BibleView />
                 ) : view === "church" ? (

@@ -1,17 +1,20 @@
 import { memo, useMemo } from "react";
-import { useTimelineCardWidth } from "@/lib/timeline/card-width";
+import { useTimelineLayout } from "@/lib/timeline/card-width";
 import { CHURCH_ENTRIES } from "@/lib/timeline/church";
 import { sectionArtifactsForQuery } from "@/lib/timeline/search";
 import { useTimeline } from "@/lib/timeline/store";
-import { estimateSectionBodyHeight } from "@/lib/timeline/viewport-gate";
-import { ArtifactCard } from "./ArtifactCard";
+import {
+  estimateDualSectionBodyHeight,
+  estimateSectionBodyHeight,
+} from "@/lib/timeline/viewport-gate";
+import { ArtifactColumns } from "./ArtifactColumns";
 import { ViewportGate } from "./ViewportGate";
 
 export const ChurchView = memo(function ChurchView() {
   const query = useTimeline((s) => s.query);
   const filter = useTimeline((s) => s.filter);
   const openArtifact = useTimeline((s) => s.openArtifact);
-  const cardWidth = useTimelineCardWidth();
+  const { dualColumn, cardWidth, artworkWidth } = useTimelineLayout();
 
   const q = query.trim();
   const sections = useMemo(
@@ -33,8 +36,7 @@ export const ChurchView = memo(function ChurchView() {
   if (sections.length === 0) {
     return (
       <p className="px-4 py-16 text-center text-sm text-muted">
-        No Church entries match these filters. Sample data from approved sources
-        only.
+        No Church entries match these filters. Sample data from approved sources only.
       </p>
     );
   }
@@ -57,26 +59,27 @@ export const ChurchView = memo(function ChurchView() {
             </p>
           )}
           <div className="px-2 pb-5">
-            <div className="flex items-baseline gap-3 pl-[var(--rail-pad)]">
-              <span className="font-serif text-xl tabular-nums text-gold">
-                {entry.year}
-              </span>
-              <h3 className="font-serif text-lg font-semibold leading-snug text-fg">
-                {entry.title}
-              </h3>
-            </div>
             <ViewportGate
-              className="mt-2.5 flex flex-col gap-2 pl-[var(--rail-pad)]"
-              estimateHeight={estimateSectionBodyHeight(visible, cardWidth)}
+              className="pt-0"
+              estimateHeight={
+                dualColumn
+                  ? estimateDualSectionBodyHeight(visible, cardWidth, artworkWidth)
+                  : estimateSectionBodyHeight(visible, cardWidth)
+              }
             >
-              {visible.map((a) => (
-                <ArtifactCard
-                  key={a.id}
-                  artifact={a}
-                  context={entry.title}
-                  onOpen={openArtifact}
-                />
-              ))}
+              <ArtifactColumns
+                artifacts={visible}
+                context={entry.title}
+                onOpen={openArtifact}
+                heading={
+                  <div className="flex items-baseline gap-3 pl-[var(--rail-pad)]">
+                    <span className="font-serif text-xl tabular-nums text-gold">{entry.year}</span>
+                    <h3 className="font-serif text-lg font-semibold leading-snug text-fg">
+                      {entry.title}
+                    </h3>
+                  </div>
+                }
+              />
             </ViewportGate>
           </div>
         </section>

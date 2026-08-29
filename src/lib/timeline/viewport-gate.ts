@@ -1,4 +1,5 @@
 import { artworkHeightForWidth } from "./artwork-size.ts";
+import { partitionTimelineColumns, type ColumnItem } from "./columns.ts";
 
 const TEXT_CARD_PX = 96;
 const CHAPTER_CHROME_PX = 88;
@@ -14,6 +15,7 @@ export function estimateArtifactListHeight(
   artifacts: readonly { imageUrl?: string }[],
   cardWidthPx = DEFAULT_CARD_IMAGE_WIDTH_PX,
 ): number {
+  if (artifacts.length === 0) return 0;
   let height = 0;
   for (const artifact of artifacts) {
     if (artifact.imageUrl) {
@@ -39,6 +41,34 @@ export function estimateSectionBodyHeight(
   cardWidthPx = DEFAULT_CARD_IMAGE_WIDTH_PX,
 ): number {
   return SECTION_CHROME_PX + estimateArtifactListHeight(artifacts, cardWidthPx);
+}
+
+/** Dual-column chapter: spanning header, then max(text column, artwork column). */
+export function estimateDualChapterBlockHeight(
+  chapter: { artifacts: readonly ColumnItem[] },
+  mainWidthPx: number,
+  artworkWidthPx: number,
+): number {
+  const { main, artwork } = partitionTimelineColumns(chapter.artifacts);
+  const columns = Math.max(
+    estimateArtifactListHeight(main, mainWidthPx),
+    estimateArtifactListHeight(artwork, artworkWidthPx),
+  );
+  return CHAPTER_CHROME_PX + columns;
+}
+
+/** Dual-column church section: spanning title, then max(text column, artwork column). */
+export function estimateDualSectionBodyHeight(
+  artifacts: readonly ColumnItem[],
+  mainWidthPx: number,
+  artworkWidthPx: number,
+): number {
+  const { main, artwork } = partitionTimelineColumns(artifacts);
+  const columns = Math.max(
+    estimateArtifactListHeight(main, mainWidthPx),
+    estimateArtifactListHeight(artwork, artworkWidthPx),
+  );
+  return SECTION_CHROME_PX + columns;
 }
 
 export function containIntrinsicSize(estimateHeight: number): string {

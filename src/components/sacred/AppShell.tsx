@@ -148,7 +148,7 @@ function BookExpandControls({ compact }: { compact?: boolean }) {
     const allClosed = Object.values(expandedBooks).every((open) => !open);
     return (
       <div
-        className="flex h-12 overflow-hidden rounded-full bg-elevated shadow-[var(--shadow-border)]"
+        className="flex h-12 overflow-hidden rounded-full bg-elevated shadow-fab"
         role="group"
         aria-label="Expand or collapse all books"
       >
@@ -713,7 +713,7 @@ export function AppShell() {
           </nav>
 
           <div
-            className="pointer-events-none absolute inset-x-0 z-30 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:hidden"
+            className="timeline-fab-dock pointer-events-none absolute inset-x-0 z-30 px-3 lg:hidden"
             style={{ bottom: "var(--footer-h, 0px)" }}
           >
             <div className="pointer-events-auto relative mx-auto w-full max-w-xl">
@@ -744,7 +744,7 @@ export function AppShell() {
                 <button
                   type="button"
                   onClick={() => setJumpOpen((v) => !v)}
-                  className="flex h-12 min-w-32 items-center justify-center rounded-full bg-elevated px-5 font-serif text-lg text-gold shadow-[var(--shadow-border)] transition-transform duration-150 ease-out active:scale-95"
+                  className="flex h-12 min-w-32 items-center justify-center rounded-full bg-elevated px-5 font-serif text-lg text-gold shadow-fab transition-transform duration-150 ease-out active:scale-95"
                 >
                   Jump to…
                 </button>

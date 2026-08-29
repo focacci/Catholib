@@ -3,8 +3,23 @@ import { cccParagraphFor } from "./ccc.ts";
 import { CHURCH_ENTRIES } from "./church.ts";
 import { missalSections } from "./missal.ts";
 import { eventPlaceHaystack } from "./place.ts";
-import { MISSAL_KIND_LABEL } from "./types.ts";
+import { MISSAL_KIND_LABEL, VIEW_LABEL } from "./types.ts";
 import type { FilterId, TimelineArtifact, ViewMode } from "./types.ts";
+
+export const SEARCH_HIT_VIEW_ORDER: ViewMode[] = ["bible", "church", "missal"];
+
+/** Hit counts in Bible → Church → Missal order, matching the footer tabs. */
+export function searchHitStripItems(counts: Record<ViewMode, number>): {
+  id: ViewMode;
+  label: string;
+  count: number;
+}[] {
+  return SEARCH_HIT_VIEW_ORDER.map((id) => ({
+    id,
+    label: VIEW_LABEL[id],
+    count: counts[id],
+  }));
+}
 
 export interface SearchHit {
   id: string;
@@ -119,10 +134,7 @@ export function collectHits(query: string, filter: FilterId): SearchHit[] {
   return hits;
 }
 
-export function countHitsByView(
-  query: string,
-  filter: FilterId,
-): Record<ViewMode, number> {
+export function countHitsByView(query: string, filter: FilterId): Record<ViewMode, number> {
   const counts: Record<ViewMode, number> = { bible: 0, church: 0, missal: 0 };
   const q = query.trim().toLowerCase();
   if (!q && filter === "all") return counts;
@@ -197,11 +209,7 @@ export function sectionArtifactsForQuery(
   return [];
 }
 
-export function bookMatchesSearch(
-  name: string,
-  abbreviation: string,
-  query: string,
-): boolean {
+export function bookMatchesSearch(name: string, abbreviation: string, query: string): boolean {
   const q = query.trim().toLowerCase();
   if (!q) return false;
   return matchesQuery(`${name} ${abbreviation}`, q);

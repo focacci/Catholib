@@ -62,6 +62,7 @@
     -moz-osx-font-smoothing: grayscale;
     background: var(--color-bg);
     color: var(--color-fg);
+    overscroll-behavior: none;
     /* Landscape Dynamic Island sits on a short edge; keep both sides clear. */
     --safe-x: max(env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px));
   }
@@ -69,6 +70,8 @@
   body {
     margin: 0;
     min-height: 100dvh;
+    overflow: hidden;
+    overscroll-behavior: none;
     background: var(--color-bg);
     color: var(--color-fg);
     font-family: var(--font-sans);
@@ -137,8 +140,9 @@
 }
 
 /*
- * Search is focused or the software keyboard is up: drop tabs, home-indicator
- * padding, and the jump dock so the search row sits on the keyboard.
+ * Search is focused or the software keyboard is up: drop home-indicator
+ * padding and the jump dock so the search row sits on the keyboard.
+ * Keep Bible / Church / Missal docked at the screen bottom (behind the keys).
  */
 .library-nav[data-keyboard] {
   padding-bottom: 0;
@@ -147,10 +151,6 @@
 
 .library-nav[data-keyboard] input[type="search"] {
   touch-action: none;
-}
-
-.library-nav[data-keyboard] .library-tabs {
-  display: none;
 }
 
 [data-keyboard] .timeline-fab-dock {
@@ -165,7 +165,7 @@ input[type="search"]::-webkit-search-results-decoration {
   appearance: none;
 }
 
-/* Inset only the timeline, so header and footer bars stay full-bleed. */
 #timeline-scroll {
   padding-inline: var(--safe-x);
+  overscroll-behavior-y: auto;
 }

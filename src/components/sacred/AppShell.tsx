@@ -24,11 +24,10 @@ import { BIBLE_BOOKS } from "@/lib/timeline/bible";
 import { periodBadgeStyle, periodForBook } from "@/lib/timeline/bible-periods";
 import { CHURCH_ENTRIES } from "@/lib/timeline/church";
 import { missalJumpItems } from "@/lib/timeline/missal";
-import { countHitsByView } from "@/lib/timeline/search";
+import { countHitsByView, searchHitStripItems } from "@/lib/timeline/search";
 import { areAllBooksExpanded, useTimeline } from "@/lib/timeline/store";
 import {
   VIEW_FILTERS,
-  VIEW_LABEL,
   type BibleBook,
   type FilterChip,
   type FilterId,
@@ -59,6 +58,7 @@ import {
   shouldCaptureSearchBarPull,
   shouldCompactLibraryChrome,
   shouldPullDismissSearchBar,
+  stabilizeFocusedKeyboardLift,
   visualViewportGap,
 } from "@/lib/timeline/keyboard-inset";
 import { cn } from "@/lib/utils";
@@ -402,7 +402,8 @@ export function AppShell() {
   const shellRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLElement>(null);
   const headerRef = useRef<HTMLElement>(null);
-  const footerRef = useRef<HTMLElement>(null);
+  const footerRef = useRef<HTMLDivElement>(null);
+  const searchNavRef = useRef<HTMLElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const lastScrollRef = useRef(0);
   const lastDeltaRef = useRef(0);
@@ -464,6 +465,7 @@ export function AppShell() {
     if (footer) {
       footer.style.transform =
         overlay && progress ? `translate3d(0, ${progress * footerH}px, 0)` : "";
+      footer.style.willChange = overlay && progress ? "transform" : "";
       footer.toggleAttribute("inert", footerGone);
       footer.style.pointerEvents = footerGone ? "none" : "";
     }
@@ -502,35 +504,45 @@ export function AppShell() {
         lift = 0;
       }
     }
+    lift = stabilizeFocusedKeyboardLift({
+      measuredLift: lift,
+      lastOpenLift: lastKeyboardInsetRef.current,
+      searchFocused: searchFocusedRef.current,
+      pulling: pull.active || pull.riding,
+      freezeOpenLift: pointerDownRef.current && !pull.active,
+    });
     const compact = shouldCompactLibraryChrome({
       overlayLayout: overlay,
       searchFocused: searchFocusedRef.current,
       holdCompact: searchHoldCompactRef.current || pull.active || pull.riding,
       keyboardInset: Math.max(inset, lift),
     });
-    if (isSoftwareKeyboardOpen(inset) && !pull.active && !pull.riding) {
-      lastKeyboardInsetRef.current = inset;
+    if (isSoftwareKeyboardOpen(lift) && !pull.active && !pull.riding) {
+      lastKeyboardInsetRef.current = lift;
     }
 
+    const searchNav = searchNavRef.current;
     const footer = footerRef.current;
     const shell = shellRef.current;
     const scroll = scrollRef.current;
-    if (footer) {
+    if (searchNav) {
       const pin = overlaySearchBarPinStyle(lift);
       if (pin) {
-        footer.style.position = pin.position;
-        footer.style.left = pin.left;
-        footer.style.right = pin.right;
-        footer.style.bottom = pin.bottom;
+        searchNav.style.position = pin.position;
+        searchNav.style.left = pin.left;
+        searchNav.style.right = pin.right;
+        searchNav.style.bottom = pin.bottom;
+        searchNav.style.zIndex = "21";
       } else {
-        footer.style.position = "";
-        footer.style.left = "";
-        footer.style.right = "";
-        footer.style.bottom = "";
+        searchNav.style.position = "";
+        searchNav.style.left = "";
+        searchNav.style.right = "";
+        searchNav.style.bottom = "";
+        searchNav.style.zIndex = "";
       }
-      footer.style.transform = "";
-      footer.toggleAttribute("data-keyboard", compact);
+      searchNav.toggleAttribute("data-keyboard", compact);
     }
+    if (footer) footer.toggleAttribute("data-keyboard", compact);
     if (shell) {
       shell.style.setProperty("--keyboard-inset", `${lift}px`);
       shell.toggleAttribute("data-keyboard", compact);
@@ -737,15 +749,26 @@ export function AppShell() {
       if (window.scrollY) window.scrollTo(0, 0);
       applyKeyboardInsetRef.current(measureKeyboardInset());
     };
+    const syncFromVisualScroll = () => {
+      if (window.scrollY) window.scrollTo(0, 0);
+      if (
+        searchFocusedRef.current &&
+        !searchPullRef.current.active &&
+        !searchPullRef.current.riding
+      ) {
+        return;
+      }
+      applyKeyboardInsetRef.current(measureKeyboardInset());
+    };
     sync();
     const vv = window.visualViewport;
     vv?.addEventListener("resize", sync);
-    vv?.addEventListener("scroll", sync);
+    vv?.addEventListener("scroll", syncFromVisualScroll);
     vk?.addEventListener("geometrychange", sync);
     window.addEventListener("resize", sync);
     return () => {
       vv?.removeEventListener("resize", sync);
-      vv?.removeEventListener("scroll", sync);
+      vv?.removeEventListener("scroll", syncFromVisualScroll);
       vk?.removeEventListener("geometrychange", sync);
       window.removeEventListener("resize", sync);
       if (searchHoldTimerRef.current) {
@@ -764,9 +787,6 @@ export function AppShell() {
   }, [isSidebar]);
 
   const hitCounts = useMemo(() => countHitsByView(query, filter), [filter, query]);
-  const otherViews = (["bible", "church", "missal"] as const).filter(
-    (id) => id !== view && hitCounts[id] > 0,
-  );
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: 0 });
@@ -775,7 +795,6 @@ export function AppShell() {
     cancelChromeAnimation();
     cancelChromeSettleTimer();
     applyChrome(0);
-    if (searchFocusedRef.current) blurSearch();
     setFilterOpen(false);
     setJumpOpen(false);
   }, [view]);
@@ -951,7 +970,7 @@ export function AppShell() {
   return (
     <div
       ref={shellRef}
-      className="relative flex h-dvh flex-col overflow-hidden bg-bg text-fg"
+      className="relative flex h-dvh flex-col overflow-hidden overscroll-none bg-bg text-fg"
       style={
         {
           "--chrome-h": isSidebar ? "0px" : `${headerH}px`,
@@ -1018,87 +1037,99 @@ export function AppShell() {
             </main>
           </div>
 
-          <nav
+          <div
             ref={footerRef}
-            className="library-nav shrink-0 border-t border-line bg-bg pb-[max(0.5rem,env(safe-area-inset-bottom))] max-lg:absolute max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-20 max-lg:will-change-transform"
-            aria-label="Library"
-            onPointerDown={onSearchChromePointerDown}
+            className="library-footer shrink-0 max-lg:absolute max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-20"
           >
-            {query.trim() && (
-              <p className="px-3 pt-2 text-sm text-muted">
-                {hitCounts[view] === 0
-                  ? `No matches in ${VIEW_LABEL[view]}`
-                  : `${hitCounts[view]} in ${VIEW_LABEL[view]}`}
-                {otherViews.map((id) => (
-                  <span key={id}>
-                    {" · "}
+            <nav
+              ref={searchNavRef}
+              className="library-nav border-t border-line bg-bg"
+              aria-label="Library"
+              onPointerDown={onSearchChromePointerDown}
+            >
+              {query.trim() ? (
+                <div className="px-3 pt-2">
+                  <div
+                    className="grid grid-cols-3 p-0.5 text-center text-sm"
+                    aria-label="Search hits by view"
+                  >
+                    {searchHitStripItems(hitCounts).map(({ id, label, count }) => (
+                      <button
+                        key={id}
+                        type="button"
+                        onPointerDown={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }}
+                        onClick={() => setView(id)}
+                        className={cn(
+                          "min-w-0 truncate px-1",
+                          id === view ? "text-fg" : "text-gold",
+                        )}
+                      >
+                        {count} in {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              <div className="flex items-center gap-2 px-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setAboutOpen(true)}
+                  className="flex size-11 shrink-0 items-center justify-center rounded-md text-gold hover:bg-gold-soft"
+                  aria-label="About and sources"
+                >
+                  <Info className="size-5" strokeWidth={1.75} />
+                </button>
+                <label className="relative min-w-0 flex-1">
+                  <span className="sr-only">Search Scripture, Magisterium, and Missal</span>
+                  <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-subtle" />
+                  <input
+                    ref={searchRef}
+                    type="search"
+                    inputMode="search"
+                    enterKeyHint="search"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="none"
+                    spellCheck={false}
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    onFocus={onSearchFocus}
+                    onBlur={onSearchBlur}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        e.currentTarget.blur();
+                      }
+                    }}
+                    placeholder="Search"
+                    className="h-10 w-full rounded-md border border-line-strong bg-elevated pr-9 pl-8 text-base text-fg outline-none placeholder:text-subtle focus:border-gold"
+                  />
+                  {query && (
                     <button
                       type="button"
-                      className="text-gold underline-offset-2 hover:underline"
-                      onClick={() => setView(id)}
+                      onClick={() => setQuery("")}
+                      className="absolute top-1/2 right-0.5 flex size-8 -translate-y-1/2 items-center justify-center text-muted"
+                      aria-label="Clear search"
                     >
-                      {hitCounts[id]} in {VIEW_LABEL[id]}
+                      <X className="size-3.5" />
                     </button>
-                  </span>
-                ))}
-              </p>
-            )}
-
-            <div className="flex items-center gap-2 px-3 pt-2">
-              <button
-                type="button"
-                onClick={() => setAboutOpen(true)}
-                className="flex size-11 shrink-0 items-center justify-center rounded-md text-gold hover:bg-gold-soft"
-                aria-label="About and sources"
-              >
-                <Info className="size-5" strokeWidth={1.75} />
-              </button>
-              <label className="relative min-w-0 flex-1">
-                <span className="sr-only">Search Scripture, Magisterium, and Missal</span>
-                <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-subtle" />
-                <input
-                  ref={searchRef}
-                  type="search"
-                  inputMode="search"
-                  enterKeyHint="search"
-                  autoComplete="off"
-                  autoCorrect="off"
-                  autoCapitalize="none"
-                  spellCheck={false}
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  onFocus={onSearchFocus}
-                  onBlur={onSearchBlur}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      e.currentTarget.blur();
-                    }
-                  }}
-                  placeholder="Search"
-                  className="h-10 w-full rounded-md border border-line-strong bg-elevated pr-9 pl-8 text-base text-fg outline-none placeholder:text-subtle focus:border-gold"
+                  )}
+                </label>
+                <FilterMenu
+                  filters={VIEW_FILTERS[view]}
+                  value={filter}
+                  open={filterOpen}
+                  onOpenChange={setFilterOpen}
+                  onChange={setFilter}
                 />
-                {query && (
-                  <button
-                    type="button"
-                    onClick={() => setQuery("")}
-                    className="absolute top-1/2 right-0.5 flex size-8 -translate-y-1/2 items-center justify-center text-muted"
-                    aria-label="Clear search"
-                  >
-                    <X className="size-3.5" />
-                  </button>
-                )}
-              </label>
-              <FilterMenu
-                filters={VIEW_FILTERS[view]}
-                value={filter}
-                open={filterOpen}
-                onOpenChange={setFilterOpen}
-                onChange={setFilter}
-              />
-            </div>
+              </div>
+            </nav>
 
-            <div className="library-tabs px-3 pt-2">
+            <div className="library-tabs bg-bg px-3 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
               <div
                 role="tablist"
                 aria-label="Timeline view"
@@ -1113,6 +1144,9 @@ export function AppShell() {
                     type="button"
                     role="tab"
                     aria-selected={view === id}
+                    onPointerDown={(e) => {
+                      e.preventDefault();
+                    }}
                     onClick={() => setView(id)}
                     className={cn(
                       "flex h-10 items-center justify-center gap-1 rounded-sm text-base font-medium transition-colors duration-150",
@@ -1125,7 +1159,7 @@ export function AppShell() {
                 ))}
               </div>
             </div>
-          </nav>
+          </div>
 
           <div
             aria-hidden

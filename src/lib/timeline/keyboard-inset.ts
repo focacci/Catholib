@@ -41,9 +41,25 @@ export function visualViewportGap(args: {
   visualOffsetTop: number;
   virtualKeyboardHeight?: number;
 }): number {
-  const visual = Math.max(0, args.layoutBottom - args.visualHeight - args.visualOffsetTop);
+  // Negative offsetTop is iOS rubber-band at the top; do not treat it as more keyboard.
+  const offset = Math.max(0, args.visualOffsetTop);
+  const visual = Math.max(0, args.layoutBottom - args.visualHeight - offset);
   const virtualKb = Math.max(0, args.virtualKeyboardHeight ?? 0);
   return Math.max(visual, virtualKb);
+}
+
+/** While search is focused, do not let overscroll raise the bar above the open keyboard. */
+export function stabilizeFocusedKeyboardLift(args: {
+  measuredLift: number;
+  lastOpenLift: number;
+  searchFocused: boolean;
+  pulling: boolean;
+  freezeOpenLift: boolean;
+}): number {
+  if (args.pulling) return args.measuredLift;
+  if (!args.searchFocused || args.lastOpenLift <= 0) return args.measuredLift;
+  if (args.freezeOpenLift) return args.lastOpenLift;
+  return Math.min(args.measuredLift, args.lastOpenLift);
 }
 
 export function keyboardInsetFromViewport(args: {

@@ -11,6 +11,7 @@ import {
   shouldCaptureSearchBarPull,
   shouldCompactLibraryChrome,
   shouldPullDismissSearchBar,
+  stabilizeFocusedKeyboardLift,
   visualViewportGap,
 } from "./keyboard-inset.ts";
 
@@ -93,6 +94,17 @@ describe("keyboardInsetFromViewport", () => {
         visualOffsetTop: 0,
       }),
       0,
+    );
+  });
+
+  it("does not treat a negative visualViewport offsetTop (top rubber-band) as more keyboard", () => {
+    assert.equal(
+      visualViewportGap({
+        layoutBottom: 714,
+        visualHeight: 404,
+        visualOffsetTop: -48,
+      }),
+      310,
     );
   });
 
@@ -315,6 +327,47 @@ describe("ridingSearchBarLift", () => {
         rideCeiling: 120,
         startGap: 310,
         elapsedMs: 0,
+      }),
+      120,
+    );
+  });
+});
+
+describe("stabilizeFocusedKeyboardLift", () => {
+  it("does not let overscroll raise the bar while search is focused", () => {
+    assert.equal(
+      stabilizeFocusedKeyboardLift({
+        measuredLift: 360,
+        lastOpenLift: 310,
+        searchFocused: true,
+        pulling: false,
+        freezeOpenLift: false,
+      }),
+      310,
+    );
+  });
+
+  it("freezes the open height while the timeline is being dragged", () => {
+    assert.equal(
+      stabilizeFocusedKeyboardLift({
+        measuredLift: 200,
+        lastOpenLift: 310,
+        searchFocused: true,
+        pulling: false,
+        freezeOpenLift: true,
+      }),
+      310,
+    );
+  });
+
+  it("still follows the finger while pulling the search bar closed", () => {
+    assert.equal(
+      stabilizeFocusedKeyboardLift({
+        measuredLift: 120,
+        lastOpenLift: 310,
+        searchFocused: true,
+        pulling: true,
+        freezeOpenLift: false,
       }),
       120,
     );

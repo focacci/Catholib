@@ -65,11 +65,7 @@ export const MissalView = memo(function MissalView() {
                 context={section.title}
                 onOpen={openArtifact}
                 heading={
-                  section.id === "today" ? (
-                    <div className="pl-[var(--rail-pad)]">
-                      <TodayOffice />
-                    </div>
-                  ) : (
+                  section.id === "today" ? undefined : (
                     <div className="pl-[var(--rail-pad)]">
                       <h3 className="font-serif text-lg font-semibold leading-snug text-fg">
                         {section.title}
@@ -80,6 +76,7 @@ export const MissalView = memo(function MissalView() {
                     </div>
                   )
                 }
+                side={section.id === "today" ? <TodayOffice /> : undefined}
               />
             </ViewportGate>
           </div>

@@ -61,15 +61,27 @@ describe("timeline height estimates", () => {
     const artifacts = [{}, {}, { type: "artwork", imageUrl: wikimediaFileUrl("El_Greco_006.jpg") }];
     const stacked = estimateChapterBlockHeight({ artifacts }, 360);
     const dual = estimateDualChapterBlockHeight({ artifacts }, 360, 360);
+    const chrome =
+      estimateChapterBlockHeight({ artifacts: [{}] }) - estimateArtifactListHeight([{}]);
+    const columns = Math.max(
+      estimateArtifactListHeight([{}, {}]),
+      estimateArtifactListHeight([artifacts[2]], 360),
+    );
     assert.ok(dual < stacked);
-    assert.ok(dual >= estimateArtifactListHeight([artifacts[2]], 360));
+    assert.equal(dual, chrome + columns);
   });
 
   it("uses the taller column for dual-column church estimates", () => {
     const artifacts = [{}, { type: "artwork", imageUrl: wikimediaFileUrl("El_Greco_006.jpg") }];
     const stacked = estimateSectionBodyHeight(artifacts, 360);
     const dual = estimateDualSectionBodyHeight(artifacts, 360, 360);
+    const chrome = estimateSectionBodyHeight([{}]) - estimateArtifactListHeight([{}]);
+    const columns = Math.max(
+      estimateArtifactListHeight([{}]),
+      estimateArtifactListHeight([artifacts[1]], 360),
+    );
     assert.ok(dual < stacked);
+    assert.equal(dual, chrome + columns);
   });
 
   it("emits a remembered intrinsic size the browser can skip-paint with", () => {

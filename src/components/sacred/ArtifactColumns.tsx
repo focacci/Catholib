@@ -25,7 +25,10 @@ function ArtifactStack({
   );
 }
 
-/** Left: headings and non-artwork cards. Right (desktop/landscape): artwork. */
+/**
+ * Headings span both columns. Then non-artwork cards on the left and artwork
+ * on the right, so the first cards in each column share a top edge.
+ */
 export function ArtifactColumns({
   artifacts,
   context,
@@ -41,21 +44,27 @@ export function ArtifactColumns({
 
   return (
     <div className={DUAL_COLUMN_GRID_CLASS}>
-      <div className="min-w-0">
-        {heading}
-        <ArtifactStack
-          artifacts={main}
-          context={context}
-          onOpen={onOpen}
-          className="pl-[var(--rail-pad)]"
-        />
-      </div>
-      <ArtifactStack
-        artifacts={artwork}
-        context={context}
-        onOpen={onOpen}
-        className="min-w-0 pl-[var(--rail-pad)] dual:pl-0"
-      />
+      {heading ? <div className="min-w-0 dual:col-span-2">{heading}</div> : null}
+      {main.length > 0 ? (
+        <div className="min-w-0 dual:col-start-1">
+          <ArtifactStack
+            artifacts={main}
+            context={context}
+            onOpen={onOpen}
+            className="pl-[var(--rail-pad)]"
+          />
+        </div>
+      ) : null}
+      {artwork.length > 0 ? (
+        <div className="min-w-0 dual:col-start-2">
+          <ArtifactStack
+            artifacts={artwork}
+            context={context}
+            onOpen={onOpen}
+            className="pl-[var(--rail-pad)] dual:pl-0"
+          />
+        </div>
+      ) : null}
     </div>
   );
 }

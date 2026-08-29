@@ -72,7 +72,7 @@ export const ChurchView = memo(function ChurchView() {
                 context={entry.title}
                 onOpen={openArtifact}
                 heading={
-                  <div className="mb-2.5 flex items-baseline gap-3 pl-[var(--rail-pad)]">
+                  <div className="flex items-baseline gap-3 pl-[var(--rail-pad)]">
                     <span className="font-serif text-xl tabular-nums text-gold">{entry.year}</span>
                     <h3 className="font-serif text-lg font-semibold leading-snug text-fg">
                       {entry.title}

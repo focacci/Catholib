@@ -183,7 +183,7 @@ const BookSection = memo(function BookSection({
                 context={`${book.name} ${ch.chapter}`}
                 onOpen={onOpen}
                 heading={
-                  <div className="mb-2.5 pl-[var(--rail-pad)]">
+                  <div className="pl-[var(--rail-pad)]">
                     <p className="font-serif text-base font-semibold text-fg">
                       Chapter {ch.chapter}
                       {ch.heading ? ` · ${ch.heading}` : ""}

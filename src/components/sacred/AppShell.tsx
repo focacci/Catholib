@@ -1,4 +1,12 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   BookOpen,
@@ -16,11 +24,10 @@ import { BIBLE_BOOKS } from "@/lib/timeline/bible";
 import { periodBadgeStyle, periodForBook } from "@/lib/timeline/bible-periods";
 import { CHURCH_ENTRIES } from "@/lib/timeline/church";
 import { missalJumpItems } from "@/lib/timeline/missal";
-import { countHitsByView } from "@/lib/timeline/search";
+import { countHitsByView, searchHitStripItems } from "@/lib/timeline/search";
 import { areAllBooksExpanded, useTimeline } from "@/lib/timeline/store";
 import {
   VIEW_FILTERS,
-  VIEW_LABEL,
   type BibleBook,
   type FilterChip,
   type FilterId,
@@ -32,11 +39,30 @@ import {
   CHROME_SETTLE_MS,
   chromeFullyHidden,
   chromeHideProgress,
+  chromeOffsetWhenQueryCleared,
   chromeSettleOffset,
   interpolateChromeOffset,
-  nextChromeHideOffset,
+  nextOverlayChromeOffsets,
   visibleChromeSize,
 } from "@/lib/timeline/chrome-scroll";
+import {
+  KEYBOARD_BLUR_HOLD_MS,
+  KEYBOARD_CHASE_MS,
+  KEYBOARD_CLOSE_MS,
+  SEARCH_FOCUS_LIFT_DELAY_MS,
+  isSoftwareKeyboardOpen,
+  keyboardInsetFromViewport,
+  layoutViewportBottom,
+  overlaySearchBarPinStyle,
+  pullingSearchBarLift,
+  ridingSearchBarLift,
+  shouldCaptureSearchBarPull,
+  shouldCompactLibraryChrome,
+  shouldHoldOverlayChrome,
+  shouldPullDismissSearchBar,
+  stabilizeFocusedKeyboardLift,
+  visualViewportGap,
+} from "@/lib/timeline/keyboard-inset";
 import { cn } from "@/lib/utils";
 import { AboutPanel } from "./AboutPanel";
 import { ArtifactSheet } from "./ArtifactSheet";
@@ -66,6 +92,64 @@ const VIEWS: { id: ViewMode; label: string; Icon: typeof BookOpen }[] = [
   { id: "church", label: "Church", Icon: Church },
   { id: "missal", label: "Missal", Icon: CalendarDays },
 ];
+
+type VirtualKeyboardNav = Navigator & {
+  virtualKeyboard?: {
+    overlaysContent: boolean;
+    boundingRect: { height: number };
+    addEventListener(type: "geometrychange", listener: () => void): void;
+    removeEventListener(type: "geometrychange", listener: () => void): void;
+  };
+};
+
+function viewportMetrics() {
+  const layoutBottom = layoutViewportBottom({
+    clientHeight: document.documentElement.clientHeight,
+    innerHeight: window.innerHeight,
+  });
+  const vv = window.visualViewport;
+  const vk = (navigator as VirtualKeyboardNav).virtualKeyboard;
+  return {
+    layoutBottom,
+    visualHeight: vv?.height ?? layoutBottom,
+    visualOffsetTop: vv?.offsetTop ?? 0,
+    virtualKeyboardHeight: vk?.boundingRect.height ?? 0,
+  };
+}
+
+function measureKeyboardGap(): number {
+  return visualViewportGap(viewportMetrics());
+}
+
+function measureKeyboardInset(): number {
+  return keyboardInsetFromViewport(viewportMetrics());
+}
+
+type SearchBarPull = {
+  active: boolean;
+  riding: boolean;
+  didBlur: boolean;
+  x: number;
+  y: number;
+  dx: number;
+  dy: number;
+  startInset: number;
+  rideCeiling: number;
+  rideStartedAt: number;
+};
+
+const IDLE_SEARCH_PULL: SearchBarPull = {
+  active: false,
+  riding: false,
+  didBlur: false,
+  x: 0,
+  y: 0,
+  dx: 0,
+  dy: 0,
+  startInset: 0,
+  rideCeiling: 0,
+  rideStartedAt: 0,
+};
 
 function BibleJumpGrid({
   onPick,
@@ -320,16 +404,29 @@ export function AppShell() {
   const shellRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLElement>(null);
   const headerRef = useRef<HTMLElement>(null);
-  const footerRef = useRef<HTMLElement>(null);
+  const footerRef = useRef<HTMLDivElement>(null);
+  const searchNavRef = useRef<HTMLElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const lastScrollRef = useRef(0);
   const lastDeltaRef = useRef(0);
   const pointerDownRef = useRef(false);
-  const chromeOffsetRef = useRef(0);
+  const headerOffsetRef = useRef(0);
+  const footerOffsetRef = useRef(0);
   const headerHRef = useRef(48);
   const footerHRef = useRef(108);
   const settleRafRef = useRef(0);
   const settleTimerRef = useRef(0);
+  const searchFocusedRef = useRef(false);
+  const searchHoldCompactRef = useRef(false);
+  const searchHoldTimerRef = useRef(0);
+  const lastKeyboardInsetRef = useRef(0);
+  const searchFocusPointerRef = useRef(false);
+  const searchFocusLiftTimerRef = useRef(0);
+  const searchPullRef = useRef<SearchBarPull>({ ...IDLE_SEARCH_PULL });
+  const keyboardChaseRafRef = useRef(0);
+  const pullCaptureRef = useRef(false);
+  const pullTouchMoveRef = useRef<(e: TouchEvent) => void>(() => {});
+  const pullPointerMoveRef = useRef<(e: PointerEvent) => void>(() => {});
   const [jumpOpen, setJumpOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [headerH, setHeaderH] = useState(48);
@@ -349,31 +446,34 @@ export function AppShell() {
     }
   };
 
-  const applyChrome = (offset: number) => {
+  const applyChrome = (next?: { header?: number; footer?: number }) => {
     const overlay = !isSidebarViewport();
     const header = headerRef.current;
     const footer = footerRef.current;
     const shell = shellRef.current;
-    const headerH = headerHRef.current;
-    const footerH = footerHRef.current;
+    const headerH = header?.offsetHeight || headerHRef.current;
+    const footerH = footer?.offsetHeight || footerHRef.current;
     const maxOffset = Math.max(headerH, footerH);
-    const next = overlay ? Math.max(0, Math.min(maxOffset, offset)) : 0;
-    chromeOffsetRef.current = next;
-    const progress = overlay ? chromeHideProgress(next, maxOffset) : 0;
-    const headerVisible = overlay ? visibleChromeSize(progress, headerH) : 0;
-    const footerVisible = overlay ? visibleChromeSize(progress, footerH) : 0;
+    const clamp = (offset: number) => (overlay ? Math.max(0, Math.min(maxOffset, offset)) : 0);
+    headerOffsetRef.current = clamp(next?.header ?? headerOffsetRef.current);
+    footerOffsetRef.current = clamp(next?.footer ?? footerOffsetRef.current);
+    const headerProgress = overlay ? chromeHideProgress(headerOffsetRef.current, maxOffset) : 0;
+    const footerProgress = overlay ? chromeHideProgress(footerOffsetRef.current, maxOffset) : 0;
+    const headerVisible = overlay ? visibleChromeSize(headerProgress, headerH) : 0;
+    const footerVisible = overlay ? visibleChromeSize(footerProgress, footerH) : 0;
     const headerGone = overlay && chromeFullyHidden(headerVisible);
     const footerGone = overlay && chromeFullyHidden(footerVisible);
 
     if (header) {
       header.style.transform =
-        overlay && progress ? `translate3d(0, ${-progress * headerH}px, 0)` : "";
+        overlay && headerProgress ? `translate3d(0, ${-headerProgress * headerH}px, 0)` : "";
       header.toggleAttribute("inert", headerGone);
       header.style.pointerEvents = headerGone ? "none" : "";
     }
     if (footer) {
       footer.style.transform =
-        overlay && progress ? `translate3d(0, ${progress * footerH}px, 0)` : "";
+        overlay && footerProgress ? `translate3d(0, ${footerProgress * footerH}px, 0)` : "";
+      footer.style.willChange = overlay && footerProgress ? "transform" : "";
       footer.toggleAttribute("inert", footerGone);
       footer.style.pointerEvents = footerGone ? "none" : "";
     }
@@ -381,18 +481,17 @@ export function AppShell() {
     shell?.style.setProperty("--footer-h", `${footerVisible}px`);
   };
 
-  const settleChrome = () => {
-    if (isSidebarViewport() || pointerDownRef.current) return;
-    const maxOffset = Math.max(headerHRef.current, footerHRef.current);
-    const target = chromeSettleOffset({
-      offset: chromeOffsetRef.current,
-      maxOffset,
-      scrollTop: lastScrollRef.current,
-      lastDelta: lastDeltaRef.current,
-    });
-    if (Math.abs(target - chromeOffsetRef.current) < 0.5) return;
+  const animateChromeTo = (target: { header: number; footer: number }) => {
+    const startHeader = headerOffsetRef.current;
+    const startFooter = footerOffsetRef.current;
+    if (
+      Math.abs(target.header - startHeader) < 0.5 &&
+      Math.abs(target.footer - startFooter) < 0.5
+    ) {
+      applyChrome(target);
+      return;
+    }
     cancelChromeAnimation();
-    const start = chromeOffsetRef.current;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       applyChrome(target);
       return;
@@ -400,11 +499,269 @@ export function AppShell() {
     const t0 = performance.now();
     const tick = (now: number) => {
       const t = Math.min(1, (now - t0) / CHROME_SETTLE_MS);
-      applyChrome(interpolateChromeOffset(start, target, t));
+      applyChrome({
+        header: interpolateChromeOffset(startHeader, target.header, t),
+        footer: interpolateChromeOffset(startFooter, target.footer, t),
+      });
       if (t < 1) settleRafRef.current = requestAnimationFrame(tick);
       else settleRafRef.current = 0;
     };
     settleRafRef.current = requestAnimationFrame(tick);
+  };
+
+  const hideFooterAfterQueryCleared = () => {
+    const headerH = headerRef.current?.offsetHeight || headerHRef.current;
+    const footerH = footerRef.current?.offsetHeight || footerHRef.current;
+    animateChromeTo({
+      header: headerOffsetRef.current,
+      footer: chromeOffsetWhenQueryCleared({
+        scrollTop: lastScrollRef.current,
+        maxOffset: Math.max(headerH, footerH),
+      }),
+    });
+  };
+
+  const applyKeyboardInset = (inset: number) => {
+    const overlay = !isSidebarViewport();
+    const pull = searchPullRef.current;
+    const liveGap = overlay ? measureKeyboardGap() : 0;
+    let lift = overlay ? inset : 0;
+    if (overlay && pull.active) {
+      lift = pullingSearchBarLift({
+        frozenInset: pull.startInset,
+        fingerDy: pull.dy,
+        liveGap,
+        followKeyboard: pull.didBlur,
+      });
+    } else if (overlay && pull.riding) {
+      const elapsed = performance.now() - pull.rideStartedAt;
+      lift = ridingSearchBarLift({
+        liveGap,
+        rideCeiling: pull.rideCeiling,
+        startGap: pull.startInset,
+        elapsedMs: elapsed,
+      });
+      const keyboardGone = liveGap < 20;
+      const rideTimedOut = elapsed >= KEYBOARD_CHASE_MS;
+      if (keyboardGone || rideTimedOut) {
+        searchPullRef.current = { ...IDLE_SEARCH_PULL };
+        searchHoldCompactRef.current = false;
+        lift = keyboardGone ? 0 : inset;
+      } else if (elapsed >= KEYBOARD_CLOSE_MS && liveGap >= pull.startInset - 8) {
+        // visualViewport is still stuck at the open height; stay down until it catches up.
+        lift = 0;
+      }
+    }
+    lift = stabilizeFocusedKeyboardLift({
+      measuredLift: lift,
+      lastOpenLift: lastKeyboardInsetRef.current,
+      searchFocused: searchFocusedRef.current,
+      pulling: pull.active || pull.riding,
+      freezeOpenLift: pointerDownRef.current && !pull.active,
+    });
+    const compact = shouldCompactLibraryChrome({
+      overlayLayout: overlay,
+      searchFocused: searchFocusedRef.current,
+      holdCompact: searchHoldCompactRef.current || pull.active || pull.riding,
+      keyboardInset: Math.max(inset, lift),
+    });
+    if (isSoftwareKeyboardOpen(lift) && !pull.active && !pull.riding) {
+      lastKeyboardInsetRef.current = lift;
+    }
+
+    const searchNav = searchNavRef.current;
+    const footer = footerRef.current;
+    const shell = shellRef.current;
+    const scroll = scrollRef.current;
+    if (searchNav) {
+      const pin = overlaySearchBarPinStyle(lift);
+      if (pin) {
+        searchNav.style.position = pin.position;
+        searchNav.style.left = pin.left;
+        searchNav.style.right = pin.right;
+        searchNav.style.bottom = pin.bottom;
+        searchNav.style.zIndex = "21";
+      } else {
+        searchNav.style.position = "";
+        searchNav.style.left = "";
+        searchNav.style.right = "";
+        searchNav.style.bottom = "";
+        searchNav.style.zIndex = "";
+      }
+      searchNav.toggleAttribute("data-keyboard", compact);
+    }
+    if (footer) footer.toggleAttribute("data-keyboard", compact);
+    if (shell) {
+      shell.style.setProperty("--keyboard-inset", `${lift}px`);
+      shell.toggleAttribute("data-keyboard", compact);
+    }
+    if (scroll) scroll.style.paddingBottom = lift ? `${lift}px` : "";
+    if (compact && !pull.active) applyChrome({ footer: 0 });
+  };
+
+  const blurSearch = () => {
+    searchRef.current?.blur();
+  };
+
+  const lockTimelinePointers = (lock: boolean) => {
+    const scroll = scrollRef.current;
+    if (scroll) scroll.style.pointerEvents = lock ? "none" : "";
+  };
+
+  const setPullCapture = (on: boolean) => {
+    if (on === pullCaptureRef.current) return;
+    pullCaptureRef.current = on;
+    if (on) {
+      window.addEventListener("touchmove", pullTouchMoveRef.current, {
+        passive: false,
+        capture: true,
+      });
+      window.addEventListener("pointermove", pullPointerMoveRef.current, { passive: false });
+    } else {
+      window.removeEventListener("touchmove", pullTouchMoveRef.current, true);
+      window.removeEventListener("pointermove", pullPointerMoveRef.current);
+    }
+  };
+
+  const clearSearchFocusLiftTimer = () => {
+    if (searchFocusLiftTimerRef.current) {
+      clearTimeout(searchFocusLiftTimerRef.current);
+      searchFocusLiftTimerRef.current = 0;
+    }
+  };
+
+  const cancelKeyboardChase = () => {
+    if (keyboardChaseRafRef.current) {
+      cancelAnimationFrame(keyboardChaseRafRef.current);
+      keyboardChaseRafRef.current = 0;
+    }
+  };
+
+  const startKeyboardChase = () => {
+    cancelKeyboardChase();
+    const until = performance.now() + KEYBOARD_CHASE_MS;
+    const tick = (now: number) => {
+      applyKeyboardInset(measureKeyboardInset());
+      const riding = searchPullRef.current.riding;
+      if (now < until || riding) {
+        keyboardChaseRafRef.current = requestAnimationFrame(tick);
+      } else {
+        keyboardChaseRafRef.current = 0;
+      }
+    };
+    keyboardChaseRafRef.current = requestAnimationFrame(tick);
+  };
+
+  const releaseSearchFocusPointer = () => {
+    if (!searchFocusPointerRef.current) return;
+    searchFocusPointerRef.current = false;
+    clearSearchFocusLiftTimer();
+    searchFocusLiftTimerRef.current = window.setTimeout(() => {
+      searchFocusLiftTimerRef.current = 0;
+      if (!searchPullRef.current.active && !searchPullRef.current.riding) {
+        lockTimelinePointers(false);
+      }
+      if (searchFocusedRef.current) {
+        applyKeyboardInset(Math.max(measureKeyboardInset(), lastKeyboardInsetRef.current));
+        startKeyboardChase();
+      }
+    }, SEARCH_FOCUS_LIFT_DELAY_MS);
+  };
+
+  const moveSearchBarPull = (clientX: number, clientY: number) => {
+    const pull = searchPullRef.current;
+    if (!pull.active) return false;
+    const dy = clientY - pull.y;
+    const dx = clientX - pull.x;
+    pull.dy = dy;
+    pull.dx = dx;
+    applyKeyboardInset(measureKeyboardInset());
+    if (
+      !pull.didBlur &&
+      shouldPullDismissSearchBar({
+        gestureActive: true,
+        fingerDy: dy,
+        fingerDx: dx,
+      })
+    ) {
+      pull.didBlur = true;
+      blurSearch();
+    }
+    return shouldCaptureSearchBarPull({
+      gestureActive: true,
+      fingerDy: dy,
+      fingerDx: dx,
+    });
+  };
+
+  const endSearchBarPull = () => {
+    setPullCapture(false);
+    const pull = searchPullRef.current;
+    if (pull.riding) return;
+    if (!pull.active) return;
+    const dismiss =
+      pull.didBlur ||
+      shouldPullDismissSearchBar({
+        gestureActive: true,
+        fingerDy: pull.dy,
+        fingerDx: pull.dx,
+      });
+    if (dismiss) {
+      pull.active = false;
+      pull.riding = true;
+      pull.rideCeiling = pullingSearchBarLift({
+        frozenInset: pull.startInset,
+        fingerDy: pull.dy,
+        liveGap: measureKeyboardGap(),
+        followKeyboard: true,
+      });
+      pull.rideStartedAt = performance.now();
+      pull.dy = 0;
+      if (!pull.didBlur) {
+        pull.didBlur = true;
+        blurSearch();
+      }
+      lockTimelinePointers(false);
+      applyKeyboardInset(measureKeyboardInset());
+      startKeyboardChase();
+      return;
+    }
+    searchPullRef.current = { ...IDLE_SEARCH_PULL };
+    lockTimelinePointers(false);
+    applyKeyboardInset(measureKeyboardInset());
+  };
+
+  const settleChrome = () => {
+    if (isSidebarViewport() || pointerDownRef.current) return;
+    const holdFooter = shouldHoldOverlayChrome({
+      overlayLayout: true,
+      searchFocused: searchFocusedRef.current,
+      holdCompact: searchHoldCompactRef.current,
+      keyboardInset: measureKeyboardInset(),
+      hasQuery: Boolean(useTimeline.getState().query.trim()),
+    });
+    const maxOffset = Math.max(headerHRef.current, footerHRef.current);
+    const headerTarget = chromeSettleOffset({
+      offset: headerOffsetRef.current,
+      maxOffset,
+      scrollTop: lastScrollRef.current,
+      lastDelta: lastDeltaRef.current,
+    });
+    const footerTarget = holdFooter
+      ? 0
+      : chromeSettleOffset({
+          offset: footerOffsetRef.current,
+          maxOffset,
+          scrollTop: lastScrollRef.current,
+          lastDelta: lastDeltaRef.current,
+        });
+    if (
+      Math.abs(headerTarget - headerOffsetRef.current) < 0.5 &&
+      Math.abs(footerTarget - footerOffsetRef.current) < 0.5
+    ) {
+      return;
+    }
+    animateChromeTo({ header: headerTarget, footer: footerTarget });
   };
 
   const scheduleChromeSettle = () => {
@@ -419,6 +776,14 @@ export function AppShell() {
   scheduleChromeSettleRef.current = scheduleChromeSettle;
   const settleChromeRef = useRef(settleChrome);
   settleChromeRef.current = settleChrome;
+  const applyKeyboardInsetRef = useRef(applyKeyboardInset);
+  applyKeyboardInsetRef.current = applyKeyboardInset;
+  const releaseSearchFocusPointerRef = useRef(releaseSearchFocusPointer);
+  releaseSearchFocusPointerRef.current = releaseSearchFocusPointer;
+  const moveSearchBarPullRef = useRef(moveSearchBarPull);
+  moveSearchBarPullRef.current = moveSearchBarPull;
+  const endSearchBarPullRef = useRef(endSearchBarPull);
+  endSearchBarPullRef.current = endSearchBarPull;
 
   useLayoutEffect(() => {
     const header = headerRef.current;
@@ -431,7 +796,7 @@ export function AppShell() {
       footerHRef.current = nextFooter;
       setHeaderH(nextHeader);
       setFooterH(nextFooter);
-      applyChrome(chromeOffsetRef.current);
+      applyChrome();
     };
     update();
     const ro = new ResizeObserver(update);
@@ -440,10 +805,57 @@ export function AppShell() {
     return () => ro.disconnect();
   }, [isSidebar]);
 
+  useEffect(() => {
+    const vk = (navigator as VirtualKeyboardNav).virtualKeyboard;
+    if (vk) {
+      try {
+        vk.overlaysContent = true;
+      } catch {
+        /* Safari ignores this API */
+      }
+    }
+    const sync = () => {
+      if (window.scrollY) window.scrollTo(0, 0);
+      applyKeyboardInsetRef.current(measureKeyboardInset());
+    };
+    const syncFromVisualScroll = () => {
+      if (window.scrollY) window.scrollTo(0, 0);
+      if (
+        searchFocusedRef.current &&
+        !searchPullRef.current.active &&
+        !searchPullRef.current.riding
+      ) {
+        return;
+      }
+      applyKeyboardInsetRef.current(measureKeyboardInset());
+    };
+    sync();
+    const vv = window.visualViewport;
+    vv?.addEventListener("resize", sync);
+    vv?.addEventListener("scroll", syncFromVisualScroll);
+    vk?.addEventListener("geometrychange", sync);
+    window.addEventListener("resize", sync);
+    return () => {
+      vv?.removeEventListener("resize", sync);
+      vv?.removeEventListener("scroll", syncFromVisualScroll);
+      vk?.removeEventListener("geometrychange", sync);
+      window.removeEventListener("resize", sync);
+      if (searchHoldTimerRef.current) {
+        clearTimeout(searchHoldTimerRef.current);
+        searchHoldTimerRef.current = 0;
+      }
+      if (searchFocusLiftTimerRef.current) {
+        clearTimeout(searchFocusLiftTimerRef.current);
+        searchFocusLiftTimerRef.current = 0;
+      }
+      if (keyboardChaseRafRef.current) {
+        cancelAnimationFrame(keyboardChaseRafRef.current);
+        keyboardChaseRafRef.current = 0;
+      }
+    };
+  }, [isSidebar]);
+
   const hitCounts = useMemo(() => countHitsByView(query, filter), [filter, query]);
-  const otherViews = (["bible", "church", "missal"] as const).filter(
-    (id) => id !== view && hitCounts[id] > 0,
-  );
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: 0 });
@@ -451,10 +863,28 @@ export function AppShell() {
     lastDeltaRef.current = 0;
     cancelChromeAnimation();
     cancelChromeSettleTimer();
-    applyChrome(0);
+    applyChrome({ header: 0, footer: 0 });
     setFilterOpen(false);
     setJumpOpen(false);
   }, [view]);
+
+  useEffect(() => {
+    if (isSidebarViewport()) return;
+    if (
+      shouldHoldOverlayChrome({
+        overlayLayout: true,
+        searchFocused: searchFocusedRef.current,
+        holdCompact: searchHoldCompactRef.current,
+        keyboardInset: measureKeyboardInset(),
+        hasQuery: Boolean(query.trim()),
+      })
+    ) {
+      cancelChromeAnimation();
+      applyChrome({ footer: 0 });
+      return;
+    }
+    hideFooterAfterQueryCleared();
+  }, [query]);
 
   useEffect(() => {
     if (isDesktop) closeArtifact();
@@ -462,6 +892,7 @@ export function AppShell() {
 
   useEffect(() => {
     const el = scrollRef.current;
+    const footer = footerRef.current;
     const onScrollEnd = () => {
       if (!pointerDownRef.current) settleChromeRef.current();
     };
@@ -470,13 +901,31 @@ export function AppShell() {
       cancelChromeAnimation();
       cancelChromeSettleTimer();
     };
+    const onPointerMove = (e: PointerEvent) => {
+      if (moveSearchBarPullRef.current(e.clientX, e.clientY) && e.cancelable) {
+        e.preventDefault();
+      }
+    };
+    const onTouchMove = (e: TouchEvent) => {
+      const touch = e.touches[0];
+      if (!touch) return;
+      if (moveSearchBarPullRef.current(touch.clientX, touch.clientY) && e.cancelable) {
+        e.preventDefault();
+      }
+    };
+    pullTouchMoveRef.current = onTouchMove;
+    pullPointerMoveRef.current = onPointerMove;
     const onRelease = () => {
-      if (!pointerDownRef.current) return;
-      pointerDownRef.current = false;
-      scheduleChromeSettleRef.current();
+      endSearchBarPullRef.current();
+      if (pointerDownRef.current) {
+        pointerDownRef.current = false;
+        scheduleChromeSettleRef.current();
+      }
+      releaseSearchFocusPointerRef.current();
     };
     el?.addEventListener("scrollend", onScrollEnd);
     el?.addEventListener("pointerdown", onPointerDown);
+    footer?.addEventListener("touchmove", onTouchMove, { passive: false });
     window.addEventListener("pointerup", onRelease, true);
     window.addEventListener("pointercancel", onRelease, true);
     window.addEventListener("mouseup", onRelease, true);
@@ -484,6 +933,12 @@ export function AppShell() {
     return () => {
       el?.removeEventListener("scrollend", onScrollEnd);
       el?.removeEventListener("pointerdown", onPointerDown);
+      footer?.removeEventListener("touchmove", onTouchMove);
+      if (pullCaptureRef.current) {
+        window.removeEventListener("touchmove", onTouchMove, true);
+        window.removeEventListener("pointermove", onPointerMove);
+        pullCaptureRef.current = false;
+      }
       window.removeEventListener("pointerup", onRelease, true);
       window.removeEventListener("pointercancel", onRelease, true);
       window.removeEventListener("mouseup", onRelease, true);
@@ -499,29 +954,108 @@ export function AppShell() {
     cancelChromeSettleTimer();
   };
 
+  const onSearchChromePointerDown = (e: ReactPointerEvent<HTMLElement>) => {
+    if (isSidebarViewport()) return;
+    if (e.target instanceof Element && e.target.closest("[data-search-clear]")) return;
+    searchFocusPointerRef.current = true;
+    lockTimelinePointers(true);
+    if (document.activeElement === searchRef.current) {
+      setPullCapture(true);
+      searchPullRef.current = {
+        ...IDLE_SEARCH_PULL,
+        active: true,
+        x: e.clientX,
+        y: e.clientY,
+        startInset: Math.max(
+          measureKeyboardInset(),
+          lastKeyboardInsetRef.current,
+          measureKeyboardGap(),
+        ),
+      };
+    }
+  };
+
+  const onSearchFocus = () => {
+    searchFocusedRef.current = true;
+    searchHoldCompactRef.current = false;
+    if (searchHoldTimerRef.current) {
+      clearTimeout(searchHoldTimerRef.current);
+      searchHoldTimerRef.current = 0;
+    }
+    setFilterOpen(false);
+    setJumpOpen(false);
+    if (!searchFocusPointerRef.current) {
+      applyKeyboardInset(Math.max(measureKeyboardInset(), lastKeyboardInsetRef.current));
+      startKeyboardChase();
+    }
+  };
+
+  const onSearchBlur = () => {
+    searchFocusedRef.current = false;
+    if (searchHoldTimerRef.current) clearTimeout(searchHoldTimerRef.current);
+    const inset = measureKeyboardInset();
+    const pull = searchPullRef.current;
+    const keyboardOpen =
+      isSoftwareKeyboardOpen(inset) || pull.active || pull.riding;
+    if (!keyboardOpen) {
+      searchHoldCompactRef.current = false;
+      applyKeyboardInset(inset);
+      if (!useTimeline.getState().query.trim()) {
+        hideFooterAfterQueryCleared();
+      }
+      return;
+    }
+    searchHoldCompactRef.current = true;
+    applyKeyboardInset(inset);
+    startKeyboardChase();
+    searchHoldTimerRef.current = window.setTimeout(() => {
+      searchHoldTimerRef.current = 0;
+      if (searchPullRef.current.active || searchPullRef.current.riding) return;
+      searchHoldCompactRef.current = false;
+      applyKeyboardInset(measureKeyboardInset());
+      if (!useTimeline.getState().query.trim()) {
+        hideFooterAfterQueryCleared();
+      }
+    }, KEYBOARD_BLUR_HOLD_MS);
+  };
+
+  const clearSearchQuery = () => {
+    searchRef.current?.blur();
+    setQuery("");
+  };
+
+  const onClearSearchPointerDown = (e: ReactPointerEvent<HTMLButtonElement>) => {
+    // Prevent focus only. Clearing on pointerdown unmounts this control and the
+    // rest of the tap lands on the input, which reopens the keyboard.
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
   const onScroll = () => {
     const el = scrollRef.current;
     if (!el || isSidebarViewport()) return;
     cancelChromeAnimation();
-    if (document.activeElement === searchRef.current) {
-      applyChrome(0);
-      lastScrollRef.current = Math.max(0, el.scrollTop);
-      lastDeltaRef.current = 0;
-      return;
-    }
     const y = Math.max(0, el.scrollTop);
     const delta = y - lastScrollRef.current;
     lastScrollRef.current = y;
     if (delta !== 0) lastDeltaRef.current = delta;
+    const holdFooter = shouldHoldOverlayChrome({
+      overlayLayout: true,
+      searchFocused: searchFocusedRef.current,
+      holdCompact: searchHoldCompactRef.current,
+      keyboardInset: measureKeyboardInset(),
+      hasQuery: Boolean(query.trim()),
+    });
     const maxOffset = Math.max(headerHRef.current, footerHRef.current);
-    const prev = chromeOffsetRef.current;
-    const next = nextChromeHideOffset({
-      prev,
+    const next = nextOverlayChromeOffsets({
+      headerPrev: headerOffsetRef.current,
+      footerPrev: footerOffsetRef.current,
       delta,
       scrollTop: y,
       maxOffset,
+      holdFooter,
     });
-    if (prev < 1 && next > 1) setFilterOpen(false);
+    if (headerOffsetRef.current < 1 && next.header > 1) setFilterOpen(false);
     applyChrome(next);
     if (!pointerDownRef.current) scheduleChromeSettle();
   };
@@ -551,7 +1085,7 @@ export function AppShell() {
   return (
     <div
       ref={shellRef}
-      className="relative flex h-dvh flex-col overflow-hidden bg-bg text-fg"
+      className="relative flex h-dvh flex-col overflow-hidden overscroll-none bg-bg text-fg"
       style={
         {
           "--chrome-h": isSidebar ? "0px" : `${headerH}px`,
@@ -563,7 +1097,7 @@ export function AppShell() {
       <DayHeader
         ref={headerRef}
         id="timeline-chrome"
-        className="max-lg:absolute max-lg:inset-x-0 max-lg:top-0 max-lg:z-20 max-lg:will-change-transform"
+        className="max-lg:absolute max-lg:inset-x-0 max-lg:top-0 max-lg:z-20 max-lg:overscroll-none"
       />
 
       <div className="flex min-h-0 flex-1">
@@ -603,7 +1137,7 @@ export function AppShell() {
               id="timeline-scroll"
               onScroll={onScroll}
               onPointerDown={onChromePointerDown}
-              className="h-full overflow-y-auto [overflow-anchor:none]"
+              className="h-full overflow-y-scroll overscroll-y-contain [overflow-anchor:none] [-webkit-overflow-scrolling:touch]"
             >
               {!isSidebar && <div aria-hidden className="shrink-0" style={{ height: headerH }} />}
               <div className="mx-auto w-full max-w-xl dual:max-w-6xl">
@@ -618,72 +1152,112 @@ export function AppShell() {
             </main>
           </div>
 
-          <nav
+          <div
             ref={footerRef}
-            className="shrink-0 border-t border-line bg-bg pb-[max(0.5rem,env(safe-area-inset-bottom))] max-lg:absolute max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-20 max-lg:will-change-transform"
-            aria-label="Library"
+            className="library-footer shrink-0 max-lg:absolute max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-20"
           >
-            {query.trim() && (
-              <p className="px-3 pt-2 text-sm text-muted">
-                {hitCounts[view] === 0
-                  ? `No matches in ${VIEW_LABEL[view]}`
-                  : `${hitCounts[view]} in ${VIEW_LABEL[view]}`}
-                {otherViews.map((id) => (
-                  <span key={id}>
-                    {" · "}
+            <nav
+              ref={searchNavRef}
+              className="library-nav border-t border-line bg-bg"
+              aria-label="Library"
+              onPointerDown={onSearchChromePointerDown}
+            >
+              {query.trim() ? (
+                <div className="px-3 pt-2">
+                  <div
+                    className="grid grid-cols-3 p-0.5 text-center text-sm"
+                    aria-label="Search hits by view"
+                  >
+                    {searchHitStripItems(hitCounts).map(({ id, label, count }) => (
+                      <button
+                        key={id}
+                        type="button"
+                        onPointerDown={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }}
+                        onClick={() => setView(id)}
+                        className={cn(
+                          "min-w-0 truncate px-1",
+                          id === view ? "text-fg" : "text-gold",
+                        )}
+                      >
+                        {count} in {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              <div className="flex items-center gap-2 px-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setAboutOpen(true)}
+                  className="flex size-11 shrink-0 items-center justify-center rounded-md text-gold hover:bg-gold-soft"
+                  aria-label="About and sources"
+                >
+                  <Info className="size-5" strokeWidth={1.75} />
+                </button>
+                <div className="relative min-w-0 flex-1">
+                  <label className="block">
+                    <span className="sr-only">Search Scripture, Magisterium, and Missal</span>
+                    <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-subtle" />
+                    <input
+                      ref={searchRef}
+                      type="search"
+                      inputMode="search"
+                      enterKeyHint="search"
+                      autoComplete="off"
+                      autoCorrect="off"
+                      autoCapitalize="none"
+                      spellCheck={false}
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      onFocus={onSearchFocus}
+                      onBlur={onSearchBlur}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          e.currentTarget.blur();
+                        }
+                      }}
+                      placeholder="Search"
+                      className="h-10 w-full rounded-md border border-line-strong bg-elevated pr-9 pl-8 text-base text-fg outline-none placeholder:text-subtle focus:border-gold"
+                    />
+                  </label>
+                  {query ? (
                     <button
                       type="button"
-                      className="text-gold underline-offset-2 hover:underline"
-                      onClick={() => setView(id)}
+                      data-search-clear
+                      tabIndex={-1}
+                      onPointerDown={onClearSearchPointerDown}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        clearSearchQuery();
+                      }}
+                      className="absolute top-1/2 right-0.5 z-10 flex size-8 -translate-y-1/2 items-center justify-center text-muted"
+                      aria-label="Clear search"
                     >
-                      {hitCounts[id]} in {VIEW_LABEL[id]}
+                      <X className="size-3.5" />
                     </button>
-                  </span>
-                ))}
-              </p>
-            )}
-
-            <div className="flex items-center gap-2 px-3 pt-2">
-              <button
-                type="button"
-                onClick={() => setAboutOpen(true)}
-                className="flex size-11 shrink-0 items-center justify-center rounded-md text-gold hover:bg-gold-soft"
-                aria-label="About and sources"
-              >
-                <Info className="size-5" strokeWidth={1.75} />
-              </button>
-              <label className="relative min-w-0 flex-1">
-                <span className="sr-only">Search Scripture, Magisterium, and Missal</span>
-                <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-subtle" />
-                <input
-                  ref={searchRef}
-                  type="search"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search"
-                  className="h-10 w-full rounded-md border border-line-strong bg-elevated pr-9 pl-8 text-base text-fg outline-none placeholder:text-subtle focus:border-gold"
+                  ) : null}
+                </div>
+                <FilterMenu
+                  filters={VIEW_FILTERS[view]}
+                  value={filter}
+                  open={filterOpen}
+                  onOpenChange={setFilterOpen}
+                  onChange={setFilter}
                 />
-                {query && (
-                  <button
-                    type="button"
-                    onClick={() => setQuery("")}
-                    className="absolute top-1/2 right-0.5 flex size-8 -translate-y-1/2 items-center justify-center text-muted"
-                    aria-label="Clear search"
-                  >
-                    <X className="size-3.5" />
-                  </button>
-                )}
-              </label>
-              <FilterMenu
-                filters={VIEW_FILTERS[view]}
-                value={filter}
-                open={filterOpen}
-                onOpenChange={setFilterOpen}
-                onChange={setFilter}
-              />
-            </div>
+              </div>
+            </nav>
 
-            <div className="px-3 pt-2">
+            <div className="library-tabs bg-bg px-3 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
               <div
                 role="tablist"
                 aria-label="Timeline view"
@@ -698,6 +1272,9 @@ export function AppShell() {
                     type="button"
                     role="tab"
                     aria-selected={view === id}
+                    onPointerDown={(e) => {
+                      e.preventDefault();
+                    }}
                     onClick={() => setView(id)}
                     className={cn(
                       "flex h-10 items-center justify-center gap-1 rounded-sm text-base font-medium transition-colors duration-150",
@@ -710,7 +1287,13 @@ export function AppShell() {
                 ))}
               </div>
             </div>
-          </nav>
+          </div>
+
+          <div
+            aria-hidden
+            className="pointer-events-none fixed inset-x-0 bottom-0 z-[19] bg-bg lg:hidden"
+            style={{ height: "var(--keyboard-inset, 0px)" }}
+          />
 
           <div
             className="timeline-fab-dock pointer-events-none absolute inset-x-0 z-30 px-[max(0.75rem,var(--safe-x))] lg:hidden"

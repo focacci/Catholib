@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { BIBLE_BOOKS } from "./bible.ts";
-import { collectHits, countHitsByView, filterArtifacts } from "./search.ts";
+import { collectHits, countHitsByView, filterArtifacts, searchHitStripItems } from "./search.ts";
 
 describe("countHitsByView", () => {
   it("returns zeros when there is no query or type filter", () => {
@@ -16,18 +16,9 @@ describe("countHitsByView", () => {
     const query = "Genesis";
     const hits = collectHits(query, "all");
     const counts = countHitsByView(query, "all");
-    assert.equal(
-      counts.bible,
-      hits.filter((hit) => hit.view === "bible").length,
-    );
-    assert.equal(
-      counts.church,
-      hits.filter((hit) => hit.view === "church").length,
-    );
-    assert.equal(
-      counts.missal,
-      hits.filter((hit) => hit.view === "missal").length,
-    );
+    assert.equal(counts.bible, hits.filter((hit) => hit.view === "bible").length);
+    assert.equal(counts.church, hits.filter((hit) => hit.view === "church").length);
+    assert.equal(counts.missal, hits.filter((hit) => hit.view === "missal").length);
     assert.ok(counts.bible > 0);
   });
 
@@ -38,6 +29,20 @@ describe("countHitsByView", () => {
     assert.ok(counts.bible > 1000);
     assert.equal(counts.church, 0);
     assert.equal(counts.missal, 0);
+  });
+});
+
+describe("searchHitStripItems", () => {
+  it("always lists Bible, Church, then Missal so counts line up with the footer tabs", () => {
+    const items = searchHitStripItems({ bible: 4, church: 0, missal: 2 });
+    assert.deepEqual(
+      items.map((item) => item.id),
+      ["bible", "church", "missal"],
+    );
+    assert.deepEqual(
+      items.map((item) => `${item.count} in ${item.label}`),
+      ["4 in Bible", "0 in Church", "2 in Missal"],
+    );
   });
 });
 

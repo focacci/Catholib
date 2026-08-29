@@ -58,3 +58,38 @@ export function chromeSettleOffset(args: {
   if (offset >= maxOffset - 0.5) return maxOffset;
   return lastDelta < 0 ? 0 : maxOffset;
 }
+
+/** After the query is cleared, hide chrome if the list is scrolled. */
+export function chromeOffsetWhenQueryCleared(args: {
+  scrollTop: number;
+  maxOffset: number;
+}): number {
+  if (args.maxOffset <= 0 || args.scrollTop < 1) return 0;
+  return args.maxOffset;
+}
+
+/** Header follows hide-on-scroll; a search query only pins the footer. */
+export function nextOverlayChromeOffsets(args: {
+  headerPrev: number;
+  footerPrev: number;
+  delta: number;
+  scrollTop: number;
+  maxOffset: number;
+  holdFooter: boolean;
+}): { header: number; footer: number } {
+  const header = nextChromeHideOffset({
+    prev: args.headerPrev,
+    delta: args.delta,
+    scrollTop: args.scrollTop,
+    maxOffset: args.maxOffset,
+  });
+  const footer = args.holdFooter
+    ? 0
+    : nextChromeHideOffset({
+        prev: args.footerPrev,
+        delta: args.delta,
+        scrollTop: args.scrollTop,
+        maxOffset: args.maxOffset,
+      });
+  return { header, footer };
+}

@@ -3,9 +3,11 @@ import { describe, it } from "node:test";
 import {
   chromeFullyHidden,
   chromeHideProgress,
+  chromeOffsetWhenQueryCleared,
   chromeSettleOffset,
   interpolateChromeOffset,
   nextChromeHideOffset,
+  nextOverlayChromeOffsets,
   visibleChromeSize,
 } from "./chrome-scroll.ts";
 
@@ -178,6 +180,60 @@ describe("chromeSettleOffset", () => {
         lastDelta: 20,
       }),
       0,
+    );
+  });
+});
+
+describe("chromeOffsetWhenQueryCleared", () => {
+  it("targets fully hidden when the list is already scrolled", () => {
+    assert.equal(chromeOffsetWhenQueryCleared({ scrollTop: 240, maxOffset: 120 }), 120);
+  });
+
+  it("stays shown at the top of the list", () => {
+    assert.equal(chromeOffsetWhenQueryCleared({ scrollTop: 0, maxOffset: 120 }), 0);
+  });
+});
+
+describe("nextOverlayChromeOffsets", () => {
+  it("hides the header on scroll while a query keeps the footer on-screen", () => {
+    assert.deepEqual(
+      nextOverlayChromeOffsets({
+        headerPrev: 20,
+        footerPrev: 0,
+        delta: 40,
+        scrollTop: 80,
+        maxOffset: 120,
+        holdFooter: true,
+      }),
+      { header: 60, footer: 0 },
+    );
+  });
+
+  it("brings a hidden footer back when a query starts holding it", () => {
+    assert.deepEqual(
+      nextOverlayChromeOffsets({
+        headerPrev: 120,
+        footerPrev: 120,
+        delta: 10,
+        scrollTop: 400,
+        maxOffset: 120,
+        holdFooter: true,
+      }),
+      { header: 120, footer: 0 },
+    );
+  });
+
+  it("hides header and footer together when the footer is not held", () => {
+    assert.deepEqual(
+      nextOverlayChromeOffsets({
+        headerPrev: 20,
+        footerPrev: 20,
+        delta: 40,
+        scrollTop: 80,
+        maxOffset: 120,
+        holdFooter: false,
+      }),
+      { header: 60, footer: 60 },
     );
   });
 });

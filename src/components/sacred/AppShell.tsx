@@ -357,9 +357,7 @@ export function AppShell() {
     const headerH = headerHRef.current;
     const footerH = footerHRef.current;
     const maxOffset = Math.max(headerH, footerH);
-    const next = overlay
-      ? Math.max(0, Math.min(maxOffset, lastScrollRef.current, offset))
-      : 0;
+    const next = overlay ? Math.max(0, Math.min(maxOffset, lastScrollRef.current, offset)) : 0;
     chromeOffsetRef.current = next;
     const progress = overlay ? chromeHideProgress(next, maxOffset) : 0;
     const headerVisible = overlay ? visibleChromeSize(progress, headerH) : 0;
@@ -467,18 +465,29 @@ export function AppShell() {
     const onScrollEnd = () => {
       if (!pointerDownRef.current) settleChromeRef.current();
     };
-    const onPointerUp = () => {
+    const onPointerDown = () => {
+      pointerDownRef.current = true;
+      cancelChromeAnimation();
+      cancelChromeSettleTimer();
+    };
+    const onRelease = () => {
       if (!pointerDownRef.current) return;
       pointerDownRef.current = false;
       scheduleChromeSettleRef.current();
     };
     el?.addEventListener("scrollend", onScrollEnd);
-    window.addEventListener("pointerup", onPointerUp);
-    window.addEventListener("pointercancel", onPointerUp);
+    el?.addEventListener("pointerdown", onPointerDown);
+    window.addEventListener("pointerup", onRelease, true);
+    window.addEventListener("pointercancel", onRelease, true);
+    window.addEventListener("mouseup", onRelease, true);
+    window.addEventListener("touchend", onRelease, true);
     return () => {
       el?.removeEventListener("scrollend", onScrollEnd);
-      window.removeEventListener("pointerup", onPointerUp);
-      window.removeEventListener("pointercancel", onPointerUp);
+      el?.removeEventListener("pointerdown", onPointerDown);
+      window.removeEventListener("pointerup", onRelease, true);
+      window.removeEventListener("pointercancel", onRelease, true);
+      window.removeEventListener("mouseup", onRelease, true);
+      window.removeEventListener("touchend", onRelease, true);
       cancelChromeAnimation();
       cancelChromeSettleTimer();
     };

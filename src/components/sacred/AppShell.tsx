@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   BookOpen,
@@ -26,7 +26,13 @@ import {
   type FilterId,
   type ViewMode,
 } from "@/lib/timeline/types";
-import { useIsDesktop } from "@/lib/media";
+import { isSidebarViewport, useIsDesktop, useIsSidebarLayout } from "@/lib/media";
+import {
+  chromeFullyHidden,
+  chromeHideProgress,
+  nextChromeHideOffset,
+  visibleChromeSize,
+} from "@/lib/timeline/chrome-scroll";
 import { cn } from "@/lib/utils";
 import { AboutPanel } from "./AboutPanel";
 import { ArtifactSheet } from "./ArtifactSheet";
@@ -71,11 +77,7 @@ function BibleJumpGrid({
       <p className="px-1 pb-1.5 pt-2 font-serif text-xs uppercase tracking-[0.16em] text-gold-dim">
         {label}
       </p>
-      <div
-        className={
-          compact ? "grid grid-cols-6 gap-1 sm:grid-cols-8" : "grid grid-cols-5 gap-1"
-        }
-      >
+      <div className={compact ? "grid grid-cols-6 gap-1 sm:grid-cols-8" : "grid grid-cols-5 gap-1"}>
         {books.map((book) => {
           const populated = book.populatedChapters.length > 0;
           const period = periodForBook(book.name);
@@ -259,9 +261,7 @@ function FilterMenu({
                 aria-selected={f.id === value}
                 className={cn(
                   "flex h-11 w-full items-center px-3 text-left text-base",
-                  f.id === value
-                    ? "bg-gold-soft text-gold"
-                    : "text-fg hover:bg-gold-soft",
+                  f.id === value ? "bg-gold-soft text-gold" : "text-fg hover:bg-gold-soft",
                 )}
                 onClick={() => {
                   onChange(f.id);
@@ -308,24 +308,86 @@ export function AppShell() {
   const selected = useTimeline((s) => s.selected);
   const closeArtifact = useTimeline((s) => s.closeArtifact);
   const isDesktop = useIsDesktop();
+  const isSidebar = useIsSidebarLayout();
   const aboutOpen = useTimeline((s) => s.aboutOpen);
   const setAboutOpen = useTimeline((s) => s.setAboutOpen);
   const expandBook = useTimeline((s) => s.expandBook);
 
+  const shellRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
+  const footerRef = useRef<HTMLElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
+  const lastScrollRef = useRef(0);
+  const chromeOffsetRef = useRef(0);
+  const headerHRef = useRef(48);
+  const footerHRef = useRef(108);
   const [jumpOpen, setJumpOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
+  const [headerH, setHeaderH] = useState(48);
+  const [footerH, setFooterH] = useState(108);
 
-  const hitCounts = useMemo(
-    () => countHitsByView(query, filter),
-    [filter, query],
-  );
+  const applyChrome = (offset: number) => {
+    const overlay = !isSidebarViewport();
+    const header = headerRef.current;
+    const footer = footerRef.current;
+    const shell = shellRef.current;
+    const headerH = headerHRef.current;
+    const footerH = footerHRef.current;
+    const maxOffset = Math.max(headerH, footerH);
+    const next = overlay ? Math.max(0, Math.min(maxOffset, offset)) : 0;
+    chromeOffsetRef.current = next;
+    const progress = overlay ? chromeHideProgress(next, maxOffset) : 0;
+    const headerVisible = overlay ? visibleChromeSize(progress, headerH) : 0;
+    const footerVisible = overlay ? visibleChromeSize(progress, footerH) : 0;
+    const headerGone = overlay && chromeFullyHidden(headerVisible);
+    const footerGone = overlay && chromeFullyHidden(footerVisible);
+
+    if (header) {
+      header.style.transform =
+        overlay && progress ? `translate3d(0, ${-progress * headerH}px, 0)` : "";
+      header.toggleAttribute("inert", headerGone);
+      header.style.pointerEvents = headerGone ? "none" : "";
+    }
+    if (footer) {
+      footer.style.transform =
+        overlay && progress ? `translate3d(0, ${progress * footerH}px, 0)` : "";
+      footer.toggleAttribute("inert", footerGone);
+      footer.style.pointerEvents = footerGone ? "none" : "";
+    }
+    shell?.style.setProperty("--chrome-h", `${headerVisible}px`);
+    shell?.style.setProperty("--footer-h", `${footerVisible}px`);
+  };
+
+  useLayoutEffect(() => {
+    const header = headerRef.current;
+    const footer = footerRef.current;
+    if (!header) return;
+    const update = () => {
+      const nextHeader = header.offsetHeight;
+      const nextFooter = footer?.offsetHeight ?? 0;
+      headerHRef.current = nextHeader;
+      footerHRef.current = nextFooter;
+      setHeaderH(nextHeader);
+      setFooterH(nextFooter);
+      applyChrome(chromeOffsetRef.current);
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(header);
+    if (footer) ro.observe(footer);
+    return () => ro.disconnect();
+  }, [isSidebar]);
+
+  const hitCounts = useMemo(() => countHitsByView(query, filter), [filter, query]);
   const otherViews = (["bible", "church", "missal"] as const).filter(
     (id) => id !== view && hitCounts[id] > 0,
   );
 
   useEffect(() => {
-    document.getElementById("timeline-scroll")?.scrollTo({ top: 0 });
+    scrollRef.current?.scrollTo({ top: 0 });
+    lastScrollRef.current = 0;
+    applyChrome(0);
     setFilterOpen(false);
     setJumpOpen(false);
   }, [view]);
@@ -334,32 +396,68 @@ export function AppShell() {
     if (isDesktop) closeArtifact();
   }, [isDesktop, closeArtifact]);
 
+  const onScroll = () => {
+    const el = scrollRef.current;
+    if (!el || isSidebarViewport()) return;
+    if (document.activeElement === searchRef.current) {
+      applyChrome(0);
+      lastScrollRef.current = Math.max(0, el.scrollTop);
+      return;
+    }
+    const y = Math.max(0, el.scrollTop);
+    const delta = y - lastScrollRef.current;
+    lastScrollRef.current = y;
+    const maxOffset = Math.max(headerHRef.current, footerHRef.current);
+    const prev = chromeOffsetRef.current;
+    const next = nextChromeHideOffset({
+      prev,
+      delta,
+      scrollTop: y,
+      maxOffset,
+    });
+    if (prev < 1 && next > 1) setFilterOpen(false);
+    applyChrome(next);
+  };
+
   const jumpToBook = (book: BibleBook) => {
     setJumpOpen(false);
     expandBook(book.name, true);
     requestAnimationFrame(() => {
-      document
-        .getElementById(`book-${book.name}`)
-        ?.scrollIntoView({ block: "start" });
+      document.getElementById(`book-${book.name}`)?.scrollIntoView({ block: "start" });
     });
   };
 
   const jumpToAnchor = (prefix: string, id: string) => {
     setJumpOpen(false);
     requestAnimationFrame(() => {
-      document
-        .getElementById(`${prefix}-${id}`)
-        ?.scrollIntoView({ block: "start" });
+      document.getElementById(`${prefix}-${id}`)?.scrollIntoView({ block: "start" });
     });
   };
 
   const jumpLabel =
-    view === "bible" ? "Jump to a book" : view === "church" ? "Jump to an era" : "Jump in the Missal";
+    view === "bible"
+      ? "Jump to a book"
+      : view === "church"
+        ? "Jump to an era"
+        : "Jump in the Missal";
 
   return (
-    <div className="flex h-dvh flex-col overflow-hidden bg-bg text-fg">
+    <div
+      ref={shellRef}
+      className="relative flex h-dvh flex-col overflow-hidden bg-bg text-fg"
+      style={
+        {
+          "--chrome-h": isSidebar ? "0px" : `${headerH}px`,
+          "--footer-h": isSidebar ? "0px" : `${footerH}px`,
+        } as CSSProperties
+      }
+    >
       <ArtworkPreloader />
-      <DayHeader />
+      <DayHeader
+        ref={headerRef}
+        id="timeline-chrome"
+        className="max-lg:absolute max-lg:inset-x-0 max-lg:top-0 max-lg:z-20 max-lg:will-change-transform"
+      />
 
       <div className="flex min-h-0 flex-1">
         <aside className="hidden w-64 shrink-0 flex-col border-r border-line bg-surface lg:flex">
@@ -391,13 +489,15 @@ export function AppShell() {
           </div>
         </aside>
 
-        <div className="flex min-w-0 flex-1 flex-col">
+        <div className="relative flex min-w-0 flex-1 flex-col">
           <div className="relative min-h-0 flex-1">
             <main
+              ref={scrollRef}
               id="timeline-scroll"
+              onScroll={onScroll}
               className="h-full overflow-y-auto [overflow-anchor:none]"
-              style={{ "--chrome-h": "0px" } as CSSProperties}
             >
+              {!isSidebar && <div aria-hidden className="shrink-0" style={{ height: headerH }} />}
               <div className="mx-auto w-full max-w-xl">
                 {view === "bible" ? (
                   <BibleView />
@@ -408,52 +508,11 @@ export function AppShell() {
                 )}
               </div>
             </main>
-
-            <div className="pointer-events-none absolute inset-x-0 bottom-3 z-20 px-3 lg:hidden">
-              <div className="pointer-events-auto relative mx-auto w-full max-w-xl">
-                <AnimatePresence>
-                  {jumpOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 8, scale: 0.97 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 8, scale: 0.97 }}
-                      transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                      className={cn(
-                        "absolute bottom-14 max-h-[min(28rem,50dvh)] overflow-y-auto rounded-lg bg-elevated shadow-[var(--shadow-border)]",
-                        view === "bible"
-                          ? "inset-x-0"
-                          : "left-1/2 w-72 -translate-x-1/2",
-                      )}
-                    >
-                      <JumpBody
-                        view={view}
-                        compact
-                        onBook={jumpToBook}
-                        onChurch={(id) => jumpToAnchor("era", id)}
-                        onMissal={(id) => jumpToAnchor("missal", id)}
-                      />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-                <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-2">
-                  <span />
-                  <button
-                    type="button"
-                    onClick={() => setJumpOpen((v) => !v)}
-                    className="flex h-12 min-w-32 items-center justify-center rounded-full bg-elevated px-5 font-serif text-lg text-gold shadow-[var(--shadow-border)] transition-transform duration-150 ease-out active:scale-95"
-                  >
-                    Jump to…
-                  </button>
-                  <div className="flex justify-end">
-                    {view === "bible" && <BookExpandControls compact />}
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
 
           <nav
-            className="shrink-0 border-t border-line bg-bg pb-[max(0.5rem,env(safe-area-inset-bottom))]"
+            ref={footerRef}
+            className="shrink-0 border-t border-line bg-bg pb-[max(0.5rem,env(safe-area-inset-bottom))] max-lg:absolute max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-20 max-lg:will-change-transform"
             aria-label="Library"
           >
             {query.trim() && (
@@ -486,9 +545,7 @@ export function AppShell() {
                 <Info className="size-5" strokeWidth={1.75} />
               </button>
               <label className="relative min-w-0 flex-1">
-                <span className="sr-only">
-                  Search Scripture, Magisterium, and Missal
-                </span>
+                <span className="sr-only">Search Scripture, Magisterium, and Missal</span>
                 <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-subtle" />
                 <input
                   ref={searchRef}
@@ -524,8 +581,7 @@ export function AppShell() {
                 aria-label="Timeline view"
                 className="grid grid-cols-3 rounded-md bg-elevated p-0.5"
                 style={{
-                  boxShadow:
-                    "0 0 0 1px color-mix(in oklab, var(--color-gold) 30%, transparent)",
+                  boxShadow: "0 0 0 1px color-mix(in oklab, var(--color-gold) 30%, transparent)",
                 }}
               >
                 {VIEWS.map(({ id, label, Icon }) => (
@@ -547,12 +603,53 @@ export function AppShell() {
               </div>
             </div>
           </nav>
+
+          <div
+            className="pointer-events-none absolute inset-x-0 z-30 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:hidden"
+            style={{ bottom: "var(--footer-h, 0px)" }}
+          >
+            <div className="pointer-events-auto relative mx-auto w-full max-w-xl">
+              <AnimatePresence>
+                {jumpOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8, scale: 0.97 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 8, scale: 0.97 }}
+                    transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                    className={cn(
+                      "absolute bottom-14 max-h-[min(28rem,50dvh)] overflow-y-auto rounded-lg bg-elevated shadow-[var(--shadow-border)]",
+                      view === "bible" ? "inset-x-0" : "left-1/2 w-72 -translate-x-1/2",
+                    )}
+                  >
+                    <JumpBody
+                      view={view}
+                      compact
+                      onBook={jumpToBook}
+                      onChurch={(id) => jumpToAnchor("era", id)}
+                      onMissal={(id) => jumpToAnchor("missal", id)}
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-2">
+                <span />
+                <button
+                  type="button"
+                  onClick={() => setJumpOpen((v) => !v)}
+                  className="flex h-12 min-w-32 items-center justify-center rounded-full bg-elevated px-5 font-serif text-lg text-gold shadow-[var(--shadow-border)] transition-transform duration-150 ease-out active:scale-95"
+                >
+                  Jump to…
+                </button>
+                <div className="flex justify-end">
+                  {view === "bible" && <BookExpandControls compact />}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      {!isDesktop && (
-        <ArtifactSheet artifact={selected} onClose={closeArtifact} />
-      )}
+      {!isDesktop && <ArtifactSheet artifact={selected} onClose={closeArtifact} />}
       <AboutPanel open={aboutOpen} onOpenChange={setAboutOpen} />
     </div>
   );

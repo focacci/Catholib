@@ -43,7 +43,8 @@ export function interpolateChromeOffset(start: number, target: number, t: number
 
 /**
  * Where chrome should rest after the user lets go.
- * A partial hide continues off-screen; a pull-back (last delta negative) finishes on-screen.
+ * A partial hide continues fully off-screen even if the list has not
+ * scrolled a full chrome-height; a pull-back finishes on-screen.
  */
 export function chromeSettleOffset(args: {
   offset: number;
@@ -53,8 +54,7 @@ export function chromeSettleOffset(args: {
 }): number {
   const { offset, maxOffset, scrollTop, lastDelta } = args;
   if (maxOffset <= 0 || scrollTop < 1) return 0;
-  const maxHide = Math.min(maxOffset, scrollTop);
   if (offset <= 0.5) return 0;
-  if (offset >= maxHide - 0.5) return maxHide;
-  return lastDelta < 0 ? 0 : maxHide;
+  if (offset >= maxOffset - 0.5) return maxOffset;
+  return lastDelta < 0 ? 0 : maxOffset;
 }

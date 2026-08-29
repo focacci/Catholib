@@ -357,7 +357,7 @@ export function AppShell() {
     const headerH = headerHRef.current;
     const footerH = footerHRef.current;
     const maxOffset = Math.max(headerH, footerH);
-    const next = overlay ? Math.max(0, Math.min(maxOffset, lastScrollRef.current, offset)) : 0;
+    const next = overlay ? Math.max(0, Math.min(maxOffset, offset)) : 0;
     chromeOffsetRef.current = next;
     const progress = overlay ? chromeHideProgress(next, maxOffset) : 0;
     const headerVisible = overlay ? visibleChromeSize(progress, headerH) : 0;

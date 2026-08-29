@@ -157,7 +157,7 @@ describe("chromeSettleOffset", () => {
     );
   });
 
-  it("cannot hide more than the current scroll", () => {
+  it("finishes fully off-screen even if the list has not scrolled a full chrome height", () => {
     assert.equal(
       chromeSettleOffset({
         offset: 20,
@@ -165,7 +165,7 @@ describe("chromeSettleOffset", () => {
         scrollTop: 50,
         lastDelta: 10,
       }),
-      50,
+      120,
     );
   });
 

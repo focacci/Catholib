@@ -991,10 +991,22 @@ export function AppShell() {
 
   const onSearchBlur = () => {
     searchFocusedRef.current = false;
-    searchHoldCompactRef.current = true;
-    applyKeyboardInset(measureKeyboardInset());
-    startKeyboardChase();
     if (searchHoldTimerRef.current) clearTimeout(searchHoldTimerRef.current);
+    const inset = measureKeyboardInset();
+    const pull = searchPullRef.current;
+    const keyboardOpen =
+      isSoftwareKeyboardOpen(inset) || pull.active || pull.riding;
+    if (!keyboardOpen) {
+      searchHoldCompactRef.current = false;
+      applyKeyboardInset(inset);
+      if (!useTimeline.getState().query.trim()) {
+        hideFooterAfterQueryCleared();
+      }
+      return;
+    }
+    searchHoldCompactRef.current = true;
+    applyKeyboardInset(inset);
+    startKeyboardChase();
     searchHoldTimerRef.current = window.setTimeout(() => {
       searchHoldTimerRef.current = 0;
       if (searchPullRef.current.active || searchPullRef.current.riding) return;
@@ -1004,6 +1016,11 @@ export function AppShell() {
         hideFooterAfterQueryCleared();
       }
     }, KEYBOARD_BLUR_HOLD_MS);
+  };
+
+  const clearSearchQuery = () => {
+    searchRef.current?.blur();
+    setQuery("");
   };
 
   const onScroll = () => {
@@ -1201,7 +1218,8 @@ export function AppShell() {
                   {query && (
                     <button
                       type="button"
-                      onClick={() => setQuery("")}
+                      onPointerDown={(e) => e.preventDefault()}
+                      onClick={clearSearchQuery}
                       className="absolute top-1/2 right-0.5 flex size-8 -translate-y-1/2 items-center justify-center text-muted"
                       aria-label="Clear search"
                     >

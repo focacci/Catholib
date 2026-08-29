@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+/** Desktop, or landscape (including phones). Keep in sync with `DUAL_COLUMN_MQ`. */
+@custom-variant dual {
+  @media (min-width: 768px), (orientation: landscape) {
+    @slot;
+  }
+}
+
 @theme {
   --color-bg: #0a0e14;
   --color-surface: #141b26;

@@ -4,6 +4,8 @@ import {
   containIntrinsicSize,
   estimateArtifactListHeight,
   estimateChapterBlockHeight,
+  estimateDualChapterBlockHeight,
+  estimateDualSectionBodyHeight,
   estimateSectionBodyHeight,
 } from "./viewport-gate.ts";
 import { wikimediaFileUrl } from "./wikimedia.ts";
@@ -53,6 +55,21 @@ describe("timeline height estimates", () => {
     const narrow = estimateArtifactListHeight([{ imageUrl: url }], 300);
     const wide = estimateArtifactListHeight([{ imageUrl: url }], 600);
     assert.ok(wide > narrow);
+  });
+
+  it("uses the taller column for dual-column chapter estimates", () => {
+    const artifacts = [{}, {}, { type: "artwork", imageUrl: wikimediaFileUrl("El_Greco_006.jpg") }];
+    const stacked = estimateChapterBlockHeight({ artifacts }, 360);
+    const dual = estimateDualChapterBlockHeight({ artifacts }, 360, 360);
+    assert.ok(dual < stacked);
+    assert.ok(dual >= estimateArtifactListHeight([artifacts[2]], 360));
+  });
+
+  it("uses the taller column for dual-column church estimates", () => {
+    const artifacts = [{}, { type: "artwork", imageUrl: wikimediaFileUrl("El_Greco_006.jpg") }];
+    const stacked = estimateSectionBodyHeight(artifacts, 360);
+    const dual = estimateDualSectionBodyHeight(artifacts, 360, 360);
+    assert.ok(dual < stacked);
   });
 
   it("emits a remembered intrinsic size the browser can skip-paint with", () => {

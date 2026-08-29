@@ -13,25 +13,19 @@ import {
   matchingChaptersForBook,
   matchBibleBooks,
 } from "@/lib/timeline/bible-view";
-import {
-  isBookHeaderStuck,
-  pinSectionToScrollerTop,
-} from "@/lib/timeline/book-collapse-scroll";
-import { useTimelineCardWidth } from "@/lib/timeline/card-width";
+import { isBookHeaderStuck, pinSectionToScrollerTop } from "@/lib/timeline/book-collapse-scroll";
+import { useTimelineLayout } from "@/lib/timeline/card-width";
 import { useTimeline } from "@/lib/timeline/store";
 import type { BibleBook, FilterId, TimelineArtifact } from "@/lib/timeline/types";
-import { estimateChapterBlockHeight } from "@/lib/timeline/viewport-gate";
+import {
+  estimateChapterBlockHeight,
+  estimateDualChapterBlockHeight,
+} from "@/lib/timeline/viewport-gate";
 import { cn } from "@/lib/utils";
-import { ArtifactCard } from "./ArtifactCard";
+import { ArtifactColumns } from "./ArtifactColumns";
 import { ViewportGate } from "./ViewportGate";
 
-function ChapterIndex({
-  book,
-  onJump,
-}: {
-  book: BibleBook;
-  onJump: (chapter: number) => void;
-}) {
+function ChapterIndex({ book, onJump }: { book: BibleBook; onJump: (chapter: number) => void }) {
   const populated = new Set(book.populatedChapters.map((c) => c.chapter));
   return (
     <div className="pb-3">
@@ -51,9 +45,7 @@ function ChapterIndex({
                   : "text-subtle hover:bg-elevated hover:text-muted",
               )}
               aria-label={
-                isPop
-                  ? `${book.name} chapter ${n}, sample populated`
-                  : `${book.name} chapter ${n}`
+                isPop ? `${book.name} chapter ${n}, sample populated` : `${book.name} chapter ${n}`
               }
             >
               {n}
@@ -73,6 +65,8 @@ const BookSection = memo(function BookSection({
   hitCount,
   nameMatch,
   cardWidth,
+  artworkWidth,
+  dualColumn,
   onToggle,
   onOpen,
 }: {
@@ -83,6 +77,8 @@ const BookSection = memo(function BookSection({
   hitCount: number;
   nameMatch: boolean;
   cardWidth: number;
+  artworkWidth: number;
+  dualColumn: boolean;
   onToggle: (name: string) => void;
   onOpen: (a: TimelineArtifact) => void;
 }) {
@@ -126,11 +122,7 @@ const BookSection = memo(function BookSection({
   };
 
   return (
-    <section
-      ref={sectionRef}
-      id={`book-${book.name}`}
-      className="scroll-mt-[var(--chrome-h,0px)]"
-    >
+    <section ref={sectionRef} id={`book-${book.name}`} className="scroll-mt-[var(--chrome-h,0px)]">
       <button
         ref={headerRef}
         type="button"
@@ -150,9 +142,7 @@ const BookSection = memo(function BookSection({
           {book.name}
         </span>
         {hitCount > 0 && (
-          <span className="shrink-0 font-sans text-sm tabular-nums text-gold-dim">
-            {hitCount}
-          </span>
+          <span className="shrink-0 font-sans text-sm tabular-nums text-gold-dim">{hitCount}</span>
         )}
         <ChevronDown
           className={cn(
@@ -182,46 +172,47 @@ const BookSection = memo(function BookSection({
               key={ch.chapter}
               id={`ch-${book.abbreviation}-${ch.chapter}`}
               className="relative scroll-mt-[calc(var(--chrome-h,0px)+3.5rem)] px-2 pt-4 pb-3"
-              estimateHeight={estimateChapterBlockHeight(ch, cardWidth)}
+              estimateHeight={
+                dualColumn
+                  ? estimateDualChapterBlockHeight(ch, cardWidth, artworkWidth)
+                  : estimateChapterBlockHeight(ch, cardWidth)
+              }
             >
-              <div className="mb-2.5 pl-[var(--rail-pad)]">
-                <p className="font-serif text-base font-semibold text-fg">
-                  Chapter {ch.chapter}
-                  {ch.heading ? ` · ${ch.heading}` : ""}
-                </p>
-                <div className="mt-0.5 flex flex-wrap items-center gap-x-4">
-                  {bibleVersionLinks(book.name, ch.chapter).map((version) => (
-                    <a
-                      key={version.id}
-                      href={version.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex min-h-11 items-center gap-1 text-base text-gold"
-                      aria-label={`Read ${book.name} ${ch.chapter} in ${version.label}`}
-                    >
-                      {version.label}
-                      <ExternalLink className="size-3.5" />
-                    </a>
-                  ))}
-                </div>
-              </div>
-              <div className="flex flex-col gap-2 pl-[var(--rail-pad)]">
-                {ch.artifacts.map((a) => (
-                  <ArtifactCard
-                    key={a.id}
-                    artifact={a}
-                    context={`${book.name} ${ch.chapter}`}
-                    onOpen={onOpen}
-                  />
-                ))}
-              </div>
+              <ArtifactColumns
+                artifacts={ch.artifacts}
+                context={`${book.name} ${ch.chapter}`}
+                onOpen={onOpen}
+                heading={
+                  <div className="mb-2.5 pl-[var(--rail-pad)]">
+                    <p className="font-serif text-base font-semibold text-fg">
+                      Chapter {ch.chapter}
+                      {ch.heading ? ` · ${ch.heading}` : ""}
+                    </p>
+                    <div className="mt-0.5 flex flex-wrap items-center gap-x-4">
+                      {bibleVersionLinks(book.name, ch.chapter).map((version) => (
+                        <a
+                          key={version.id}
+                          href={version.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex min-h-11 items-center gap-1 text-base text-gold"
+                          aria-label={`Read ${book.name} ${ch.chapter} in ${version.label}`}
+                        >
+                          {version.label}
+                          <ExternalLink className="size-3.5" />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                }
+              />
             </ViewportGate>
           ))}
 
           {q && matchingChapters.length === 0 && nameMatch && (
             <p className="px-2 py-4 pl-[calc(var(--rail-pad)+0.5rem)] text-base text-muted">
-              No artifacts in {book.name} match this search. Sample data from
-              approved sources only for selected chapters.
+              No artifacts in {book.name} match this search. Sample data from approved sources only
+              for selected chapters.
             </p>
           )}
         </div>
@@ -236,24 +227,15 @@ export const BibleView = memo(function BibleView() {
   const expandedBooks = useTimeline((s) => s.expandedBooks);
   const toggleBook = useTimeline((s) => s.toggleBook);
   const openArtifact = useTimeline((s) => s.openArtifact);
-  const cardWidth = useTimelineCardWidth();
+  const { dualColumn, cardWidth, artworkWidth } = useTimelineLayout();
 
-  const matches = useMemo(
-    () => matchBibleBooks(BIBLE_BOOKS, query, filter),
-    [filter, query],
-  );
+  const matches = useMemo(() => matchBibleBooks(BIBLE_BOOKS, query, filter), [filter, query]);
   const rows = useMemo(
     () => applyBibleBookExpansion(matches, query, expandedBooks),
     [expandedBooks, matches, query],
   );
-  const ot = useMemo(
-    () => rows.filter((row) => row.book.testament === "OT"),
-    [rows],
-  );
-  const nt = useMemo(
-    () => rows.filter((row) => row.book.testament === "NT"),
-    [rows],
-  );
+  const ot = useMemo(() => rows.filter((row) => row.book.testament === "OT"), [rows]);
+  const nt = useMemo(() => rows.filter((row) => row.book.testament === "NT"), [rows]);
 
   const renderGroup = (label: string, group: typeof rows) => (
     <div>
@@ -270,6 +252,8 @@ export const BibleView = memo(function BibleView() {
           hitCount={row.hitCount}
           nameMatch={row.nameMatch}
           cardWidth={cardWidth}
+          artworkWidth={artworkWidth}
+          dualColumn={dualColumn}
           onToggle={toggleBook}
           onOpen={openArtifact}
         />
@@ -288,10 +272,7 @@ export const BibleView = memo(function BibleView() {
 
 function TimelineColorKey() {
   return (
-    <section
-      className="mt-6 border-t border-line px-2 pt-6"
-      aria-labelledby="timeline-color-key"
-    >
+    <section className="mt-6 border-t border-line px-2 pt-6" aria-labelledby="timeline-color-key">
       <h2
         id="timeline-color-key"
         className="font-serif text-sm tracking-[0.2em] text-gold-dim uppercase"

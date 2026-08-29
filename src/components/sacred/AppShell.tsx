@@ -355,7 +355,7 @@ function FilterMenu({
   }, [open, onOpenChange]);
 
   return (
-    <div ref={rootRef} className="relative shrink-0">
+    <div ref={rootRef} className={cn("relative shrink-0", open && "z-50")}>
       <button
         type="button"
         aria-haspopup="listbox"
@@ -380,7 +380,7 @@ function FilterMenu({
         <ul
           role="listbox"
           aria-label="Filter artifacts"
-          className="absolute right-0 bottom-full z-40 mb-1 min-w-[10.5rem] overflow-hidden rounded-md bg-elevated py-1 shadow-[var(--shadow-border)]"
+          className="absolute right-0 bottom-full z-50 mb-1 min-w-[10.5rem] overflow-hidden rounded-md bg-elevated py-1 shadow-[var(--shadow-border)]"
         >
           {filters.map((f) => (
             <li key={f.id}>
@@ -1102,6 +1102,17 @@ export function AppShell() {
     if (!pointerDownRef.current) scheduleChromeSettle();
   };
 
+  const scrollToTop = () => {
+    setJumpOpen(false);
+    setFilterOpen(false);
+    cancelChromeAnimation();
+    cancelChromeSettleTimer();
+    lastScrollRef.current = 0;
+    lastDeltaRef.current = 0;
+    applyChrome({ header: 0, footer: 0 });
+    scrollRef.current?.scrollTo({ top: 0 });
+  };
+
   const jumpToBook = (book: BibleBook) => {
     setJumpOpen(false);
     expandBook(book.name, true);
@@ -1146,6 +1157,8 @@ export function AppShell() {
         ref={headerRef}
         id="timeline-chrome"
         className="max-lg:absolute max-lg:inset-x-0 max-lg:top-0 max-lg:z-20 max-lg:overscroll-none"
+        onAboutClick={() => setAboutOpen(true)}
+        onBrandClick={scrollToTop}
       />
 
       <div className="flex min-h-0 flex-1">
@@ -1202,7 +1215,10 @@ export function AppShell() {
 
           <div
             ref={footerRef}
-            className="library-footer shrink-0 max-lg:absolute max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-20"
+            className={cn(
+              "library-footer shrink-0 max-lg:absolute max-lg:inset-x-0 max-lg:bottom-0",
+              filterOpen ? "max-lg:z-50" : "max-lg:z-20",
+            )}
           >
             <nav
               ref={searchNavRef}
@@ -1241,7 +1257,7 @@ export function AppShell() {
                 <button
                   type="button"
                   onClick={() => setAboutOpen(true)}
-                  className="flex size-11 shrink-0 items-center justify-center rounded-md text-gold hover:bg-gold-soft"
+                  className="hidden size-11 shrink-0 items-center justify-center rounded-md text-gold hover:bg-gold-soft lg:flex"
                   aria-label="About and sources"
                 >
                   <Info className="size-5" strokeWidth={1.75} />

@@ -218,109 +218,110 @@ function SectionJumpList({
   );
 }
 
-function ExpandControls({
+function AllToggleButton({
   compact,
-  allOpen,
-  allClosed,
+  kind,
+  disabled,
   noun,
-  onCollapse,
-  onExpand,
+  onClick,
 }: {
   compact?: boolean;
-  allOpen: boolean;
-  allClosed: boolean;
+  kind: "expand" | "collapse";
+  disabled: boolean;
   noun: string;
-  onCollapse: () => void;
-  onExpand: () => void;
+  onClick: () => void;
 }) {
+  const isExpand = kind === "expand";
+  const label = isExpand ? `Expand all ${noun}` : `Collapse all ${noun}`;
+  const Icon = isExpand ? ChevronsUpDown : ChevronsDownUp;
+
   if (compact) {
     return (
-      <div
-        className="flex h-12 overflow-hidden rounded-full bg-elevated shadow-fab"
-        role="group"
-        aria-label={`Expand or collapse all ${noun}`}
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={disabled}
+        className="flex h-12 w-12 items-center justify-center rounded-full bg-elevated text-gold shadow-fab transition-colors duration-150 hover:bg-gold-soft disabled:opacity-40"
+        aria-label={label}
       >
-        <button
-          type="button"
-          onClick={onCollapse}
-          disabled={allClosed}
-          className="flex h-full w-12 items-center justify-center text-gold transition-colors duration-150 hover:bg-gold-soft disabled:opacity-40"
-          aria-label={`Collapse all ${noun}`}
-        >
-          <ChevronsDownUp className="size-5" strokeWidth={1.75} />
-        </button>
-        <span className="my-2 w-px shrink-0 bg-line" aria-hidden />
-        <button
-          type="button"
-          onClick={onExpand}
-          disabled={allOpen}
-          className="flex h-full w-12 items-center justify-center text-gold transition-colors duration-150 hover:bg-gold-soft disabled:opacity-40"
-          aria-label={`Expand all ${noun}`}
-        >
-          <ChevronsUpDown className="size-5" strokeWidth={1.75} />
-        </button>
-      </div>
+        <Icon className="size-5" strokeWidth={1.75} />
+      </button>
     );
   }
 
   return (
-    <div className="grid grid-cols-2 gap-1 px-3 py-2">
-      <button
-        type="button"
-        onClick={onCollapse}
-        disabled={allClosed}
-        className="flex h-10 items-center justify-center rounded-md border border-line-strong bg-elevated px-2 text-xs font-medium text-muted transition-colors duration-150 hover:text-fg disabled:opacity-40"
-      >
-        Collapse all
-      </button>
-      <button
-        type="button"
-        onClick={onExpand}
-        disabled={allOpen}
-        className="flex h-10 items-center justify-center rounded-md border border-line-strong bg-elevated px-2 text-xs font-medium text-muted transition-colors duration-150 hover:text-fg disabled:opacity-40"
-      >
-        Expand all
-      </button>
-    </div>
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="flex h-10 w-full items-center justify-center rounded-md border border-line-strong bg-elevated px-2 text-xs font-medium text-muted transition-colors duration-150 hover:text-fg disabled:opacity-40"
+    >
+      {isExpand ? "Expand all" : "Collapse all"}
+    </button>
   );
 }
 
-function ViewExpandControls({ compact }: { compact?: boolean }) {
+function CollapseAllControl({ compact }: { compact?: boolean }) {
   const view = useTimeline((s) => s.view);
   const expandedBooks = useTimeline((s) => s.expandedBooks);
-  const expandAllBooks = useTimeline((s) => s.expandAllBooks);
   const collapseAllBooks = useTimeline((s) => s.collapseAllBooks);
   const expandedEras = useTimeline((s) => s.expandedEras);
-  const expandAllEras = useTimeline((s) => s.expandAllEras);
   const collapseAllEras = useTimeline((s) => s.collapseAllEras);
 
   if (view === "bible") {
     return (
-      <ExpandControls
+      <AllToggleButton
         compact={compact}
+        kind="collapse"
         noun="books"
-        allOpen={areAllBooksExpanded(expandedBooks)}
-        allClosed={Object.values(expandedBooks).every((open) => !open)}
-        onCollapse={collapseAllBooks}
-        onExpand={expandAllBooks}
+        disabled={Object.values(expandedBooks).every((open) => !open)}
+        onClick={collapseAllBooks}
       />
     );
   }
 
   if (view === "church") {
     return (
-      <ExpandControls
+      <AllToggleButton
         compact={compact}
+        kind="collapse"
         noun="eras"
-        allOpen={areAllBooksExpanded(expandedEras, CHURCH_ERA_NAMES)}
-        allClosed={CHURCH_ERA_NAMES.every((name) => !expandedEras[name])}
-        onCollapse={collapseAllEras}
-        onExpand={expandAllEras}
+        disabled={CHURCH_ERA_NAMES.every((name) => !expandedEras[name])}
+        onClick={collapseAllEras}
       />
     );
   }
 
   return null;
+}
+
+function ExpandAllControl({ compact }: { compact?: boolean }) {
+  const view = useTimeline((s) => s.view);
+  const expandedEras = useTimeline((s) => s.expandedEras);
+  const expandAllEras = useTimeline((s) => s.expandAllEras);
+
+  if (view !== "church") return null;
+
+  return (
+    <AllToggleButton
+      compact={compact}
+      kind="expand"
+      noun="eras"
+      disabled={areAllBooksExpanded(expandedEras, CHURCH_ERA_NAMES)}
+      onClick={expandAllEras}
+    />
+  );
+}
+
+function SidebarExpandControls() {
+  const view = useTimeline((s) => s.view);
+  if (view !== "bible" && view !== "church") return null;
+  return (
+    <div className={view === "church" ? "grid grid-cols-2 gap-1 px-3 py-2" : "px-3 py-2"}>
+      <ExpandAllControl />
+      <CollapseAllControl />
+    </div>
+  );
 }
 
 function FilterMenu({
@@ -1211,7 +1212,7 @@ export function AppShell() {
           </div>
           {view === "bible" || view === "church" ? (
             <div className="border-t border-line">
-              <ViewExpandControls />
+              <SidebarExpandControls />
             </div>
           ) : null}
           <div className="border-t border-line p-3">
@@ -1424,7 +1425,9 @@ export function AppShell() {
                 )}
               </AnimatePresence>
               <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-2">
-                <span />
+                <div className="flex justify-start">
+                  <ExpandAllControl compact />
+                </div>
                 <button
                   type="button"
                   onClick={() => {
@@ -1436,7 +1439,7 @@ export function AppShell() {
                   Jump to…
                 </button>
                 <div className="flex justify-end">
-                  {(view === "bible" || view === "church") && <ViewExpandControls compact />}
+                  <CollapseAllControl compact />
                 </div>
               </div>
             </div>

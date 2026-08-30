@@ -10,12 +10,14 @@ import { useTimeline } from "@/lib/timeline/store";
 import type { ChurchEntry, TimelineArtifact } from "@/lib/timeline/types";
 import {
   estimateDualSectionBodyHeight,
+  estimateExpandedSectionsHeight,
   estimateSectionBodyHeight,
+  STICKY_GROUP_HEADER_PX,
 } from "@/lib/timeline/viewport-gate";
 import { cn } from "@/lib/utils";
 import { ArtifactColumns } from "./ArtifactColumns";
 import { StickyGroupHeader, StickyItemHeader } from "./StickyHeaders";
-import { ViewportGate } from "./ViewportGate";
+import { OffscreenSkip, ViewportGate } from "./ViewportGate";
 
 type ChurchSection = { entry: ChurchEntry; visible: TimelineArtifact[] };
 
@@ -45,6 +47,17 @@ const EraGroup = memo(function EraGroup({
   const pinOnCollapseRef = useRef(false);
   const range = yearRangeForEntries(items.map((item) => item.entry));
   const firstId = items[0]?.entry.id;
+  const bodyEstimate = useMemo(
+    () =>
+      estimateExpandedSectionsHeight(
+        items.map((item) => ({ artifacts: item.visible })),
+        dualColumn,
+        cardWidth,
+        artworkWidth,
+      ),
+    [artworkWidth, cardWidth, dualColumn, items],
+  );
+  const blockEstimate = STICKY_GROUP_HEADER_PX + (expanded ? bodyEstimate : 0);
 
   useLayoutEffect(() => {
     if (expanded || !pinOnCollapseRef.current || !sectionRef.current) return;
@@ -67,7 +80,8 @@ const EraGroup = memo(function EraGroup({
       id={firstId ? `era-${firstId}` : undefined}
       className="scroll-mt-[var(--chrome-h,0px)]"
     >
-      <StickyGroupHeader className="px-0 tracking-normal normal-case">
+      <OffscreenSkip estimateHeight={blockEstimate}>
+        <StickyGroupHeader className="px-0 tracking-normal normal-case">
         <button
           ref={headerRef}
           type="button"
@@ -91,21 +105,22 @@ const EraGroup = memo(function EraGroup({
             )}
           />
         </button>
-      </StickyGroupHeader>
-      {expanded
-        ? items.map(({ entry, visible }) => (
-            <ChurchEntrySection
-              key={entry.id}
-              entry={entry}
-              visible={visible}
-              skipAnchor={entry.id === firstId}
-              dualColumn={dualColumn}
-              cardWidth={cardWidth}
-              artworkWidth={artworkWidth}
-              onOpen={onOpen}
-            />
-          ))
-        : null}
+        </StickyGroupHeader>
+        {expanded
+          ? items.map(({ entry, visible }) => (
+              <ChurchEntrySection
+                key={entry.id}
+                entry={entry}
+                visible={visible}
+                skipAnchor={entry.id === firstId}
+                dualColumn={dualColumn}
+                cardWidth={cardWidth}
+                artworkWidth={artworkWidth}
+                onOpen={onOpen}
+              />
+            ))
+          : null}
+      </OffscreenSkip>
     </section>
   );
 });

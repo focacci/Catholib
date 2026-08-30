@@ -8,6 +8,10 @@ import {
   interpolateChromeOffset,
   nextChromeHideOffset,
   nextOverlayChromeOffsets,
+  overlayChromeShiftY,
+  overlayChromeTranslateY,
+  reservedOverlayChromePx,
+  stickyOverlayChromePx,
   visibleChromeSize,
 } from "./chrome-scroll.ts";
 
@@ -242,5 +246,44 @@ describe("interpolateChromeOffset", () => {
   it("starts at the origin and lands on the target", () => {
     assert.equal(interpolateChromeOffset(10, 110, 0), 10);
     assert.equal(interpolateChromeOffset(10, 110, 1), 110);
+  });
+});
+
+describe("reservedOverlayChromePx", () => {
+  it("keeps the full overlay size for sticky top while chrome hides", () => {
+    assert.equal(reservedOverlayChromePx(true, 96), 96);
+    assert.equal(reservedOverlayChromePx(true, 140), 140);
+  });
+
+  it("is zero in the sidebar layout or before chrome has been measured", () => {
+    assert.equal(reservedOverlayChromePx(false, 96), 0);
+    assert.equal(reservedOverlayChromePx(true, 0), 0);
+  });
+});
+
+describe("stickyOverlayChromePx", () => {
+  it("tracks remaining visible overlay size for the FAB dock", () => {
+    assert.equal(stickyOverlayChromePx(true, 96), 96);
+    assert.equal(stickyOverlayChromePx(true, visibleChromeSize(0.5, 96)), 48);
+    assert.equal(stickyOverlayChromePx(true, 0), 0);
+    assert.equal(stickyOverlayChromePx(false, 96), 0);
+  });
+});
+
+describe("overlayChromeShiftY", () => {
+  it("matches the overlay header translate so stickies follow on the compositor", () => {
+    const hidden = overlayChromeTranslateY({ progress: 1, size: 96, edge: "header" });
+    assert.equal(overlayChromeShiftY(true, hidden), -96);
+    assert.equal(overlayChromeShiftY(true, 0), 0);
+    assert.equal(overlayChromeShiftY(false, hidden), 0);
+  });
+});
+
+describe("overlayChromeTranslateY", () => {
+  it("moves the header up and the footer down by the hidden amount", () => {
+    assert.equal(overlayChromeTranslateY({ progress: 0, size: 120, edge: "header" }), 0);
+    assert.equal(overlayChromeTranslateY({ progress: 1, size: 120, edge: "header" }), -120);
+    assert.equal(overlayChromeTranslateY({ progress: 0.5, size: 80, edge: "footer" }), 40);
+    assert.equal(overlayChromeTranslateY({ progress: 1, size: 80, edge: "footer" }), 80);
   });
 });

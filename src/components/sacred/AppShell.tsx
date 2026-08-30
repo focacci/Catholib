@@ -4,7 +4,6 @@ import {
   useMemo,
   useRef,
   useState,
-  type CSSProperties,
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import { createPortal } from "react-dom";
@@ -44,6 +43,10 @@ import {
   chromeSettleOffset,
   interpolateChromeOffset,
   nextOverlayChromeOffsets,
+  overlayChromeShiftY,
+  overlayChromeTranslateY,
+  reservedOverlayChromePx,
+  stickyOverlayChromePx,
   visibleChromeSize,
 } from "@/lib/timeline/chrome-scroll";
 import {
@@ -482,6 +485,8 @@ export function AppShell() {
   const scrollRef = useRef<HTMLElement>(null);
   const headerRef = useRef<HTMLElement>(null);
   const footerRef = useRef<HTMLDivElement>(null);
+  const fabDockRef = useRef<HTMLDivElement>(null);
+  const keyboardFillRef = useRef<HTMLDivElement>(null);
   const searchNavRef = useRef<HTMLElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const lastScrollRef = useRef(0);
@@ -491,6 +496,12 @@ export function AppShell() {
   const footerOffsetRef = useRef(0);
   const headerHRef = useRef(48);
   const footerHRef = useRef(108);
+  const headerGoneRef = useRef<boolean | null>(null);
+  const footerGoneRef = useRef<boolean | null>(null);
+  const publishedStickyChromeRef = useRef<number | null>(null);
+  const publishedChromeShiftRef = useRef<string | null>(null);
+  const publishedFooterHRef = useRef<number | null>(null);
+  const overlayKeyboardInsetRef = useRef(0);
   const settleRafRef = useRef(0);
   const settleTimerRef = useRef(0);
   const searchFocusedRef = useRef(false);
@@ -507,7 +518,6 @@ export function AppShell() {
   const [jumpOpen, setJumpOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [headerH, setHeaderH] = useState(48);
-  const [footerH, setFooterH] = useState(108);
 
   const cancelChromeAnimation = () => {
     if (settleRafRef.current) {
@@ -527,9 +537,9 @@ export function AppShell() {
     const overlay = !isSidebarViewport();
     const header = headerRef.current;
     const footer = footerRef.current;
-    const shell = shellRef.current;
-    const headerH = header?.offsetHeight || headerHRef.current;
-    const footerH = footer?.offsetHeight || footerHRef.current;
+    const dock = fabDockRef.current;
+    const headerH = headerHRef.current;
+    const footerH = footerHRef.current;
     const maxOffset = Math.max(headerH, footerH);
     const clamp = (offset: number) => (overlay ? Math.max(0, Math.min(maxOffset, offset)) : 0);
     headerOffsetRef.current = clamp(next?.header ?? headerOffsetRef.current);
@@ -540,22 +550,65 @@ export function AppShell() {
     const footerVisible = overlay ? visibleChromeSize(footerProgress, footerH) : 0;
     const headerGone = overlay && chromeFullyHidden(headerVisible);
     const footerGone = overlay && chromeFullyHidden(footerVisible);
+    const headerY = overlayChromeTranslateY({
+      progress: headerProgress,
+      size: headerH,
+      edge: "header",
+    });
+    const footerY = overlayChromeTranslateY({
+      progress: footerProgress,
+      size: footerH,
+      edge: "footer",
+    });
 
     if (header) {
-      header.style.transform =
-        overlay && headerProgress ? `translate3d(0, ${-headerProgress * headerH}px, 0)` : "";
-      header.toggleAttribute("inert", headerGone);
-      header.style.pointerEvents = headerGone ? "none" : "";
+      header.style.transform = overlay ? `translate3d(0, ${headerY}px, 0)` : "";
+      if (headerGoneRef.current !== headerGone) {
+        headerGoneRef.current = headerGone;
+        header.toggleAttribute("inert", headerGone);
+        header.style.pointerEvents = headerGone ? "none" : "";
+      }
     }
     if (footer) {
-      footer.style.transform =
-        overlay && footerProgress ? `translate3d(0, ${footerProgress * footerH}px, 0)` : "";
-      footer.style.willChange = overlay && footerProgress ? "transform" : "";
-      footer.toggleAttribute("inert", footerGone);
-      footer.style.pointerEvents = footerGone ? "none" : "";
+      footer.style.transform = overlay ? `translate3d(0, ${footerY}px, 0)` : "";
+      if (footerGoneRef.current !== footerGone) {
+        footerGoneRef.current = footerGone;
+        footer.toggleAttribute("inert", footerGone);
+        footer.style.pointerEvents = footerGone ? "none" : "";
+      }
     }
-    shell?.style.setProperty("--chrome-h", `${headerVisible}px`);
-    shell?.style.setProperty("--footer-h", `${footerVisible}px`);
+    if (dock) {
+      dock.style.transform = "";
+    }
+
+    const reservedHeader = reservedOverlayChromePx(overlay, headerH);
+    if (publishedStickyChromeRef.current !== reservedHeader) {
+      publishedStickyChromeRef.current = reservedHeader;
+      if (reservedHeader > 0) {
+        scrollRef.current?.style.setProperty("--chrome-h", `${reservedHeader}px`);
+      } else {
+        scrollRef.current?.style.removeProperty("--chrome-h");
+      }
+    }
+
+    const shiftCss = `${overlayChromeShiftY(overlay, headerY)}px`;
+    if (publishedChromeShiftRef.current !== shiftCss) {
+      publishedChromeShiftRef.current = shiftCss;
+      if (!overlay && headerY === 0) {
+        scrollRef.current?.style.removeProperty("--chrome-shift");
+      } else {
+        scrollRef.current?.style.setProperty("--chrome-shift", shiftCss);
+      }
+    }
+
+    const dockFooter = Math.round(stickyOverlayChromePx(overlay, footerVisible));
+    if (publishedFooterHRef.current !== dockFooter) {
+      publishedFooterHRef.current = dockFooter;
+      if (dock) {
+        dock.style.setProperty("--footer-h", `${dockFooter}px`);
+        dock.style.bottom = "";
+      }
+    }
   };
 
   const animateChromeTo = (target: { header: number; footer: number }) => {
@@ -587,13 +640,11 @@ export function AppShell() {
   };
 
   const hideFooterAfterQueryCleared = () => {
-    const headerH = headerRef.current?.offsetHeight || headerHRef.current;
-    const footerH = footerRef.current?.offsetHeight || footerHRef.current;
     animateChromeTo({
       header: headerOffsetRef.current,
       footer: chromeOffsetWhenQueryCleared({
         scrollTop: lastScrollRef.current,
-        maxOffset: Math.max(headerH, footerH),
+        maxOffset: Math.max(headerHRef.current, footerHRef.current),
       }),
     });
   };
@@ -646,10 +697,14 @@ export function AppShell() {
       lastKeyboardInsetRef.current = lift;
     }
 
+    overlayKeyboardInsetRef.current = lift;
+
     const searchNav = searchNavRef.current;
     const footer = footerRef.current;
+    const dock = fabDockRef.current;
     const shell = shellRef.current;
     const scroll = scrollRef.current;
+    const keyboardFill = keyboardFillRef.current;
     if (searchNav) {
       const pin = overlaySearchBarPinStyle(lift);
       if (pin) {
@@ -668,10 +723,9 @@ export function AppShell() {
       searchNav.toggleAttribute("data-keyboard", compact);
     }
     if (footer) footer.toggleAttribute("data-keyboard", compact);
-    if (shell) {
-      shell.style.setProperty("--keyboard-inset", `${lift}px`);
-      shell.toggleAttribute("data-keyboard", compact);
-    }
+    if (dock) dock.toggleAttribute("data-keyboard", compact);
+    if (keyboardFill) keyboardFill.style.height = lift ? `${lift}px` : "";
+    if (shell) shell.toggleAttribute("data-keyboard", compact);
     if (scroll) scroll.style.paddingBottom = lift ? `${lift}px` : "";
     if (compact && !pull.active) applyChrome({ footer: 0 });
   };
@@ -872,7 +926,6 @@ export function AppShell() {
       headerHRef.current = nextHeader;
       footerHRef.current = nextFooter;
       setHeaderH(nextHeader);
-      setFooterH(nextFooter);
       applyChrome();
     };
     update();
@@ -1120,7 +1173,7 @@ export function AppShell() {
       overlayLayout: true,
       searchFocused: searchFocusedRef.current,
       holdCompact: searchHoldCompactRef.current,
-      keyboardInset: measureKeyboardInset(),
+      keyboardInset: overlayKeyboardInsetRef.current,
       hasQuery: Boolean(query.trim()),
     });
     const maxOffset = Math.max(headerHRef.current, footerHRef.current);
@@ -1180,12 +1233,6 @@ export function AppShell() {
     <div
       ref={shellRef}
       className="relative flex h-dvh flex-col overflow-hidden overscroll-none bg-bg text-fg"
-      style={
-        {
-          "--chrome-h": isSidebar ? "0px" : `${headerH}px`,
-          "--footer-h": isSidebar ? "0px" : `${footerH}px`,
-        } as CSSProperties
-      }
     >
       <ArtworkPreloader />
       <DayHeader
@@ -1389,14 +1436,14 @@ export function AppShell() {
           </div>
 
           <div
+            ref={keyboardFillRef}
             aria-hidden
             className="pointer-events-none fixed inset-x-0 bottom-0 z-[19] bg-bg lg:hidden"
-            style={{ height: "var(--keyboard-inset, 0px)" }}
           />
 
           <div
+            ref={fabDockRef}
             className="timeline-fab-dock pointer-events-none absolute inset-x-0 z-40 px-[max(0.75rem,var(--safe-x))] lg:hidden"
-            style={{ bottom: "var(--footer-h, 0px)" }}
           >
             <div className="pointer-events-auto relative mx-auto w-full max-w-xl">
               <AnimatePresence>

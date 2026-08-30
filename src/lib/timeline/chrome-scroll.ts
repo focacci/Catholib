@@ -2,6 +2,11 @@
  * Hide-on-scroll overlay chrome: 0 = fully shown, maxOffset = fully hidden.
  * Tracks finger movement 1:1 so the timeline does not jump when chrome recedes.
  * On release, a partial hide finishes off-screen (or a pull-back finishes on-screen).
+ *
+ * Overlay bars move with compositor transforms. Sticky `top` stays at the full
+ * reserved `--chrome-h` so hide-on-scroll does not restyle the timeline.
+ * Stickies follow the header with `--chrome-shift` (same Y as the overlay
+ * header transform), which is used only in `transform`.
  */
 
 export const CHROME_SETTLE_MS = 240;
@@ -30,6 +35,41 @@ export function visibleChromeSize(progress: number, size: number): number {
 /** Treat sub-pixel remainders as fully off-screen so inert/pointer-events stay in sync. */
 export function chromeFullyHidden(visiblePx: number): boolean {
   return visiblePx < 0.5;
+}
+
+/**
+ * Full overlay size for sticky `top` / `--chrome-h`. Held constant while chrome
+ * hides so section headers do not recost layout.
+ */
+export function reservedOverlayChromePx(overlay: boolean, measuredPx: number): number {
+  if (!overlay || measuredPx <= 0) return 0;
+  return measuredPx;
+}
+
+/**
+ * Remaining visible overlay size. Published as `--footer-h` on the FAB dock so
+ * the buttons sit on the footer and pick up home-indicator padding when it is
+ * gone — without inheriting into the timeline.
+ */
+export function stickyOverlayChromePx(overlay: boolean, visiblePx: number): number {
+  if (!overlay) return 0;
+  return Math.max(0, visiblePx);
+}
+
+/** Same Y as the overlay header bar; published as `--chrome-shift`. */
+export function overlayChromeShiftY(overlay: boolean, headerTranslateY: number): number {
+  return overlay ? headerTranslateY : 0;
+}
+
+/** Compositor-only shift: header recedes up, footer recedes down. */
+export function overlayChromeTranslateY(args: {
+  progress: number;
+  size: number;
+  edge: "header" | "footer";
+}): number {
+  const y = Math.max(0, args.progress) * Math.max(0, args.size);
+  if (y === 0) return 0;
+  return args.edge === "header" ? -y : y;
 }
 
 export function easeOutCubic(t: number): number {

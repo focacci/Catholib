@@ -184,7 +184,7 @@ const BookSection = memo(function BookSection({
             >
               <StickyLeafHeader className="px-2">
                 <div className="flex flex-col pl-[var(--rail-pad)] dual:flex-row dual:items-center dual:justify-between dual:gap-x-4">
-                  <p className="flex h-10 min-w-0 items-center font-serif text-base font-semibold text-fg dual:h-11 dual:flex-1">
+                  <p className="flex h-7 min-w-0 items-center font-serif text-base font-semibold leading-none text-fg dual:h-8 dual:flex-1">
                     <span className="min-w-0 truncate">
                       Chapter {ch.chapter}
                       {ch.heading ? ` · ${ch.heading}` : ""}
@@ -197,7 +197,7 @@ const BookSection = memo(function BookSection({
                         href={version.href}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex min-h-11 items-center gap-1 text-base text-gold"
+                        className="inline-flex min-h-8 items-center gap-1 text-base leading-none text-gold"
                         aria-label={`Read ${book.name} ${ch.chapter} in ${version.label}`}
                       >
                         {version.label}

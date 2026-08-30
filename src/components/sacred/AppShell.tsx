@@ -729,6 +729,8 @@ export function AppShell() {
   const pullPointerMoveRef = useRef<(e: PointerEvent) => void>(() => {});
   const [jumpOpen, setJumpOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
+  const jumpMenuRef = useRef<HTMLDivElement>(null);
+  const jumpButtonRef = useRef<HTMLButtonElement>(null);
   const [headerH, setHeaderH] = useState(48);
   const [footerH, setFooterH] = useState(108);
 
@@ -1270,6 +1272,24 @@ export function AppShell() {
     };
   }, [isSidebar]);
 
+  useEffect(() => {
+    if (!jumpOpen) return;
+    const onDoc = (e: PointerEvent) => {
+      const t = e.target as Node;
+      if (jumpMenuRef.current?.contains(t) || jumpButtonRef.current?.contains(t)) return;
+      setJumpOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setJumpOpen(false);
+    };
+    document.addEventListener("pointerdown", onDoc);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onDoc);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [jumpOpen]);
+
   const onChromePointerDown = () => {
     pointerDownRef.current = true;
     cancelChromeAnimation();
@@ -1543,6 +1563,7 @@ export function AppShell() {
               <AnimatePresence>
                 {jumpOpen && (
                   <motion.div
+                    ref={jumpMenuRef}
                     initial={{ opacity: 0, y: 8, scale: 0.97 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 8, scale: 0.97 }}
@@ -1567,7 +1588,10 @@ export function AppShell() {
               <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-2">
                 <span />
                 <button
+                  ref={jumpButtonRef}
                   type="button"
+                  aria-expanded={jumpOpen}
+                  aria-haspopup="dialog"
                   onClick={() => {
                     setFilterOpen(false);
                     setJumpOpen((v) => !v);

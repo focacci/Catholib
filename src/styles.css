@@ -58,7 +58,7 @@
   /* Nested sticky headers: group (testament/era/kind) then item (book). */
   --sticky-l1: 2.5rem;
   --sticky-l2: 3rem;
-  --sticky-fade: 2.25rem;
+  --sticky-fade: 1rem;
 }
 
 @layer base {

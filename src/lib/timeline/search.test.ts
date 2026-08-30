@@ -33,7 +33,7 @@ describe("countHitsByView", () => {
 });
 
 describe("searchHitStripItems", () => {
-  it("always lists Bible, Church, then Missal so counts line up with the footer tabs", () => {
+  it("always lists Bible, Church, then Missal so counts line up with the view switcher", () => {
     const items = searchHitStripItems({ bible: 4, church: 0, missal: 2 });
     assert.deepEqual(
       items.map((item) => item.id),

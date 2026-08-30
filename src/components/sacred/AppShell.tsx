@@ -6,6 +6,7 @@ import {
   useState,
   type CSSProperties,
   type PointerEvent as ReactPointerEvent,
+  type RefObject,
 } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
@@ -269,13 +270,7 @@ function AllToggleButton({
   );
 }
 
-function CollapseAllControl({
-  compact,
-  grouped,
-}: {
-  compact?: boolean;
-  grouped?: boolean;
-}) {
+function CollapseAllControl({ compact, grouped }: { compact?: boolean; grouped?: boolean }) {
   const view = useTimeline((s) => s.view);
   const expandedBooks = useTimeline((s) => s.expandedBooks);
   const collapseAllBooks = useTimeline((s) => s.collapseAllBooks);
@@ -311,13 +306,7 @@ function CollapseAllControl({
   return null;
 }
 
-function ExpandAllControl({
-  compact,
-  grouped,
-}: {
-  compact?: boolean;
-  grouped?: boolean;
-}) {
+function ExpandAllControl({ compact, grouped }: { compact?: boolean; grouped?: boolean }) {
   const view = useTimeline((s) => s.view);
   const expandedEras = useTimeline((s) => s.expandedEras);
   const expandAllEras = useTimeline((s) => s.expandAllEras);
@@ -357,13 +346,71 @@ function FabExpandControls() {
   return null;
 }
 
-function SidebarExpandControls() {
+function ToolbarExpandControls() {
   const view = useTimeline((s) => s.view);
-  if (view !== "bible" && view !== "church") return null;
+  if (view === "church") {
+    return (
+      <div
+        className="flex h-10 shrink-0 overflow-hidden rounded-md border border-line-strong bg-elevated"
+        role="group"
+        aria-label="Expand or collapse all eras"
+      >
+        <ExpandAllControl compact grouped />
+        <span className="my-1.5 w-px shrink-0 bg-line" aria-hidden />
+        <CollapseAllControl compact grouped />
+      </div>
+    );
+  }
+  if (view === "bible") {
+    return (
+      <div className="flex h-10 shrink-0 overflow-hidden rounded-md border border-line-strong bg-elevated">
+        <CollapseAllControl compact grouped />
+      </div>
+    );
+  }
+  return null;
+}
+
+function ViewSwitcher({ orientation }: { orientation: "horizontal" | "vertical" }) {
+  const view = useTimeline((s) => s.view);
+  const setView = useTimeline((s) => s.setView);
+  const vertical = orientation === "vertical";
+
   return (
-    <div className={view === "church" ? "grid grid-cols-2 gap-1 px-3 py-2" : "px-3 py-2"}>
-      <ExpandAllControl />
-      <CollapseAllControl />
+    <div
+      role="tablist"
+      aria-label="Timeline view"
+      className={
+        vertical
+          ? "flex flex-col rounded-md bg-elevated p-0.5"
+          : "grid grid-cols-3 rounded-md bg-elevated p-0.5"
+      }
+      style={{
+        boxShadow: "0 0 0 1px color-mix(in oklab, var(--color-gold) 30%, transparent)",
+      }}
+    >
+      {VIEWS.map(({ id, label, Icon }) => (
+        <button
+          key={id}
+          type="button"
+          role="tab"
+          aria-selected={view === id}
+          onPointerDown={(e) => {
+            e.preventDefault();
+          }}
+          onClick={() => setView(id)}
+          className={cn(
+            "flex items-center rounded-sm font-medium transition-colors duration-150",
+            vertical
+              ? "h-11 justify-start gap-2 px-3 text-sm"
+              : "h-10 justify-center gap-1 text-base",
+            view === id ? "bg-gold text-bg" : "text-muted",
+          )}
+        >
+          <Icon className="size-3.5 shrink-0" strokeWidth={1.75} />
+          {label}
+        </button>
+      ))}
     </div>
   );
 }
@@ -374,26 +421,35 @@ function FilterMenu({
   open,
   onOpenChange,
   onChange,
+  placement = "up",
 }: {
   filters: FilterChip[];
   value: FilterId;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onChange: (id: FilterId) => void;
+  placement?: "up" | "down";
 }) {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLUListElement>(null);
-  const [coords, setCoords] = useState<{ right: number; bottom: number } | null>(null);
+  const [coords, setCoords] = useState<{ right: number; top?: number; bottom?: number } | null>(
+    null,
+  );
   const current = filters.find((f) => f.id === value) ?? filters[0];
 
   const placeMenu = () => {
     const trigger = triggerRef.current;
     if (!trigger) return;
     const r = trigger.getBoundingClientRect();
-    setCoords({
-      right: window.innerWidth - r.right,
-      bottom: window.innerHeight - r.top + 4,
-    });
+    const right = window.innerWidth - r.right;
+    if (placement === "down") {
+      setCoords({ right, top: r.bottom + 4 });
+    } else {
+      setCoords({
+        right,
+        bottom: window.innerHeight - r.top + 4,
+      });
+    }
   };
 
   useLayoutEffect(() => {
@@ -408,7 +464,7 @@ function FilterMenu({
       window.removeEventListener("resize", placeMenu);
       window.removeEventListener("scroll", placeMenu, true);
     };
-  }, [open]);
+  }, [open, placement]);
 
   useEffect(() => {
     if (!open) return;
@@ -459,7 +515,7 @@ function FilterMenu({
             role="listbox"
             aria-label="Filter artifacts"
             className="fixed z-[80] min-w-[10.5rem] overflow-hidden rounded-md bg-elevated py-1 shadow-[var(--shadow-border)]"
-            style={{ right: coords.right, bottom: coords.bottom }}
+            style={{ right: coords.right, top: coords.top, bottom: coords.bottom }}
           >
             {filters.map((f) => (
               <li key={f.id}>
@@ -507,13 +563,135 @@ function JumpBody({
   return <SectionJumpList items={MISSAL_JUMPS} onPick={onMissal} compact={compact} />;
 }
 
-export function AppShell() {
+function LibrarySearchFields({
+  inputRef,
+  onFocus,
+  onBlur,
+  onClearPointerDown,
+  filterOpen,
+  onFilterOpenChange,
+  filterPlacement = "up",
+  showExpand = false,
+  toolbar = false,
+}: {
+  inputRef?: RefObject<HTMLInputElement | null>;
+  onFocus: () => void;
+  onBlur: () => void;
+  onClearPointerDown: (e: ReactPointerEvent<HTMLButtonElement>) => void;
+  filterOpen: boolean;
+  onFilterOpenChange: (open: boolean) => void;
+  filterPlacement?: "up" | "down";
+  showExpand?: boolean;
+  toolbar?: boolean;
+}) {
+  const query = useTimeline((s) => s.query);
+  const setQuery = useTimeline((s) => s.setQuery);
   const view = useTimeline((s) => s.view);
   const setView = useTimeline((s) => s.setView);
   const filter = useTimeline((s) => s.filter);
   const setFilter = useTimeline((s) => s.setFilter);
+  const localRef = useRef<HTMLInputElement>(null);
+  const searchInputRef = inputRef ?? localRef;
+  const hitCounts = useMemo(() => countHitsByView(query, filter), [filter, query]);
+
+  const clearSearchQuery = () => {
+    searchInputRef.current?.blur();
+    setQuery("");
+  };
+
+  return (
+    <>
+      {query.trim() ? (
+        <div className={toolbar ? "px-5 pt-2" : "px-3 pt-2"}>
+          <div
+            className="grid grid-cols-3 p-0.5 text-center text-sm"
+            aria-label="Search hits by view"
+          >
+            {searchHitStripItems(hitCounts).map(({ id, label, count }) => (
+              <button
+                key={id}
+                type="button"
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+                onClick={() => setView(id)}
+                className={cn("min-w-0 truncate px-1", id === view ? "text-fg" : "text-gold")}
+              >
+                {count} in {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      <div className={cn("flex items-center gap-2", toolbar ? "px-5 py-2" : "px-3 pt-2")}>
+        <div className="relative min-w-0 flex-1">
+          <label className="block">
+            <span className="sr-only">Search Scripture, Magisterium, and Missal</span>
+            <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-subtle" />
+            <input
+              ref={searchInputRef}
+              type="search"
+              inputMode="search"
+              enterKeyHint="search"
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="none"
+              spellCheck={false}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onFocus={onFocus}
+              onBlur={onBlur}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  e.currentTarget.blur();
+                }
+              }}
+              placeholder="Search"
+              className="h-10 w-full rounded-md border border-line-strong bg-elevated pr-9 pl-8 text-base text-fg outline-none placeholder:text-subtle focus:border-gold"
+            />
+          </label>
+          {query ? (
+            <button
+              type="button"
+              data-search-clear
+              tabIndex={-1}
+              onPointerDown={onClearPointerDown}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                clearSearchQuery();
+              }}
+              className="absolute top-1/2 right-0.5 z-10 flex size-8 -translate-y-1/2 items-center justify-center text-muted"
+              aria-label="Clear search"
+            >
+              <X className="size-3.5" />
+            </button>
+          ) : null}
+        </div>
+        <FilterMenu
+          filters={VIEW_FILTERS[view]}
+          value={filter}
+          open={filterOpen}
+          placement={filterPlacement}
+          onOpenChange={onFilterOpenChange}
+          onChange={setFilter}
+        />
+        {showExpand ? <ToolbarExpandControls /> : null}
+      </div>
+    </>
+  );
+}
+
+export function AppShell() {
+  const view = useTimeline((s) => s.view);
   const query = useTimeline((s) => s.query);
-  const setQuery = useTimeline((s) => s.setQuery);
   const selected = useTimeline((s) => s.selected);
   const closeArtifact = useTimeline((s) => s.closeArtifact);
   const isDesktop = useIsDesktop();
@@ -1001,8 +1179,6 @@ export function AppShell() {
     };
   }, [isSidebar]);
 
-  const hitCounts = useMemo(() => countHitsByView(query, filter), [filter, query]);
-
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: 0 });
     lastScrollRef.current = 0;
@@ -1141,8 +1317,7 @@ export function AppShell() {
     if (searchHoldTimerRef.current) clearTimeout(searchHoldTimerRef.current);
     const inset = measureKeyboardInset();
     const pull = searchPullRef.current;
-    const keyboardOpen =
-      isSoftwareKeyboardOpen(inset) || pull.active || pull.riding;
+    const keyboardOpen = isSoftwareKeyboardOpen(inset) || pull.active || pull.riding;
     if (!keyboardOpen) {
       searchHoldCompactRef.current = false;
       applyKeyboardInset(inset);
@@ -1163,11 +1338,6 @@ export function AppShell() {
         hideFooterAfterQueryCleared();
       }
     }, KEYBOARD_BLUR_HOLD_MS);
-  };
-
-  const clearSearchQuery = () => {
-    searchRef.current?.blur();
-    setQuery("");
   };
 
   const onClearSearchPointerDown = (e: ReactPointerEvent<HTMLButtonElement>) => {
@@ -1265,8 +1435,27 @@ export function AppShell() {
         onBrandClick={scrollToTop}
       />
 
+      <nav className="hidden shrink-0 border-b border-line bg-bg lg:block" aria-label="Library">
+        <LibrarySearchFields
+          onFocus={onSearchFocus}
+          onBlur={onSearchBlur}
+          onClearPointerDown={onClearSearchPointerDown}
+          filterOpen={filterOpen && isSidebar}
+          onFilterOpenChange={(next) => {
+            setFilterOpen(next);
+            if (next) setJumpOpen(false);
+          }}
+          filterPlacement="down"
+          showExpand
+          toolbar
+        />
+      </nav>
+
       <div className="flex min-h-0 flex-1">
         <aside className="hidden w-64 shrink-0 flex-col border-r border-line bg-surface lg:flex">
+          <div className="border-b border-line p-3">
+            <ViewSwitcher orientation="vertical" />
+          </div>
           <p className="px-5 pt-4 pb-2 font-serif text-xs tracking-[0.16em] text-gold-dim uppercase">
             {jumpLabel}
           </p>
@@ -1278,11 +1467,6 @@ export function AppShell() {
               onMissal={(id) => jumpToAnchor("missal", id)}
             />
           </div>
-          {view === "bible" || view === "church" ? (
-            <div className="border-t border-line">
-              <SidebarExpandControls />
-            </div>
-          ) : null}
           <div className="border-t border-line p-3">
             <button
               type="button"
@@ -1319,7 +1503,7 @@ export function AppShell() {
 
           <div
             ref={footerRef}
-            className="library-footer shrink-0 max-lg:absolute max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-20"
+            className="library-footer shrink-0 max-lg:absolute max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-20 lg:hidden"
           >
             <nav
               ref={searchNavRef}
@@ -1327,133 +1511,21 @@ export function AppShell() {
               aria-label="Library"
               onPointerDown={onSearchChromePointerDown}
             >
-              {query.trim() ? (
-                <div className="px-3 pt-2">
-                  <div
-                    className="grid grid-cols-3 p-0.5 text-center text-sm"
-                    aria-label="Search hits by view"
-                  >
-                    {searchHitStripItems(hitCounts).map(({ id, label, count }) => (
-                      <button
-                        key={id}
-                        type="button"
-                        onPointerDown={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                        }}
-                        onClick={() => setView(id)}
-                        className={cn(
-                          "min-w-0 truncate px-1",
-                          id === view ? "text-fg" : "text-gold",
-                        )}
-                      >
-                        {count} in {label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-
-              <div className="flex items-center gap-2 px-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setAboutOpen(true)}
-                  className="hidden size-11 shrink-0 items-center justify-center rounded-md text-gold hover:bg-gold-soft lg:flex"
-                  aria-label="About and sources"
-                >
-                  <Info className="size-5" strokeWidth={1.75} />
-                </button>
-                <div className="relative min-w-0 flex-1">
-                  <label className="block">
-                    <span className="sr-only">Search Scripture, Magisterium, and Missal</span>
-                    <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-subtle" />
-                    <input
-                      ref={searchRef}
-                      type="search"
-                      inputMode="search"
-                      enterKeyHint="search"
-                      autoComplete="off"
-                      autoCorrect="off"
-                      autoCapitalize="none"
-                      spellCheck={false}
-                      value={query}
-                      onChange={(e) => setQuery(e.target.value)}
-                      onFocus={onSearchFocus}
-                      onBlur={onSearchBlur}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          e.currentTarget.blur();
-                        }
-                      }}
-                      placeholder="Search"
-                      className="h-10 w-full rounded-md border border-line-strong bg-elevated pr-9 pl-8 text-base text-fg outline-none placeholder:text-subtle focus:border-gold"
-                    />
-                  </label>
-                  {query ? (
-                    <button
-                      type="button"
-                      data-search-clear
-                      tabIndex={-1}
-                      onPointerDown={onClearSearchPointerDown}
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                      }}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        clearSearchQuery();
-                      }}
-                      className="absolute top-1/2 right-0.5 z-10 flex size-8 -translate-y-1/2 items-center justify-center text-muted"
-                      aria-label="Clear search"
-                    >
-                      <X className="size-3.5" />
-                    </button>
-                  ) : null}
-                </div>
-                <FilterMenu
-                  filters={VIEW_FILTERS[view]}
-                  value={filter}
-                  open={filterOpen}
-                  onOpenChange={(next) => {
-                    setFilterOpen(next);
-                    if (next) setJumpOpen(false);
-                  }}
-                  onChange={setFilter}
-                />
-              </div>
+              <LibrarySearchFields
+                inputRef={searchRef}
+                onFocus={onSearchFocus}
+                onBlur={onSearchBlur}
+                onClearPointerDown={onClearSearchPointerDown}
+                filterOpen={filterOpen && !isSidebar}
+                onFilterOpenChange={(next) => {
+                  setFilterOpen(next);
+                  if (next) setJumpOpen(false);
+                }}
+              />
             </nav>
 
             <div className="library-tabs bg-bg px-3 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
-              <div
-                role="tablist"
-                aria-label="Timeline view"
-                className="grid grid-cols-3 rounded-md bg-elevated p-0.5"
-                style={{
-                  boxShadow: "0 0 0 1px color-mix(in oklab, var(--color-gold) 30%, transparent)",
-                }}
-              >
-                {VIEWS.map(({ id, label, Icon }) => (
-                  <button
-                    key={id}
-                    type="button"
-                    role="tab"
-                    aria-selected={view === id}
-                    onPointerDown={(e) => {
-                      e.preventDefault();
-                    }}
-                    onClick={() => setView(id)}
-                    className={cn(
-                      "flex h-10 items-center justify-center gap-1 rounded-sm text-base font-medium transition-colors duration-150",
-                      view === id ? "bg-gold text-bg" : "text-muted",
-                    )}
-                  >
-                    <Icon className="size-3.5 shrink-0" strokeWidth={1.75} />
-                    {label}
-                  </button>
-                ))}
-              </div>
+              <ViewSwitcher orientation="horizontal" />
             </div>
           </div>
 

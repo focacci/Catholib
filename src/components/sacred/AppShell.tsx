@@ -220,12 +220,14 @@ function SectionJumpList({
 
 function AllToggleButton({
   compact,
+  grouped,
   kind,
   disabled,
   noun,
   onClick,
 }: {
   compact?: boolean;
+  grouped?: boolean;
   kind: "expand" | "collapse";
   disabled: boolean;
   noun: string;
@@ -241,7 +243,11 @@ function AllToggleButton({
         type="button"
         onClick={onClick}
         disabled={disabled}
-        className="flex h-12 w-12 items-center justify-center rounded-full bg-elevated text-gold shadow-fab transition-colors duration-150 hover:bg-gold-soft disabled:opacity-40"
+        className={
+          grouped
+            ? "flex h-full w-12 items-center justify-center text-gold transition-colors duration-150 hover:bg-gold-soft disabled:opacity-40"
+            : "flex h-12 w-12 items-center justify-center rounded-full bg-elevated text-gold shadow-fab transition-colors duration-150 hover:bg-gold-soft disabled:opacity-40"
+        }
         aria-label={label}
       >
         <Icon className="size-5" strokeWidth={1.75} />
@@ -261,7 +267,13 @@ function AllToggleButton({
   );
 }
 
-function CollapseAllControl({ compact }: { compact?: boolean }) {
+function CollapseAllControl({
+  compact,
+  grouped,
+}: {
+  compact?: boolean;
+  grouped?: boolean;
+}) {
   const view = useTimeline((s) => s.view);
   const expandedBooks = useTimeline((s) => s.expandedBooks);
   const collapseAllBooks = useTimeline((s) => s.collapseAllBooks);
@@ -272,6 +284,7 @@ function CollapseAllControl({ compact }: { compact?: boolean }) {
     return (
       <AllToggleButton
         compact={compact}
+        grouped={grouped}
         kind="collapse"
         noun="books"
         disabled={Object.values(expandedBooks).every((open) => !open)}
@@ -284,6 +297,7 @@ function CollapseAllControl({ compact }: { compact?: boolean }) {
     return (
       <AllToggleButton
         compact={compact}
+        grouped={grouped}
         kind="collapse"
         noun="eras"
         disabled={CHURCH_ERA_NAMES.every((name) => !expandedEras[name])}
@@ -295,7 +309,13 @@ function CollapseAllControl({ compact }: { compact?: boolean }) {
   return null;
 }
 
-function ExpandAllControl({ compact }: { compact?: boolean }) {
+function ExpandAllControl({
+  compact,
+  grouped,
+}: {
+  compact?: boolean;
+  grouped?: boolean;
+}) {
   const view = useTimeline((s) => s.view);
   const expandedEras = useTimeline((s) => s.expandedEras);
   const expandAllEras = useTimeline((s) => s.expandAllEras);
@@ -305,12 +325,34 @@ function ExpandAllControl({ compact }: { compact?: boolean }) {
   return (
     <AllToggleButton
       compact={compact}
+      grouped={grouped}
       kind="expand"
       noun="eras"
       disabled={areAllBooksExpanded(expandedEras, CHURCH_ERA_NAMES)}
       onClick={expandAllEras}
     />
   );
+}
+
+function ChurchExpandCollapsePill() {
+  return (
+    <div
+      className="flex h-12 overflow-hidden rounded-full bg-elevated shadow-fab"
+      role="group"
+      aria-label="Expand or collapse all eras"
+    >
+      <ExpandAllControl compact grouped />
+      <span className="my-2 w-px shrink-0 bg-line" aria-hidden />
+      <CollapseAllControl compact grouped />
+    </div>
+  );
+}
+
+function FabExpandControls() {
+  const view = useTimeline((s) => s.view);
+  if (view === "church") return <ChurchExpandCollapsePill />;
+  if (view === "bible") return <CollapseAllControl compact />;
+  return null;
 }
 
 function SidebarExpandControls() {
@@ -1425,9 +1467,7 @@ export function AppShell() {
                 )}
               </AnimatePresence>
               <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-2">
-                <div className="flex justify-start">
-                  <ExpandAllControl compact />
-                </div>
+                <span />
                 <button
                   type="button"
                   onClick={() => {
@@ -1439,7 +1479,7 @@ export function AppShell() {
                   Jump to…
                 </button>
                 <div className="flex justify-end">
-                  <CollapseAllControl compact />
+                  <FabExpandControls />
                 </div>
               </div>
             </div>

@@ -5,7 +5,7 @@ export const STICKY_L1_REM = 2.5;
 export const STICKY_L2_REM = 3;
 
 /** Keep in sync with `--sticky-fade` in `src/styles.css`. */
-export const STICKY_FADE_REM = 2.25;
+export const STICKY_FADE_REM = 1;
 
 /** Group consecutive items that share a key, keeping separate runs apart. */
 export function groupConsecutiveBy<T, K extends string>(

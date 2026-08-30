@@ -2,7 +2,7 @@ import { artworkHeightForWidth } from "./artwork-size.ts";
 import { partitionTimelineColumns, type ColumnItem } from "./columns.ts";
 
 const TEXT_CARD_PX = 96;
-const CHAPTER_CHROME_PX = 88;
+const CHAPTER_CHROME_PX = 68;
 const SECTION_CHROME_PX = 52;
 
 /** Inner width of a timeline card before the scroller has been measured. */

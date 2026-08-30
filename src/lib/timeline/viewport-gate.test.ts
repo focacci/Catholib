@@ -7,7 +7,10 @@ import {
   estimateChapterIndexHeight,
   estimateDualChapterBlockHeight,
   estimateDualSectionBodyHeight,
+  estimateExpandedBookBodyHeight,
+  estimateExpandedSectionsHeight,
   estimateSectionBodyHeight,
+  isNearScrollport,
 } from "./viewport-gate.ts";
 import { wikimediaFileUrl } from "./wikimedia.ts";
 
@@ -96,5 +99,33 @@ describe("timeline height estimates", () => {
     assert.equal(estimateChapterIndexHeight(0), 0);
     assert.ok(oneRow > 0);
     assert.equal(twoRows, oneRow + 44 + 4);
+  });
+
+  it("sizes an expanded book body from its index and chapters", () => {
+    const index = estimateChapterIndexHeight(50);
+    const chapters = estimateChapterBlockHeight({ artifacts: [{}, {}] });
+    const body = estimateExpandedBookBodyHeight({
+      indexChapters: 50,
+      chapters: [{ artifacts: [{}, {}] }],
+      dualColumn: false,
+      cardWidthPx: 360,
+      artworkWidthPx: 360,
+    });
+    assert.equal(body, index + chapters);
+  });
+
+  it("sizes expanded church sections from headers plus bodies", () => {
+    const body = estimateSectionBodyHeight([{}]);
+    const stacked = estimateExpandedSectionsHeight([{ artifacts: [{}] }, { artifacts: [{}] }], false, 360, 360);
+    assert.equal(stacked, 48 + body + 48 + body);
+  });
+});
+
+describe("isNearScrollport", () => {
+  it("is true when the target overlaps the port, including margin", () => {
+    const port = { top: 100, bottom: 500 };
+    assert.equal(isNearScrollport({ top: 120, bottom: 200 }, port, 0), true);
+    assert.equal(isNearScrollport({ top: 520, bottom: 600 }, port, 80), true);
+    assert.equal(isNearScrollport({ top: 700, bottom: 800 }, port, 80), false);
   });
 });

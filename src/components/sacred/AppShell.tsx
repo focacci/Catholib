@@ -46,6 +46,7 @@ import {
   nextOverlayChromeOffsets,
   overlayChromeTranslateY,
   reservedOverlayChromePx,
+  stickyOverlayChromePx,
   visibleChromeSize,
 } from "@/lib/timeline/chrome-scroll";
 import {
@@ -537,7 +538,6 @@ export function AppShell() {
     const header = headerRef.current;
     const footer = footerRef.current;
     const dock = fabDockRef.current;
-    const shell = shellRef.current;
     const headerH = headerHRef.current;
     const footerH = footerHRef.current;
     const maxOffset = Math.max(headerH, footerH);
@@ -581,10 +581,10 @@ export function AppShell() {
       dock.style.transform = overlay ? `translate3d(0, ${footerY}px, 0)` : "";
     }
 
-    const stickyChrome = reservedOverlayChromePx(overlay, headerH);
+    const stickyChrome = Math.round(stickyOverlayChromePx(overlay, headerVisible));
     if (publishedStickyChromeRef.current !== stickyChrome) {
       publishedStickyChromeRef.current = stickyChrome;
-      shell?.style.setProperty("--chrome-h", `${stickyChrome}px`);
+      scrollRef.current?.style.setProperty("--chrome-h", `${stickyChrome}px`);
     }
 
     const reservedFooter = reservedOverlayChromePx(overlay, footerH);
@@ -1220,11 +1220,6 @@ export function AppShell() {
     <div
       ref={shellRef}
       className="relative flex h-dvh flex-col overflow-hidden overscroll-none bg-bg text-fg"
-      style={
-        {
-          "--chrome-h": isSidebar ? "0px" : `${headerH}px`,
-        } as CSSProperties
-      }
     >
       <ArtworkPreloader />
       <DayHeader

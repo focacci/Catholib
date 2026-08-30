@@ -3,9 +3,9 @@
  * Tracks finger movement 1:1 so the timeline does not jump when chrome recedes.
  * On release, a partial hide finishes off-screen (or a pull-back finishes on-screen).
  *
- * Overlay bars move with compositor transforms. `--chrome-h` stays at the
- * reserved header height so sticky Bible/Church headers are not restyled on
- * every scroll frame.
+ * Overlay bars move with compositor transforms. Sticky section headers follow
+ * the visible overlay via `--chrome-h` on `#timeline-scroll` (not the shell),
+ * so they stay glued to the header as it recedes.
  */
 
 export const CHROME_SETTLE_MS = 240;
@@ -37,14 +37,21 @@ export function chromeFullyHidden(visiblePx: number): boolean {
 }
 
 /**
- * Length published as `--chrome-h` / `--footer-h` for sticky headers and the
- * FAB dock. Must stay at the reserved overlay size while hide-on-scroll runs:
- * shrinking an inherited custom property restyles every sticky node in the
- * timeline and is what makes expanded Bible view stutter.
+ * Full overlay size for the FAB dock rest position. Not animated — the dock
+ * follows the footer with a transform instead.
  */
 export function reservedOverlayChromePx(overlay: boolean, measuredPx: number): number {
   if (!overlay || measuredPx <= 0) return 0;
   return measuredPx;
+}
+
+/**
+ * Sticky `top` offset published as `--chrome-h`. Tracks the visible overlay
+ * header so section headers stay glued to it as it hides.
+ */
+export function stickyOverlayChromePx(overlay: boolean, visibleHeaderPx: number): number {
+  if (!overlay) return 0;
+  return Math.max(0, visibleHeaderPx);
 }
 
 /** Compositor-only shift: header recedes up, footer and FAB recede down. */

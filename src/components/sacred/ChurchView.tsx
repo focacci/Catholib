@@ -10,12 +10,13 @@ import { useTimeline } from "@/lib/timeline/store";
 import type { ChurchEntry, TimelineArtifact } from "@/lib/timeline/types";
 import {
   estimateDualSectionBodyHeight,
+  estimateExpandedSectionsHeight,
   estimateSectionBodyHeight,
 } from "@/lib/timeline/viewport-gate";
 import { cn } from "@/lib/utils";
 import { ArtifactColumns } from "./ArtifactColumns";
 import { StickyGroupHeader, StickyItemHeader } from "./StickyHeaders";
-import { ViewportGate } from "./ViewportGate";
+import { OffscreenSkip, ViewportGate } from "./ViewportGate";
 
 type ChurchSection = { entry: ChurchEntry; visible: TimelineArtifact[] };
 
@@ -45,6 +46,16 @@ const EraGroup = memo(function EraGroup({
   const pinOnCollapseRef = useRef(false);
   const range = yearRangeForEntries(items.map((item) => item.entry));
   const firstId = items[0]?.entry.id;
+  const bodyEstimate = useMemo(
+    () =>
+      estimateExpandedSectionsHeight(
+        items.map((item) => ({ artifacts: item.visible })),
+        dualColumn,
+        cardWidth,
+        artworkWidth,
+      ),
+    [artworkWidth, cardWidth, dualColumn, items],
+  );
 
   useLayoutEffect(() => {
     if (expanded || !pinOnCollapseRef.current || !sectionRef.current) return;
@@ -92,8 +103,9 @@ const EraGroup = memo(function EraGroup({
           />
         </button>
       </StickyGroupHeader>
-      {expanded
-        ? items.map(({ entry, visible }) => (
+      {expanded ? (
+        <OffscreenSkip estimateHeight={bodyEstimate}>
+          {items.map(({ entry, visible }) => (
             <ChurchEntrySection
               key={entry.id}
               entry={entry}
@@ -104,8 +116,9 @@ const EraGroup = memo(function EraGroup({
               artworkWidth={artworkWidth}
               onOpen={onOpen}
             />
-          ))
-        : null}
+          ))}
+        </OffscreenSkip>
+      ) : null}
     </section>
   );
 });

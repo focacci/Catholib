@@ -10,6 +10,7 @@ import {
   nextOverlayChromeOffsets,
   overlayChromeTranslateY,
   reservedOverlayChromePx,
+  stickyOverlayChromePx,
   visibleChromeSize,
 } from "./chrome-scroll.ts";
 
@@ -248,15 +249,23 @@ describe("interpolateChromeOffset", () => {
 });
 
 describe("reservedOverlayChromePx", () => {
-  it("keeps the full overlay size even when chrome is mid-hide", () => {
+  it("keeps the full overlay size for the dock rest position", () => {
     assert.equal(reservedOverlayChromePx(true, 96), 96);
     assert.equal(reservedOverlayChromePx(true, 140), 140);
-    assert.notEqual(reservedOverlayChromePx(true, 96), visibleChromeSize(0.5, 96));
   });
 
   it("is zero in the sidebar layout or before chrome has been measured", () => {
     assert.equal(reservedOverlayChromePx(false, 96), 0);
     assert.equal(reservedOverlayChromePx(true, 0), 0);
+  });
+});
+
+describe("stickyOverlayChromePx", () => {
+  it("follows the visible overlay header so sticky tops stay glued to it", () => {
+    assert.equal(stickyOverlayChromePx(true, 96), 96);
+    assert.equal(stickyOverlayChromePx(true, visibleChromeSize(0.5, 96)), 48);
+    assert.equal(stickyOverlayChromePx(true, 0), 0);
+    assert.equal(stickyOverlayChromePx(false, 96), 0);
   });
 });
 

@@ -21,11 +21,12 @@ import {
   estimateChapterBlockHeight,
   estimateChapterIndexHeight,
   estimateDualChapterBlockHeight,
+  estimateExpandedBookBodyHeight,
 } from "@/lib/timeline/viewport-gate";
 import { cn } from "@/lib/utils";
 import { ArtifactColumns } from "./ArtifactColumns";
 import { StickyGroupHeader, StickyItemHeader, StickyLeafHeader } from "./StickyHeaders";
-import { ViewportGate } from "./ViewportGate";
+import { OffscreenSkip, ViewportGate } from "./ViewportGate";
 
 function ChapterIndex({ book, onJump }: { book: BibleBook; onJump: (chapter: number) => void }) {
   const populated = new Set(book.populatedChapters.map((c) => c.chapter));
@@ -88,6 +89,17 @@ const BookSection = memo(function BookSection({
   const matchingChapters = useMemo(
     () => (expanded ? matchingChaptersForBook(book, query, filter) : []),
     [book, expanded, filter, query],
+  );
+  const bodyEstimate = useMemo(
+    () =>
+      estimateExpandedBookBodyHeight({
+        indexChapters: expanded && filter === "all" && !query.trim() ? book.chapters : 0,
+        chapters: matchingChapters,
+        dualColumn,
+        cardWidthPx: cardWidth,
+        artworkWidthPx: artworkWidth,
+      }),
+    [artworkWidth, book.chapters, cardWidth, dualColumn, expanded, filter, matchingChapters, query],
   );
   const sectionRef = useRef<HTMLElement>(null);
   const headerRef = useRef<HTMLButtonElement>(null);
@@ -163,78 +175,80 @@ const BookSection = memo(function BookSection({
       </StickyItemHeader>
 
       {expanded && (
-        <div className="relative border-b border-line" style={{ overflowAnchor: "none" }}>
-          <div
-            className="absolute top-0 bottom-0 left-[var(--rail-x)] w-px timeline-rail"
-            aria-hidden
-          />
+        <OffscreenSkip estimateHeight={bodyEstimate}>
+          <div className="relative border-b border-line" style={{ overflowAnchor: "none" }}>
+            <div
+              className="absolute top-0 bottom-0 left-[var(--rail-x)] w-px timeline-rail"
+              aria-hidden
+            />
 
-          {filter === "all" && !q && (
-            <div id={`empty-${book.name}`} className="relative px-2 pt-3 pb-1">
-              <div className="pl-[var(--rail-pad)]">
-                <ViewportGate estimateHeight={estimateChapterIndexHeight(book.chapters)}>
-                  <ChapterIndex book={book} onJump={jumpChapter} />
-                </ViewportGate>
-              </div>
-            </div>
-          )}
-
-          {matchingChapters.map((ch) => (
-            <section
-              key={ch.chapter}
-              id={`ch-${book.abbreviation}-${ch.chapter}`}
-              className="relative scroll-mt-[calc(var(--chrome-h,0px)+var(--sticky-l1)+var(--sticky-l2))]"
-            >
-              <StickyLeafHeader className="px-2">
-                <div className="flex flex-col pl-[var(--rail-pad)] dual:flex-row dual:items-center dual:justify-between dual:gap-x-4">
-                  <p className="flex h-10 min-w-0 items-center font-serif text-base font-semibold text-fg dual:h-11 dual:flex-1">
-                    <span className="min-w-0 truncate">
-                      Chapter {ch.chapter}
-                      {ch.heading ? ` · ${ch.heading}` : ""}
-                    </span>
-                  </p>
-                  <div className="flex flex-wrap items-center gap-x-4 dual:shrink-0 dual:justify-end">
-                    {bibleVersionLinks(book.name, ch.chapter).map((version) => (
-                      <a
-                        key={version.id}
-                        href={version.href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex min-h-11 items-center gap-1 text-base text-gold"
-                        aria-label={`Read ${book.name} ${ch.chapter} in ${version.label}`}
-                      >
-                        {version.label}
-                        <ExternalLink className="size-3.5" />
-                      </a>
-                    ))}
-                  </div>
+            {filter === "all" && !q && (
+              <div id={`empty-${book.name}`} className="relative px-2 pt-3 pb-1">
+                <div className="pl-[var(--rail-pad)]">
+                  <ViewportGate estimateHeight={estimateChapterIndexHeight(book.chapters)}>
+                    <ChapterIndex book={book} onJump={jumpChapter} />
+                  </ViewportGate>
                 </div>
-              </StickyLeafHeader>
-              <div className="px-2 pt-[var(--sticky-fade)] pb-3">
-                <ViewportGate
-                  estimateHeight={
-                    dualColumn
-                      ? estimateDualChapterBlockHeight(ch, cardWidth, artworkWidth)
-                      : estimateChapterBlockHeight(ch, cardWidth)
-                  }
-                >
-                  <ArtifactColumns
-                    artifacts={ch.artifacts}
-                    context={`${book.name} ${ch.chapter}`}
-                    onOpen={onOpen}
-                  />
-                </ViewportGate>
               </div>
-            </section>
-          ))}
+            )}
 
-          {q && matchingChapters.length === 0 && nameMatch && (
-            <p className="px-2 py-4 pl-[calc(var(--rail-pad)+0.5rem)] text-base text-muted">
-              No artifacts in {book.name} match this search. Sample data from approved sources only
-              for selected chapters.
-            </p>
-          )}
-        </div>
+            {matchingChapters.map((ch) => (
+              <section
+                key={ch.chapter}
+                id={`ch-${book.abbreviation}-${ch.chapter}`}
+                className="relative scroll-mt-[calc(var(--chrome-h,0px)+var(--sticky-l1)+var(--sticky-l2))]"
+              >
+                <StickyLeafHeader className="px-2">
+                  <div className="flex flex-col pl-[var(--rail-pad)] dual:flex-row dual:items-center dual:justify-between dual:gap-x-4">
+                    <p className="flex h-10 min-w-0 items-center font-serif text-base font-semibold text-fg dual:h-11 dual:flex-1">
+                      <span className="min-w-0 truncate">
+                        Chapter {ch.chapter}
+                        {ch.heading ? ` · ${ch.heading}` : ""}
+                      </span>
+                    </p>
+                    <div className="flex flex-wrap items-center gap-x-4 dual:shrink-0 dual:justify-end">
+                      {bibleVersionLinks(book.name, ch.chapter).map((version) => (
+                        <a
+                          key={version.id}
+                          href={version.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex min-h-11 items-center gap-1 text-base text-gold"
+                          aria-label={`Read ${book.name} ${ch.chapter} in ${version.label}`}
+                        >
+                          {version.label}
+                          <ExternalLink className="size-3.5" />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                </StickyLeafHeader>
+                <div className="px-2 pt-[var(--sticky-fade)] pb-3">
+                  <ViewportGate
+                    estimateHeight={
+                      dualColumn
+                        ? estimateDualChapterBlockHeight(ch, cardWidth, artworkWidth)
+                        : estimateChapterBlockHeight(ch, cardWidth)
+                    }
+                  >
+                    <ArtifactColumns
+                      artifacts={ch.artifacts}
+                      context={`${book.name} ${ch.chapter}`}
+                      onOpen={onOpen}
+                    />
+                  </ViewportGate>
+                </div>
+              </section>
+            ))}
+
+            {q && matchingChapters.length === 0 && nameMatch && (
+              <p className="px-2 py-4 pl-[calc(var(--rail-pad)+0.5rem)] text-base text-muted">
+                No artifacts in {book.name} match this search. Sample data from approved sources only
+                for selected chapters.
+              </p>
+            )}
+          </div>
+        </OffscreenSkip>
       )}
     </section>
   );

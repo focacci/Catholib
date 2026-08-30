@@ -3,9 +3,10 @@
  * Tracks finger movement 1:1 so the timeline does not jump when chrome recedes.
  * On release, a partial hide finishes off-screen (or a pull-back finishes on-screen).
  *
- * Overlay bars move with compositor transforms. Sticky section headers follow
- * the visible overlay via `--chrome-h` on `#timeline-scroll` (not the shell),
- * so they stay glued to the header as it recedes.
+ * Overlay bars move with compositor transforms. Sticky `top` stays at the full
+ * reserved `--chrome-h` so hide-on-scroll does not restyle the timeline.
+ * Stickies follow the header with `--chrome-shift` (same Y as the overlay
+ * header transform), which is used only in `transform`.
  */
 
 export const CHROME_SETTLE_MS = 240;
@@ -37,8 +38,8 @@ export function chromeFullyHidden(visiblePx: number): boolean {
 }
 
 /**
- * Full overlay size for the FAB dock rest position. Not animated — the dock
- * follows the footer with a transform instead.
+ * Full overlay size for sticky `top` / `--chrome-h`. Held constant while chrome
+ * hides so section headers do not recost layout.
  */
 export function reservedOverlayChromePx(overlay: boolean, measuredPx: number): number {
   if (!overlay || measuredPx <= 0) return 0;
@@ -46,15 +47,21 @@ export function reservedOverlayChromePx(overlay: boolean, measuredPx: number): n
 }
 
 /**
- * Sticky `top` offset published as `--chrome-h`. Tracks the visible overlay
- * header so section headers stay glued to it as it hides.
+ * Remaining visible overlay size. Published as `--footer-h` on the FAB dock so
+ * the buttons sit on the footer and pick up home-indicator padding when it is
+ * gone — without inheriting into the timeline.
  */
-export function stickyOverlayChromePx(overlay: boolean, visibleHeaderPx: number): number {
+export function stickyOverlayChromePx(overlay: boolean, visiblePx: number): number {
   if (!overlay) return 0;
-  return Math.max(0, visibleHeaderPx);
+  return Math.max(0, visiblePx);
 }
 
-/** Compositor-only shift: header recedes up, footer and FAB recede down. */
+/** Same Y as the overlay header bar; published as `--chrome-shift`. */
+export function overlayChromeShiftY(overlay: boolean, headerTranslateY: number): number {
+  return overlay ? headerTranslateY : 0;
+}
+
+/** Compositor-only shift: header recedes up, footer recedes down. */
 export function overlayChromeTranslateY(args: {
   progress: number;
   size: number;

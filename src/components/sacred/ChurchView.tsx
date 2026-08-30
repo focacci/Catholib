@@ -12,6 +12,7 @@ import {
   estimateDualSectionBodyHeight,
   estimateExpandedSectionsHeight,
   estimateSectionBodyHeight,
+  STICKY_GROUP_HEADER_PX,
 } from "@/lib/timeline/viewport-gate";
 import { cn } from "@/lib/utils";
 import { ArtifactColumns } from "./ArtifactColumns";
@@ -56,6 +57,7 @@ const EraGroup = memo(function EraGroup({
       ),
     [artworkWidth, cardWidth, dualColumn, items],
   );
+  const blockEstimate = STICKY_GROUP_HEADER_PX + (expanded ? bodyEstimate : 0);
 
   useLayoutEffect(() => {
     if (expanded || !pinOnCollapseRef.current || !sectionRef.current) return;
@@ -78,7 +80,8 @@ const EraGroup = memo(function EraGroup({
       id={firstId ? `era-${firstId}` : undefined}
       className="scroll-mt-[var(--chrome-h,0px)]"
     >
-      <StickyGroupHeader className="px-0 tracking-normal normal-case">
+      <OffscreenSkip estimateHeight={blockEstimate}>
+        <StickyGroupHeader className="px-0 tracking-normal normal-case">
         <button
           ref={headerRef}
           type="button"
@@ -102,23 +105,22 @@ const EraGroup = memo(function EraGroup({
             )}
           />
         </button>
-      </StickyGroupHeader>
-      {expanded ? (
-        <OffscreenSkip estimateHeight={bodyEstimate}>
-          {items.map(({ entry, visible }) => (
-            <ChurchEntrySection
-              key={entry.id}
-              entry={entry}
-              visible={visible}
-              skipAnchor={entry.id === firstId}
-              dualColumn={dualColumn}
-              cardWidth={cardWidth}
-              artworkWidth={artworkWidth}
-              onOpen={onOpen}
-            />
-          ))}
-        </OffscreenSkip>
-      ) : null}
+        </StickyGroupHeader>
+        {expanded
+          ? items.map(({ entry, visible }) => (
+              <ChurchEntrySection
+                key={entry.id}
+                entry={entry}
+                visible={visible}
+                skipAnchor={entry.id === firstId}
+                dualColumn={dualColumn}
+                cardWidth={cardWidth}
+                artworkWidth={artworkWidth}
+                onOpen={onOpen}
+              />
+            ))
+          : null}
+      </OffscreenSkip>
     </section>
   );
 });

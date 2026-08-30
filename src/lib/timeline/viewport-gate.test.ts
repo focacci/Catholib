@@ -11,6 +11,8 @@ import {
   estimateExpandedSectionsHeight,
   estimateSectionBodyHeight,
   isNearScrollport,
+  STICKY_GROUP_HEADER_PX,
+  STICKY_ITEM_HEADER_PX,
 } from "./viewport-gate.ts";
 import { wikimediaFileUrl } from "./wikimedia.ts";
 
@@ -118,6 +120,11 @@ describe("timeline height estimates", () => {
     const body = estimateSectionBodyHeight([{}]);
     const stacked = estimateExpandedSectionsHeight([{ artifacts: [{}] }, { artifacts: [{}] }], false, 360, 360);
     assert.equal(stacked, 48 + body + 48 + body);
+  });
+
+  it("adds sticky chrome when estimating a skipped book or era block", () => {
+    assert.equal(STICKY_ITEM_HEADER_PX, 48);
+    assert.equal(STICKY_GROUP_HEADER_PX, 40);
   });
 });
 

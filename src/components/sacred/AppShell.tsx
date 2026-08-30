@@ -4,7 +4,6 @@ import {
   useMemo,
   useRef,
   useState,
-  type CSSProperties,
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import { createPortal } from "react-dom";
@@ -44,6 +43,7 @@ import {
   chromeSettleOffset,
   interpolateChromeOffset,
   nextOverlayChromeOffsets,
+  overlayChromeShiftY,
   overlayChromeTranslateY,
   reservedOverlayChromePx,
   stickyOverlayChromePx,
@@ -499,6 +499,7 @@ export function AppShell() {
   const headerGoneRef = useRef<boolean | null>(null);
   const footerGoneRef = useRef<boolean | null>(null);
   const publishedStickyChromeRef = useRef<number | null>(null);
+  const publishedChromeShiftRef = useRef<string | null>(null);
   const publishedFooterHRef = useRef<number | null>(null);
   const overlayKeyboardInsetRef = useRef(0);
   const settleRafRef = useRef(0);
@@ -517,7 +518,6 @@ export function AppShell() {
   const [jumpOpen, setJumpOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [headerH, setHeaderH] = useState(48);
-  const [footerH, setFooterH] = useState(108);
 
   const cancelChromeAnimation = () => {
     if (settleRafRef.current) {
@@ -578,21 +578,35 @@ export function AppShell() {
       }
     }
     if (dock) {
-      dock.style.transform = overlay ? `translate3d(0, ${footerY}px, 0)` : "";
+      dock.style.transform = "";
     }
 
-    const stickyChrome = Math.round(stickyOverlayChromePx(overlay, headerVisible));
-    if (publishedStickyChromeRef.current !== stickyChrome) {
-      publishedStickyChromeRef.current = stickyChrome;
-      scrollRef.current?.style.setProperty("--chrome-h", `${stickyChrome}px`);
+    const reservedHeader = reservedOverlayChromePx(overlay, headerH);
+    if (publishedStickyChromeRef.current !== reservedHeader) {
+      publishedStickyChromeRef.current = reservedHeader;
+      if (reservedHeader > 0) {
+        scrollRef.current?.style.setProperty("--chrome-h", `${reservedHeader}px`);
+      } else {
+        scrollRef.current?.style.removeProperty("--chrome-h");
+      }
     }
 
-    const reservedFooter = reservedOverlayChromePx(overlay, footerH);
-    if (publishedFooterHRef.current !== reservedFooter) {
-      publishedFooterHRef.current = reservedFooter;
+    const shiftCss = `${overlayChromeShiftY(overlay, headerY)}px`;
+    if (publishedChromeShiftRef.current !== shiftCss) {
+      publishedChromeShiftRef.current = shiftCss;
+      if (!overlay && headerY === 0) {
+        scrollRef.current?.style.removeProperty("--chrome-shift");
+      } else {
+        scrollRef.current?.style.setProperty("--chrome-shift", shiftCss);
+      }
+    }
+
+    const dockFooter = Math.round(stickyOverlayChromePx(overlay, footerVisible));
+    if (publishedFooterHRef.current !== dockFooter) {
+      publishedFooterHRef.current = dockFooter;
       if (dock) {
-        dock.style.setProperty("--footer-h", `${reservedFooter}px`);
-        dock.style.bottom = overlay ? `${footerH}px` : "";
+        dock.style.setProperty("--footer-h", `${dockFooter}px`);
+        dock.style.bottom = "";
       }
     }
   };
@@ -912,7 +926,6 @@ export function AppShell() {
       headerHRef.current = nextHeader;
       footerHRef.current = nextFooter;
       setHeaderH(nextHeader);
-      setFooterH(nextFooter);
       applyChrome();
     };
     update();
@@ -1431,12 +1444,6 @@ export function AppShell() {
           <div
             ref={fabDockRef}
             className="timeline-fab-dock pointer-events-none absolute inset-x-0 z-40 px-[max(0.75rem,var(--safe-x))] lg:hidden"
-            style={
-              {
-                bottom: isSidebar ? undefined : footerH,
-                "--footer-h": isSidebar ? "0px" : `${footerH}px`,
-              } as CSSProperties
-            }
           >
             <div className="pointer-events-auto relative mx-auto w-full max-w-xl">
               <AnimatePresence>

@@ -22,6 +22,7 @@ import {
   estimateChapterIndexHeight,
   estimateDualChapterBlockHeight,
   estimateExpandedBookBodyHeight,
+  STICKY_ITEM_HEADER_PX,
 } from "@/lib/timeline/viewport-gate";
 import { cn } from "@/lib/utils";
 import { ArtifactColumns } from "./ArtifactColumns";
@@ -124,6 +125,7 @@ const BookSection = memo(function BookSection({
     }
   };
 
+  const blockEstimate = STICKY_ITEM_HEADER_PX + (expanded ? bodyEstimate : 0);
   const period = periodForBook(book.name);
 
   const handleToggle = () => {
@@ -141,7 +143,8 @@ const BookSection = memo(function BookSection({
       id={`book-${book.name}`}
       className="scroll-mt-[calc(var(--chrome-h,0px)+var(--sticky-l1))]"
     >
-      <StickyItemHeader className="h-[var(--sticky-l2)] border-b border-line">
+      <OffscreenSkip estimateHeight={blockEstimate}>
+        <StickyItemHeader className="h-[var(--sticky-l2)] border-b border-line">
         <button
           ref={headerRef}
           type="button"
@@ -175,8 +178,7 @@ const BookSection = memo(function BookSection({
       </StickyItemHeader>
 
       {expanded && (
-        <OffscreenSkip estimateHeight={bodyEstimate}>
-          <div className="relative border-b border-line" style={{ overflowAnchor: "none" }}>
+        <div className="relative border-b border-line" style={{ overflowAnchor: "none" }}>
             <div
               className="absolute top-0 bottom-0 left-[var(--rail-x)] w-px timeline-rail"
               aria-hidden
@@ -248,8 +250,8 @@ const BookSection = memo(function BookSection({
               </p>
             )}
           </div>
-        </OffscreenSkip>
-      )}
+        )}
+      </OffscreenSkip>
     </section>
   );
 });

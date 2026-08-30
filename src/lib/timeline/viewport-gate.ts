@@ -91,6 +91,12 @@ export function isNearScrollport(
 
 const ITEM_HEADER_PX = 48;
 
+/** Matches `--sticky-l1` (2.5rem) at a 16px root. */
+export const STICKY_GROUP_HEADER_PX = 40;
+
+/** Matches `--sticky-l2` (3rem) at a 16px root. */
+export const STICKY_ITEM_HEADER_PX = 48;
+
 /** Expanded Bible book body (chapter grid + chapters), excluding the book header. */
 export function estimateExpandedBookBodyHeight(args: {
   indexChapters: number;

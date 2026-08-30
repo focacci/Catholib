@@ -8,6 +8,7 @@ import {
   interpolateChromeOffset,
   nextChromeHideOffset,
   nextOverlayChromeOffsets,
+  overlayChromeShiftY,
   overlayChromeTranslateY,
   reservedOverlayChromePx,
   stickyOverlayChromePx,
@@ -249,7 +250,7 @@ describe("interpolateChromeOffset", () => {
 });
 
 describe("reservedOverlayChromePx", () => {
-  it("keeps the full overlay size for the dock rest position", () => {
+  it("keeps the full overlay size for sticky top while chrome hides", () => {
     assert.equal(reservedOverlayChromePx(true, 96), 96);
     assert.equal(reservedOverlayChromePx(true, 140), 140);
   });
@@ -261,11 +262,20 @@ describe("reservedOverlayChromePx", () => {
 });
 
 describe("stickyOverlayChromePx", () => {
-  it("follows the visible overlay header so sticky tops stay glued to it", () => {
+  it("tracks remaining visible overlay size for the FAB dock", () => {
     assert.equal(stickyOverlayChromePx(true, 96), 96);
     assert.equal(stickyOverlayChromePx(true, visibleChromeSize(0.5, 96)), 48);
     assert.equal(stickyOverlayChromePx(true, 0), 0);
     assert.equal(stickyOverlayChromePx(false, 96), 0);
+  });
+});
+
+describe("overlayChromeShiftY", () => {
+  it("matches the overlay header translate so stickies follow on the compositor", () => {
+    const hidden = overlayChromeTranslateY({ progress: 1, size: 96, edge: "header" });
+    assert.equal(overlayChromeShiftY(true, hidden), -96);
+    assert.equal(overlayChromeShiftY(true, 0), 0);
+    assert.equal(overlayChromeShiftY(false, hidden), 0);
   });
 });
 

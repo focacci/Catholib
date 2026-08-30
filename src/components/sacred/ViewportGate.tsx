@@ -22,8 +22,8 @@ function syncNearAttribute(el: HTMLElement, root: HTMLElement | null) {
 }
 
 /**
- * Skip layout/paint for expanded timeline bodies that are far from the
- * scrollport. Nearby sections get `content-visibility: visible` so nested
+ * Skip layout/paint for far timeline books/eras, including their sticky
+ * headers. Nearby sections get `content-visibility: visible` so nested
  * sticky headers still stick to `#timeline-scroll`.
  */
 export function OffscreenSkip({

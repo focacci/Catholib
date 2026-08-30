@@ -1,8 +1,5 @@
 {
   "title": "Catholib",
   "type": "website",
-  "card": "custom",
-  "description": "One Catholic library for Sacred Scripture, the living Magisterium, and the 1962 Roman Missal.",
-  "imageWidth": 1200,
-  "imageHeight": 720
+  "card": "custom"
 }

@@ -38,7 +38,7 @@ export function DayHeader({
           <img
             src="/crucifix.png"
             alt=""
-            width={256}
+            width={154}
             height={256}
             draggable={false}
             aria-hidden

@@ -25,7 +25,7 @@ test("injects before </head>", () => {
   const out = injectGrokPwaHead("<html><head><title>x</title></head><body></body></html>");
   assert.match(out, /rel="manifest"/);
   assert.match(out, /apple-touch-icon/);
-  assert.match(out, /href="\/apple-touch-icon.png\?v=3"/);
+  assert.match(out, /href="\/apple-touch-icon.png\?v=2"/);
   assert.match(out, /grok-app-builder\/extensions\.js/);
   assert.ok(out.indexOf("manifest") < out.indexOf("</head>"));
 });
@@ -303,29 +303,6 @@ test("vercel Host without a public hostname emits no og:image", () => {
   }
 });
 
-test("emits site description and custom card dimensions for link previews", () => {
-  const out = injectGrokPwaHead("<html><head></head></html>", {
-    host: "catholib.grok.me",
-    site: {
-      title: "Catholib",
-      description: "One Catholic library for Sacred Scripture, the living Magisterium, and the 1962 Roman Missal.",
-      card: "custom",
-      imageWidth: 1200,
-      imageHeight: 720,
-    },
-  });
-  assert.match(
-    out,
-    /property="og:description" content="One Catholic library for Sacred Scripture, the living Magisterium, and the 1962 Roman Missal."/,
-  );
-  assert.match(
-    out,
-    /name="twitter:description" content="One Catholic library for Sacred Scripture, the living Magisterium, and the 1962 Roman Missal."/,
-  );
-  assert.match(out, /property="og:image:width" content="1200"/);
-  assert.match(out, /property="og:image:height" content="720"/);
-});
-
 test("emits og:image for a public host and prefers a custom card", () => {
   const placeholder = injectGrokPwaHead("<html><head></head></html>", {
     appName: "Wild Race",
@@ -492,7 +469,7 @@ test("rejects hosts that are not plain slugs", () => {
 
 test("renders install page markup", () => {
   const html = renderInstallPage("wild-race.grok.me", "/?install=1&platform=ios");
-  assert.match(html, /href="\/apple-touch-icon.png\?v=3"/);
+  assert.match(html, /href="\/apple-touch-icon.png\?v=2"/);
   assert.match(html, /Add Wild Race to your/);
   assert.match(html, /\/__grok\/install\/styles\.css/);
   assert.match(html, /href="\/"/);

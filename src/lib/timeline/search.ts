@@ -8,7 +8,7 @@ import type { FilterId, TimelineArtifact, ViewMode } from "./types.ts";
 
 export const SEARCH_HIT_VIEW_ORDER: ViewMode[] = ["bible", "church", "missal"];
 
-/** Hit counts in Bible → Church → Missal order, matching the footer tabs. */
+/** Hit counts in Bible → Church → Missal order, matching the view switcher. */
 export function searchHitStripItems(counts: Record<ViewMode, number>): {
   id: ViewMode;
   label: string;

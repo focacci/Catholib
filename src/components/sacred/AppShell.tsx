@@ -38,12 +38,14 @@ import { isSidebarViewport, useIsDesktop, useIsSidebarLayout } from "@/lib/media
 import {
   CHROME_SETTLE_IDLE_MS,
   CHROME_SETTLE_MS,
+  assignChromeVars,
   chromeFullyHidden,
   chromeHideProgress,
   chromeOffsetWhenQueryCleared,
   chromeSettleOffset,
   interpolateChromeOffset,
   nextOverlayChromeOffsets,
+  overlayChromeVars,
   visibleChromeSize,
 } from "@/lib/timeline/chrome-scroll";
 import {
@@ -597,8 +599,18 @@ export function AppShell() {
       footer.toggleAttribute("inert", footerGone);
       footer.style.pointerEvents = footerGone ? "none" : "";
     }
-    shell?.style.setProperty("--chrome-h", `${headerVisible}px`);
-    shell?.style.setProperty("--footer-h", `${footerVisible}px`);
+    if (shell) {
+      assignChromeVars(
+        shell.style,
+        overlayChromeVars({
+          overlay,
+          headerProgress,
+          footerProgress,
+          headerVisiblePx: headerVisible,
+          footerVisiblePx: footerVisible,
+        }),
+      );
+    }
   };
 
   const animateChromeTo = (target: { header: number; footer: number }) => {
@@ -922,7 +934,21 @@ export function AppShell() {
     const ro = new ResizeObserver(update);
     ro.observe(header);
     if (footer) ro.observe(footer);
-    return () => ro.disconnect();
+    const updateAfterRotate = () => {
+      update();
+      requestAnimationFrame(() => {
+        requestAnimationFrame(update);
+      });
+    };
+    window.addEventListener("orientationchange", updateAfterRotate);
+    window.addEventListener("resize", update);
+    window.visualViewport?.addEventListener("resize", update);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("orientationchange", updateAfterRotate);
+      window.removeEventListener("resize", update);
+      window.visualViewport?.removeEventListener("resize", update);
+    };
   }, [isSidebar]);
 
   useEffect(() => {
@@ -1222,11 +1248,11 @@ export function AppShell() {
   return (
     <div
       ref={shellRef}
-      className="relative flex h-dvh flex-col overflow-hidden overscroll-none bg-bg text-fg"
+      className="timeline-shell relative flex h-dvh flex-col overflow-hidden overscroll-none bg-bg text-fg"
       style={
         {
-          "--chrome-h": isSidebar ? "0px" : `${headerH}px`,
-          "--footer-h": isSidebar ? "0px" : `${footerH}px`,
+          "--header-h": `${headerH}px`,
+          "--footer-h-full": `${footerH}px`,
         } as CSSProperties
       }
     >
@@ -1234,7 +1260,7 @@ export function AppShell() {
       <DayHeader
         ref={headerRef}
         id="timeline-chrome"
-        className="max-lg:absolute max-lg:inset-x-0 max-lg:top-0 max-lg:z-20 max-lg:overscroll-none"
+        className="max-lg:absolute max-lg:inset-x-0 max-lg:top-0 max-lg:z-40 max-lg:overscroll-none"
         onAboutClick={() => setAboutOpen(true)}
         onBrandClick={scrollToTop}
       />
@@ -1278,7 +1304,7 @@ export function AppShell() {
               onPointerDown={onChromePointerDown}
               className="h-full overflow-y-scroll overscroll-y-contain [overflow-anchor:none] [-webkit-overflow-scrolling:touch]"
             >
-              {!isSidebar && <div aria-hidden className="shrink-0" style={{ height: headerH }} />}
+              <div aria-hidden className="h-[var(--header-h,48px)] shrink-0 lg:h-0" />
               <div className="mx-auto w-full max-w-xl dual:max-w-6xl">
                 {view === "bible" ? (
                   <BibleView />

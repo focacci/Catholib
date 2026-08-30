@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  assignChromeVars,
   chromeFullyHidden,
   chromeHideProgress,
   chromeOffsetWhenQueryCleared,
@@ -8,6 +9,7 @@ import {
   interpolateChromeOffset,
   nextChromeHideOffset,
   nextOverlayChromeOffsets,
+  overlayChromeVars,
   visibleChromeSize,
 } from "./chrome-scroll.ts";
 
@@ -242,5 +244,67 @@ describe("interpolateChromeOffset", () => {
   it("starts at the origin and lands on the target", () => {
     assert.equal(interpolateChromeOffset(10, 110, 0), 10);
     assert.equal(interpolateChromeOffset(10, 110, 1), 110);
+  });
+});
+
+describe("overlayChromeVars", () => {
+  it("clears inline vars in the sidebar layout so CSS can take over after rotation", () => {
+    assert.deepEqual(
+      overlayChromeVars({
+        overlay: false,
+        headerProgress: 0,
+        footerProgress: 0,
+        headerVisiblePx: 0,
+        footerVisiblePx: 0,
+      }),
+      { chromeH: null, footerH: null },
+    );
+  });
+
+  it("clears inline vars when overlay chrome is fully shown", () => {
+    assert.deepEqual(
+      overlayChromeVars({
+        overlay: true,
+        headerProgress: 0,
+        footerProgress: 0,
+        headerVisiblePx: 64,
+        footerVisiblePx: 108,
+      }),
+      { chromeH: null, footerH: null },
+    );
+  });
+
+  it("writes visible sizes while overlay chrome is hiding", () => {
+    assert.deepEqual(
+      overlayChromeVars({
+        overlay: true,
+        headerProgress: 0.5,
+        footerProgress: 0.25,
+        headerVisiblePx: 32,
+        footerVisiblePx: 81,
+      }),
+      { chromeH: "32px", footerH: "81px" },
+    );
+  });
+});
+
+describe("assignChromeVars", () => {
+  it("removes leftover sidebar 0px so overlay CSS can inset sticky headers", () => {
+    const props = new Map<string, string>([["--chrome-h", "0px"], ["--footer-h", "0px"]]);
+    assignChromeVars(
+      {
+        setProperty: (name, value) => {
+          props.set(name, value);
+        },
+        removeProperty: (name) => {
+          const prev = props.get(name) ?? "";
+          props.delete(name);
+          return prev;
+        },
+      },
+      { chromeH: null, footerH: null },
+    );
+    assert.equal(props.has("--chrome-h"), false);
+    assert.equal(props.has("--footer-h"), false);
   });
 });

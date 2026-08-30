@@ -3,8 +3,11 @@ import { useEffect, useLayoutEffect, useState } from "react";
 /** Tailwind `md` — treat this width and above as desktop. */
 export const DESKTOP_MQ = "(min-width: 768px)";
 
-/** Tailwind `lg` — sidebar jump list; header and footer stay put. */
-export const SIDEBAR_MQ = "(min-width: 1024px)";
+/**
+ * Tailwind `lg` / `max-lg` (`64rem`). Keep in sync with `.timeline-shell`
+ * chrome insets and `max-lg:absolute` on the overlay header.
+ */
+export const SIDEBAR_MQ = "(min-width: 64rem)";
 
 /**
  * Two-column content: desktop widths, or any landscape viewport (phones
@@ -50,12 +53,26 @@ export function isSidebarViewport(): boolean {
 
 export function useIsSidebarLayout(): boolean {
   const [sidebar, setSidebar] = useState(isSidebarViewport);
-  useEffect(() => {
+  useLayoutEffect(() => {
     const mq = window.matchMedia(SIDEBAR_MQ);
     const update = () => setSidebar(mq.matches);
+    const updateAfterRotate = () => {
+      update();
+      requestAnimationFrame(() => {
+        requestAnimationFrame(update);
+      });
+    };
     update();
     mq.addEventListener("change", update);
-    return () => mq.removeEventListener("change", update);
+    window.addEventListener("orientationchange", updateAfterRotate);
+    window.addEventListener("resize", update);
+    window.visualViewport?.addEventListener("resize", update);
+    return () => {
+      mq.removeEventListener("change", update);
+      window.removeEventListener("orientationchange", updateAfterRotate);
+      window.removeEventListener("resize", update);
+      window.visualViewport?.removeEventListener("resize", update);
+    };
   }, []);
   return sidebar;
 }

@@ -93,3 +93,38 @@ export function nextOverlayChromeOffsets(args: {
       });
   return { header, footer };
 }
+
+/**
+ * Inline --chrome-h / --footer-h. `null` clears the inline property so the
+ * same `lg` / `max-lg` CSS that overlays the header can set the inset.
+ * Writing `0px` in the sidebar layout must not survive iPad rotation onto
+ * overlay chrome — sticky section titles would then sit under the header.
+ */
+export function overlayChromeVars(args: {
+  overlay: boolean;
+  headerProgress: number;
+  footerProgress: number;
+  headerVisiblePx: number;
+  footerVisiblePx: number;
+}): { chromeH: string | null; footerH: string | null } {
+  if (!args.overlay || (args.headerProgress <= 0 && args.footerProgress <= 0)) {
+    return { chromeH: null, footerH: null };
+  }
+  return {
+    chromeH: `${args.headerVisiblePx}px`,
+    footerH: `${args.footerVisiblePx}px`,
+  };
+}
+
+export function assignChromeVars(
+  style: {
+    setProperty: (name: string, value: string) => void;
+    removeProperty: (name: string) => string;
+  },
+  vars: { chromeH: string | null; footerH: string | null },
+): void {
+  if (vars.chromeH == null) style.removeProperty("--chrome-h");
+  else style.setProperty("--chrome-h", vars.chromeH);
+  if (vars.footerH == null) style.removeProperty("--footer-h");
+  else style.setProperty("--footer-h", vars.footerH);
+}

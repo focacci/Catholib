@@ -189,3 +189,23 @@ input[type="search"]::-webkit-search-results-decoration {
   padding-inline: var(--safe-x);
   overscroll-behavior-y: contain;
 }
+
+/*
+ * Overlay vs sidebar chrome. Must match Tailwind `lg` (64rem) and
+ * `max-lg:absolute` on the header — iPad rotation updates these media
+ * queries even when JS still thinks the sidebar layout is up, so sticky
+ * section titles keep their inset instead of sliding under the header.
+ */
+@media (width < 64rem) {
+  .timeline-shell {
+    --chrome-h: var(--header-h, 48px);
+    --footer-h: var(--footer-h-full, 108px);
+  }
+}
+
+@media (width >= 64rem) {
+  .timeline-shell {
+    --chrome-h: 0px;
+    --footer-h: 0px;
+  }
+}

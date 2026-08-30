@@ -8,6 +8,8 @@ declare module "virtual:grok-og-identity" {
       image?: string;
       banner?: string;
       color?: string;
+      imageWidth?: number;
+      imageHeight?: number;
     };
   };
 }

@@ -106,6 +106,7 @@ function SourceCard({ name, href, note }: (typeof SOURCES)[number]) {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
+      draggable={false}
       className={cn(
         "group block w-full overflow-hidden rounded-lg border border-line bg-elevated text-left no-underline",
         "md:transition-[border-color,box-shadow,transform] md:duration-200 md:ease-out",
@@ -229,6 +230,7 @@ export function AboutPanel({
   const contentRef = useRef<HTMLDivElement>(null);
   const pullRef = useRef<SheetScrollPull>(idleSheetScrollPull());
   const gestureRef = useRef(false);
+  const suppressClickRef = useRef(false);
 
   useEffect(() => {
     if (open) setTab("about");
@@ -258,9 +260,17 @@ export function AboutPanel({
       });
       pullRef.current = next;
       if (next.pulling) {
+        if (next.pullY > 8) suppressClickRef.current = true;
         if ("cancelable" in event && event.cancelable) event.preventDefault();
         applySheetPull(sheet, next.pullY);
       }
+    };
+
+    const onClickCapture = (event: Event) => {
+      if (!suppressClickRef.current) return;
+      event.preventDefault();
+      event.stopPropagation();
+      suppressClickRef.current = false;
     };
 
     const onEnd = () => {
@@ -298,6 +308,7 @@ export function AboutPanel({
     scroll.addEventListener("pointermove", onPointerMove);
     scroll.addEventListener("pointerup", onEnd);
     scroll.addEventListener("pointercancel", onEnd);
+    scroll.addEventListener("click", onClickCapture, true);
     scroll.addEventListener("touchstart", onTouchStart, { passive: true });
     scroll.addEventListener("touchmove", onTouchMove, { passive: false });
     scroll.addEventListener("touchend", onEnd);
@@ -308,6 +319,7 @@ export function AboutPanel({
       scroll.removeEventListener("pointermove", onPointerMove);
       scroll.removeEventListener("pointerup", onEnd);
       scroll.removeEventListener("pointercancel", onEnd);
+      scroll.removeEventListener("click", onClickCapture, true);
       scroll.removeEventListener("touchstart", onTouchStart);
       scroll.removeEventListener("touchmove", onTouchMove);
       scroll.removeEventListener("touchend", onEnd);

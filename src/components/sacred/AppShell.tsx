@@ -689,7 +689,7 @@ function LibrarySearchFields({
   );
 }
 
-export function AppShell() {
+export function AppShell({ now }: { now?: Date }) {
   const view = useTimeline((s) => s.view);
   const query = useTimeline((s) => s.query);
   const selected = useTimeline((s) => s.selected);
@@ -1453,6 +1453,7 @@ export function AppShell() {
         className="max-lg:absolute max-lg:inset-x-0 max-lg:top-0 max-lg:z-40 max-lg:overscroll-none"
         onAboutClick={() => setAboutOpen(true)}
         onBrandClick={scrollToTop}
+        now={now}
       />
 
       <nav className="hidden shrink-0 border-b border-line bg-bg lg:block" aria-label="Library">

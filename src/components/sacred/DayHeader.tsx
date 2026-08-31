@@ -1,17 +1,24 @@
 import type { ComponentProps } from "react";
 import { Info } from "lucide-react";
+import { liturgicalDay } from "@/lib/timeline/liturgical-day";
 import { cn } from "@/lib/utils";
+import { DayDisciplineTags } from "./DayDisciplineTags";
 
 export function DayHeader({
   className,
   ref,
   onBrandClick,
   onAboutClick,
+  now,
   ...props
 }: ComponentProps<"header"> & {
   onBrandClick?: () => void;
   onAboutClick?: () => void;
+  /** Override "today" for previews and tests. */
+  now?: Date;
 }) {
+  const day = liturgicalDay(now);
+
   return (
     <header
       ref={ref}
@@ -48,6 +55,10 @@ export function DayHeader({
             Catholib
           </span>
         </button>
+        <DayDisciplineTags
+          day={day}
+          className="absolute top-1/2 right-2 z-10 -translate-y-1/2 lg:right-5"
+        />
       </div>
     </header>
   );

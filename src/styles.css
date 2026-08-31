@@ -26,6 +26,10 @@
   --color-lit-violet: #5a4a68;
   --color-lit-rose: #b5838d;
   --color-lit-black: #121212;
+  --color-discipline-obligation: #3e7a52;
+  --color-discipline-free: #5c6573;
+  --color-discipline-abstain: #c9a227;
+  --color-discipline-fast: #c45c4a;
 
   --font-sans: "Nunito Sans", "Segoe UI", system-ui, sans-serif;
   --font-serif: "Literata", "Iowan Old Style", "Palatino Linotype", serif;

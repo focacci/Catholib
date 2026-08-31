@@ -15,6 +15,9 @@ export type LiturgicalColor =
 
 export type LiturgicalRank = 1 | 2 | 3 | 4;
 
+export type ObligationKind = "obligation" | "none";
+export type DietKind = "fast" | "abstain" | "none";
+
 export interface LiturgicalOffice {
   title: string;
   color: LiturgicalColor;
@@ -36,6 +39,10 @@ export interface LiturgicalDay {
   rosary: string;
   notes: string[];
   missalUrl: string;
+  /** Sunday or a US holy day of obligation that has not been abrogated. */
+  obligation: ObligationKind;
+  /** Fast supersedes Friday abstinence. Solemnities lift Friday abstinence. */
+  diet: DietKind;
 }
 
 export const COLOR_LABEL: Record<LiturgicalColor, string> = {
@@ -514,10 +521,40 @@ function movableMap(year: number): Map<string, LiturgicalOffice> {
   return map;
 }
 
-function fridayAbstinence(date: Date, officeTitle: string): boolean {
+function isFastDay(officeTitle: string): boolean {
+  return /Ash Wednesday|Good Friday/i.test(officeTitle);
+}
+
+/**
+ * Latin-rite US holy days: every Sunday, Christmas, Immaculate Conception,
+ * and (when not Saturday or Monday) Jan 1, Assumption, and All Saints.
+ * Ascension Thursday still binds where it is not transferred to Sunday.
+ */
+export function obligationForDay(date: Date, officeTitle: string): ObligationKind {
+  if (date.getDay() === 0) return "obligation";
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  const satOrMon = date.getDay() === 6 || date.getDay() === 1;
+  if (month === 12 && day === 25) return "obligation";
+  if (month === 12 && day === 8) return "obligation";
+  if (month === 1 && day === 1) return satOrMon ? "none" : "obligation";
+  if (month === 8 && day === 15) return satOrMon ? "none" : "obligation";
+  if (month === 11 && day === 1) return satOrMon ? "none" : "obligation";
+  if (/^Ascension of Our Lord/i.test(officeTitle)) return "obligation";
+  return "none";
+}
+
+function fridayAbstinence(date: Date, officeTitle: string, rank: LiturgicalRank): boolean {
   if (date.getDay() !== 5) return false;
-  if (/Good Friday/i.test(officeTitle)) return false;
+  if (isFastDay(officeTitle)) return false;
+  if (rank === 1) return false;
   return true;
+}
+
+export function dietForDay(date: Date, officeTitle: string, rank: LiturgicalRank): DietKind {
+  if (isFastDay(officeTitle)) return "fast";
+  if (fridayAbstinence(date, officeTitle, rank)) return "abstain";
+  return "none";
 }
 
 export function liturgicalDay(now = new Date()): LiturgicalDay {
@@ -550,11 +587,11 @@ export function liturgicalDay(now = new Date()): LiturgicalDay {
     }
   }
 
-  if (date.getDay() === 3 && /Ash Wednesday/i.test(current.title)) {
+  const diet = dietForDay(date, current.title, current.rank);
+  const obligation = obligationForDay(date, current.title);
+  if (diet === "fast") {
     notes.push("Fast and abstinence");
-  } else if (/Good Friday/i.test(current.title)) {
-    notes.push("Fast and abstinence");
-  } else if (fridayAbstinence(date, current.title)) {
+  } else if (diet === "abstain") {
     notes.push("Friday abstinence");
   }
 
@@ -577,5 +614,7 @@ export function liturgicalDay(now = new Date()): LiturgicalDay {
     rosary,
     notes,
     missalUrl: url,
+    obligation,
+    diet,
   };
 }

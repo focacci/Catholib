@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { areAllBooksExpanded, mapAllBooks, nextExpandedBooks } from "./store.ts";
+import {
+  areAllBooksExpanded,
+  mapAllBooks,
+  nextExpandedBooks,
+  useTimeline,
+} from "./store.ts";
 
 describe("nextExpandedBooks", () => {
   it("opens one book at a time so Jump to… does not keep Genesis mounted", () => {
@@ -57,5 +62,15 @@ describe("areAllBooksExpanded", () => {
       ]),
       false,
     );
+  });
+});
+
+describe("setView", () => {
+  it("closes About so the chosen library view is visible", () => {
+    useTimeline.setState({ aboutOpen: true, view: "bible" });
+    useTimeline.getState().setView("church");
+    assert.equal(useTimeline.getState().view, "church");
+    assert.equal(useTimeline.getState().aboutOpen, false);
+    useTimeline.setState({ aboutOpen: false, view: "bible", filter: "all" });
   });
 });

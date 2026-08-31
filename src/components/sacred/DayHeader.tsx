@@ -24,7 +24,7 @@ export function DayHeader({
             type="button"
             onClick={onAboutClick}
             className="absolute top-1/2 left-2 z-10 flex size-11 -translate-y-1/2 items-center justify-center rounded-md text-gold hover:bg-gold-soft lg:hidden"
-            aria-label="About and sources"
+            aria-label="About"
           >
             <Info className="size-5" strokeWidth={1.75} />
           </button>

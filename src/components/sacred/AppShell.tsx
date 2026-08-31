@@ -68,7 +68,7 @@ import {
   visualViewportGap,
 } from "@/lib/timeline/keyboard-inset";
 import { cn } from "@/lib/utils";
-import { AboutPanel } from "./AboutPanel";
+import { AboutPanel, AboutView } from "./AboutPanel";
 import { ArtifactSheet } from "./ArtifactSheet";
 import { ArtworkPreloader } from "./ArtworkPreloader";
 import { BibleView } from "./BibleView";
@@ -374,7 +374,9 @@ function ToolbarExpandControls() {
 function ViewSwitcher({ orientation }: { orientation: "horizontal" | "vertical" }) {
   const view = useTimeline((s) => s.view);
   const setView = useTimeline((s) => s.setView);
+  const aboutOpen = useTimeline((s) => s.aboutOpen);
   const vertical = orientation === "vertical";
+  const selected = !vertical || !aboutOpen;
 
   return (
     <div
@@ -394,7 +396,7 @@ function ViewSwitcher({ orientation }: { orientation: "horizontal" | "vertical" 
           key={id}
           type="button"
           role="tab"
-          aria-selected={view === id}
+          aria-selected={selected && view === id}
           onPointerDown={(e) => {
             e.preventDefault();
           }}
@@ -404,7 +406,7 @@ function ViewSwitcher({ orientation }: { orientation: "horizontal" | "vertical" 
             vertical
               ? "h-11 justify-start gap-2 px-3 text-sm"
               : "h-10 justify-center gap-1 text-base",
-            view === id ? "bg-gold text-bg" : "text-muted",
+            selected && view === id ? "bg-gold text-bg" : "text-muted",
           )}
         >
           <Icon className="size-3.5 shrink-0" strokeWidth={1.75} />
@@ -1409,14 +1411,18 @@ export function AppShell() {
 
   const jumpToBook = (book: BibleBook) => {
     setJumpOpen(false);
+    setAboutOpen(false);
     expandBook(book.name, true);
     requestAnimationFrame(() => {
-      document.getElementById(`book-${book.name}`)?.scrollIntoView({ block: "start" });
+      requestAnimationFrame(() => {
+        document.getElementById(`book-${book.name}`)?.scrollIntoView({ block: "start" });
+      });
     });
   };
 
   const jumpToAnchor = (prefix: string, id: string) => {
     setJumpOpen(false);
+    setAboutOpen(false);
     if (prefix === "era") {
       const era = eraNameForEntryId(id);
       if (era) expandEra(era, true);
@@ -1490,11 +1496,21 @@ export function AppShell() {
           <div className="border-t border-line p-3">
             <button
               type="button"
-              onClick={() => setAboutOpen(true)}
-              className="flex h-11 w-full items-center gap-2 rounded-md px-2 text-sm text-muted transition-colors duration-150 hover:bg-gold-soft hover:text-fg"
+              aria-pressed={aboutOpen}
+              onClick={() => {
+                const next = !aboutOpen;
+                setAboutOpen(next);
+                if (next) scrollToTop();
+              }}
+              className={cn(
+                "flex h-11 w-full items-center gap-2 rounded-md px-2 text-sm transition-colors duration-150",
+                aboutOpen
+                  ? "bg-gold-soft text-fg"
+                  : "text-muted hover:bg-gold-soft hover:text-fg",
+              )}
             >
               <Info className="size-4 text-gold" strokeWidth={1.75} />
-              About and sources
+              About
             </button>
           </div>
         </aside>
@@ -1510,7 +1526,9 @@ export function AppShell() {
             >
               <div aria-hidden className="h-[var(--header-h,48px)] shrink-0 lg:h-0" />
               <div className="mx-auto w-full max-w-xl dual:max-w-6xl">
-                {view === "bible" ? (
+                {isSidebar && aboutOpen ? (
+                  <AboutView />
+                ) : view === "bible" ? (
                   <BibleView />
                 ) : view === "church" ? (
                   <ChurchView />
@@ -1610,7 +1628,7 @@ export function AppShell() {
       </div>
 
       {!isDesktop && <ArtifactSheet artifact={selected} onClose={closeArtifact} />}
-      <AboutPanel open={aboutOpen} onOpenChange={setAboutOpen} />
+      {!isSidebar && <AboutPanel open={aboutOpen} onOpenChange={setAboutOpen} />}
     </div>
   );
 }

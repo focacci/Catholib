@@ -209,8 +209,8 @@ export function AboutView() {
 }
 
 function applySheetPull(sheet: HTMLElement, pullY: number, snapping = false) {
-  sheet.style.transform = pullY > 0 ? `translate3d(0, ${pullY}px, 0)` : "";
   sheet.style.transition = snapping ? "transform 0.25s var(--ease-out)" : "none";
+  sheet.style.transform = `translate3d(0, ${Math.max(0, pullY)}px, 0)`;
 }
 
 function clearSheetPull(sheet: HTMLElement) {
@@ -243,12 +243,7 @@ export function AboutPanel({
     const sheet = contentRef.current;
     if (!open || !scroll || !sheet) return;
 
-    const onStart = (clientY: number) => {
-      activeRef.current = true;
-      gestureRef.current = startSheetScrollGesture(clientY);
-      scrollTopRef.current = scroll.scrollTop;
-      startScrollTopRef.current = scroll.scrollTop;
-    };
+    const unbindMove = { current: () => {} };
 
     const onMove = (event: Event, clientY: number) => {
       if (!activeRef.current) return;
@@ -272,14 +267,9 @@ export function AboutPanel({
       }
     };
 
-    const onClickCapture = (event: Event) => {
-      if (!suppressClickRef.current) return;
-      event.preventDefault();
-      event.stopPropagation();
-      suppressClickRef.current = false;
-    };
-
     const onEnd = () => {
+      unbindMove.current();
+      unbindMove.current = () => {};
       if (!activeRef.current) return;
       activeRef.current = false;
       const { pulling, pullY } = gestureRef.current;
@@ -298,56 +288,78 @@ export function AboutPanel({
       sheet.addEventListener("transitionend", done);
     };
 
+    const bindWindow = () => {
+      const onWinPointerMove = (event: PointerEvent) => {
+        if (event.pointerType === "touch") return;
+        onMove(event, event.clientY);
+      };
+      const onWinTouchMove = (event: TouchEvent) => {
+        if (event.touches[0]) onMove(event, event.touches[0].clientY);
+      };
+      window.addEventListener("pointermove", onWinPointerMove);
+      window.addEventListener("pointerup", onEnd);
+      window.addEventListener("pointercancel", onEnd);
+      window.addEventListener("touchmove", onWinTouchMove, { passive: false });
+      window.addEventListener("touchend", onEnd);
+      window.addEventListener("touchcancel", onEnd);
+      unbindMove.current = () => {
+        window.removeEventListener("pointermove", onWinPointerMove);
+        window.removeEventListener("pointerup", onEnd);
+        window.removeEventListener("pointercancel", onEnd);
+        window.removeEventListener("touchmove", onWinTouchMove);
+        window.removeEventListener("touchend", onEnd);
+        window.removeEventListener("touchcancel", onEnd);
+      };
+    };
+
+    const onStart = (clientY: number) => {
+      unbindMove.current();
+      activeRef.current = true;
+      gestureRef.current = startSheetScrollGesture(clientY);
+      scrollTopRef.current = scroll.scrollTop;
+      startScrollTopRef.current = scroll.scrollTop;
+      bindWindow();
+    };
+
+    const onClickCapture = (event: Event) => {
+      if (!suppressClickRef.current) return;
+      event.preventDefault();
+      event.stopPropagation();
+      suppressClickRef.current = false;
+    };
+
     const onPointerDown = (event: PointerEvent) => {
       if (event.pointerType !== "touch") {
         scroll.setPointerCapture(event.pointerId);
       }
       onStart(event.clientY);
     };
-    const onPointerMove = (event: PointerEvent) => {
-      if (event.pointerType === "touch") return;
-      onMove(event, event.clientY);
-    };
     const onTouchStart = (event: TouchEvent) => {
       if (event.touches[0]) onStart(event.touches[0].clientY);
     };
-    const onTouchMove = (event: TouchEvent) => {
-      if (event.touches[0]) onMove(event, event.touches[0].clientY);
-    };
 
     scroll.addEventListener("pointerdown", onPointerDown);
-    scroll.addEventListener("pointermove", onPointerMove);
-    scroll.addEventListener("pointerup", onEnd);
-    scroll.addEventListener("pointercancel", onEnd);
     scroll.addEventListener("click", onClickCapture, true);
     scroll.addEventListener("touchstart", onTouchStart, { passive: true });
-    scroll.addEventListener("touchmove", onTouchMove, { passive: false });
-    scroll.addEventListener("touchend", onEnd);
-    scroll.addEventListener("touchcancel", onEnd);
 
     return () => {
+      unbindMove.current();
       scroll.removeEventListener("pointerdown", onPointerDown);
-      scroll.removeEventListener("pointermove", onPointerMove);
-      scroll.removeEventListener("pointerup", onEnd);
-      scroll.removeEventListener("pointercancel", onEnd);
       scroll.removeEventListener("click", onClickCapture, true);
       scroll.removeEventListener("touchstart", onTouchStart);
-      scroll.removeEventListener("touchmove", onTouchMove);
-      scroll.removeEventListener("touchend", onEnd);
-      scroll.removeEventListener("touchcancel", onEnd);
       clearSheetPull(sheet);
     };
   }, [open, onOpenChange, tab]);
 
   return (
-    <Drawer.Root open={open} onOpenChange={onOpenChange}>
+    <Drawer.Root handleOnly open={open} onOpenChange={onOpenChange}>
       <Drawer.Portal>
         <Drawer.Overlay className="fixed inset-0 z-50 bg-bg/70" />
         <Drawer.Content
           ref={contentRef}
           className="fixed inset-x-0 bottom-0 z-50 flex max-h-[88dvh] flex-col overflow-hidden overscroll-none rounded-t-xl bg-surface shadow-[var(--shadow-sheet)] outline-none"
         >
-          <div className="mx-auto mt-3 h-1 w-10 shrink-0 rounded-full bg-line-strong" />
+          <Drawer.Handle className="mx-auto mt-3 h-1 w-10 shrink-0 rounded-full bg-line-strong" />
           <div className="shrink-0 px-[max(1.25rem,var(--safe-x))] pt-3 pb-2">
             <Drawer.Title className="sr-only">
               {tab === "about" ? "About" : "Sources"}

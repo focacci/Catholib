@@ -1,46 +1,63 @@
 /** Pull-down distance that closes the About sheet after the content hits the top. */
 export const SHEET_DISMISS_PX = 72;
 
-export type SheetScrollPull = {
-  /** The finger is pulling the sheet closed instead of scrolling. */
+export type SheetScrollGesture = {
+  lastY: number;
   pulling: boolean;
-  /** Client Y used as the origin for pull distance. */
-  originY: number;
-  /** How far the sheet has been pulled down, in px. */
   pullY: number;
 };
 
-export function idleSheetScrollPull(originY = 0): SheetScrollPull {
-  return { pulling: false, originY, pullY: 0 };
+export function startSheetScrollGesture(clientY: number): SheetScrollGesture {
+  return { lastY: clientY, pulling: false, pullY: 0 };
 }
 
 /**
- * Nested-scroll dismiss: a downward swipe that reaches the top of the sheet
- * contents keeps going and pulls the sheet closed. Origins rebase while the
- * list is still scrolling so the pull starts at zero as the top is crossed.
+ * Owns both list scrolling and sheet dismiss so one downward swipe can
+ * scroll to the top and, in the same motion, start pulling the sheet closed.
+ * `scrollTop` is the value the caller should apply; leftover finger movement
+ * after the list hits 0 becomes `pullY`.
  */
-export function nextSheetScrollPull(args: {
-  scrollTop: number;
+export function nextSheetScrollGesture(args: {
+  prev: SheetScrollGesture;
   clientY: number;
-  prev: SheetScrollPull;
-  start?: boolean;
-}): SheetScrollPull {
-  if (args.start) return idleSheetScrollPull(args.clientY);
+  scrollTop: number;
+  maxScrollTop: number;
+}): { gesture: SheetScrollGesture; scrollTop: number } {
+  const dy = args.clientY - args.prev.lastY;
+  const maxScrollTop = Math.max(0, args.maxScrollTop);
+  let { pulling, pullY } = args.prev;
+  let scrollTop = Math.min(maxScrollTop, Math.max(0, args.scrollTop));
 
-  const dy = args.clientY - args.prev.originY;
-
-  if (args.prev.pulling) {
-    const pullY = Math.max(0, dy);
-    return pullY > 0
-      ? { pulling: true, originY: args.prev.originY, pullY }
-      : idleSheetScrollPull(args.clientY);
+  if (pulling) {
+    const nextPull = pullY + dy;
+    if (nextPull > 0) {
+      pullY = nextPull;
+    } else {
+      pullY = 0;
+      pulling = false;
+      scrollTop = Math.min(maxScrollTop, scrollTop - nextPull);
+    }
+  } else if (dy > 0) {
+    if (scrollTop > 0) {
+      const nextScroll = Math.max(0, scrollTop - dy);
+      const leftover = dy - (scrollTop - nextScroll);
+      scrollTop = nextScroll;
+      if (leftover > 0) {
+        pulling = true;
+        pullY = leftover;
+      }
+    } else {
+      pulling = true;
+      pullY = dy;
+    }
+  } else if (dy < 0) {
+    scrollTop = Math.min(maxScrollTop, scrollTop - dy);
   }
 
-  if (args.scrollTop <= 0 && dy > 0) {
-    return { pulling: true, originY: args.prev.originY, pullY: dy };
-  }
-
-  return idleSheetScrollPull(args.clientY);
+  return {
+    gesture: { lastY: args.clientY, pulling, pullY },
+    scrollTop,
+  };
 }
 
 export function shouldDismissSheetPull(

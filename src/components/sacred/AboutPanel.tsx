@@ -2,10 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import { Drawer } from "vaul";
 import { DUAL_COLUMN_GRID_CLASS } from "@/lib/timeline/columns";
 import {
-  idleSheetScrollPull,
-  nextSheetScrollPull,
+  nextSheetScrollGesture,
   shouldDismissSheetPull,
-  type SheetScrollPull,
+  startSheetScrollGesture,
+  type SheetScrollGesture,
 } from "@/lib/timeline/sheet-dismiss";
 import { cn } from "@/lib/utils";
 import { StickyGroupHeader } from "./StickyHeaders";
@@ -228,8 +228,10 @@ export function AboutPanel({
   const [tab, setTab] = useState<AboutTab>("about");
   const scrollRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
-  const pullRef = useRef<SheetScrollPull>(idleSheetScrollPull());
-  const gestureRef = useRef(false);
+  const gestureRef = useRef<SheetScrollGesture>(startSheetScrollGesture(0));
+  const scrollTopRef = useRef(0);
+  const startScrollTopRef = useRef(0);
+  const activeRef = useRef(false);
   const suppressClickRef = useRef(false);
 
   useEffect(() => {
@@ -242,27 +244,31 @@ export function AboutPanel({
     if (!open || !scroll || !sheet) return;
 
     const onStart = (clientY: number) => {
-      gestureRef.current = true;
-      pullRef.current = nextSheetScrollPull({
-        scrollTop: scroll.scrollTop,
-        clientY,
-        prev: pullRef.current,
-        start: true,
-      });
+      activeRef.current = true;
+      gestureRef.current = startSheetScrollGesture(clientY);
+      scrollTopRef.current = scroll.scrollTop;
+      startScrollTopRef.current = scroll.scrollTop;
     };
 
     const onMove = (event: Event, clientY: number) => {
-      if (!gestureRef.current) return;
-      const next = nextSheetScrollPull({
-        scrollTop: scroll.scrollTop,
+      if (!activeRef.current) return;
+      if ("cancelable" in event && event.cancelable) event.preventDefault();
+      const maxScrollTop = Math.max(0, scroll.scrollHeight - scroll.clientHeight);
+      const next = nextSheetScrollGesture({
+        prev: gestureRef.current,
         clientY,
-        prev: pullRef.current,
+        scrollTop: scrollTopRef.current,
+        maxScrollTop,
       });
-      pullRef.current = next;
-      if (next.pulling) {
-        if (next.pullY > 8) suppressClickRef.current = true;
-        if ("cancelable" in event && event.cancelable) event.preventDefault();
-        applySheetPull(sheet, next.pullY);
+      gestureRef.current = next.gesture;
+      scrollTopRef.current = next.scrollTop;
+      if (scroll.scrollTop !== next.scrollTop) scroll.scrollTop = next.scrollTop;
+      applySheetPull(sheet, next.gesture.pullY);
+      if (
+        next.gesture.pullY > 8 ||
+        Math.abs(next.scrollTop - startScrollTopRef.current) > 8
+      ) {
+        suppressClickRef.current = true;
       }
     };
 
@@ -274,10 +280,10 @@ export function AboutPanel({
     };
 
     const onEnd = () => {
-      if (!gestureRef.current) return;
-      gestureRef.current = false;
-      const { pulling, pullY } = pullRef.current;
-      pullRef.current = idleSheetScrollPull();
+      if (!activeRef.current) return;
+      activeRef.current = false;
+      const { pulling, pullY } = gestureRef.current;
+      gestureRef.current = startSheetScrollGesture(0);
       if (!pulling) return;
       if (shouldDismissSheetPull(pullY)) {
         clearSheetPull(sheet);
@@ -292,7 +298,12 @@ export function AboutPanel({
       sheet.addEventListener("transitionend", done);
     };
 
-    const onPointerDown = (event: PointerEvent) => onStart(event.clientY);
+    const onPointerDown = (event: PointerEvent) => {
+      if (event.pointerType !== "touch") {
+        scroll.setPointerCapture(event.pointerId);
+      }
+      onStart(event.clientY);
+    };
     const onPointerMove = (event: PointerEvent) => {
       if (event.pointerType === "touch") return;
       onMove(event, event.clientY);
@@ -355,7 +366,7 @@ export function AboutPanel({
           <div
             ref={scrollRef}
             data-vaul-no-drag=""
-            className="min-h-0 flex-1 overflow-y-auto overscroll-none px-[max(1.25rem,var(--safe-x))] pt-1 pb-[max(1.5rem,env(safe-area-inset-bottom))] [overflow-anchor:none] [-webkit-overflow-scrolling:touch]"
+            className="min-h-0 flex-1 touch-none overflow-y-auto overscroll-none px-[max(1.25rem,var(--safe-x))] pt-1 pb-[max(1.5rem,env(safe-area-inset-bottom))] [overflow-anchor:none]"
           >
             {tab === "about" ? (
               <>

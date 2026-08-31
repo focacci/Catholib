@@ -69,5 +69,63 @@ describe("liturgicalDay", () => {
     assert.match(day.title, /King/);
     assert.equal(day.color, "white");
     assert.equal(day.rank, 1);
+    assert.equal(day.obligation, "obligation");
+    assert.equal(day.diet, "none");
+  });
+
+  it("marks ordinary Fridays as abstinence without obligation", () => {
+    const day = liturgicalDay(at(2026, 8, 28));
+    assert.equal(day.obligation, "none");
+    assert.equal(day.diet, "abstain");
+  });
+
+  it("marks ordinary weekdays as no obligation and no diet", () => {
+    const day = liturgicalDay(at(2026, 8, 31));
+    assert.equal(day.obligation, "none");
+    assert.equal(day.diet, "none");
+  });
+
+  it("marks Sundays as days of obligation", () => {
+    const day = liturgicalDay(at(2026, 8, 30));
+    assert.equal(day.obligation, "obligation");
+    assert.equal(day.diet, "none");
+  });
+
+  it("marks Christmas as obligation even on Friday", () => {
+    const day = liturgicalDay(at(2026, 12, 25));
+    assert.equal(day.obligation, "obligation");
+    assert.equal(day.diet, "none");
+  });
+
+  it("abrogates the Assumption obligation when it falls on Saturday", () => {
+    const day = liturgicalDay(at(2026, 8, 15));
+    assert.match(day.title, /Assumption/);
+    assert.equal(day.obligation, "none");
+    assert.equal(day.diet, "none");
+  });
+
+  it("keeps Immaculate Conception as obligation on any weekday", () => {
+    const day = liturgicalDay(at(2026, 12, 8));
+    assert.equal(day.obligation, "obligation");
+  });
+
+  it("marks Good Friday as a fast day without Mass obligation", () => {
+    const day = liturgicalDay(at(2026, 4, 3));
+    assert.equal(day.obligation, "none");
+    assert.equal(day.diet, "fast");
+  });
+
+  it("marks Ash Wednesday as a fast day", () => {
+    const day = liturgicalDay(at(2026, 2, 18));
+    assert.equal(day.title, "Ash Wednesday");
+    assert.equal(day.obligation, "none");
+    assert.equal(day.diet, "fast");
+  });
+
+  it("lifts Friday abstinence on the Sacred Heart", () => {
+    const day = liturgicalDay(at(2026, 6, 12));
+    assert.match(day.title, /Sacred Heart/);
+    assert.equal(day.rank, 1);
+    assert.equal(day.diet, "none");
   });
 });

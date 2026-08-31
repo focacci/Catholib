@@ -1,7 +1,14 @@
-import * as Dialog from "@radix-ui/react-dialog";
+import { useEffect, useRef, useState } from "react";
 import { Drawer } from "vaul";
-import { X } from "lucide-react";
-import { useIsDesktop } from "@/lib/media";
+import { DUAL_COLUMN_GRID_CLASS } from "@/lib/timeline/columns";
+import {
+  idleSheetScrollPull,
+  nextSheetScrollPull,
+  shouldDismissSheetPull,
+  type SheetScrollPull,
+} from "@/lib/timeline/sheet-dismiss";
+import { cn } from "@/lib/utils";
+import { StickyGroupHeader } from "./StickyHeaders";
 
 const SOURCES = [
   {
@@ -56,6 +63,8 @@ const SOURCES = [
   },
 ];
 
+type AboutTab = "about" | "sources";
+
 function AboutCopy() {
   return (
     <>
@@ -76,32 +85,136 @@ function AboutCopy() {
         doctrine is offered. Every artifact links to its original page. If
         a working sourceUrl cannot be confirmed, the artifact is omitted.
       </p>
-      <ul className="mt-5 flex flex-col gap-3">
-        {SOURCES.map((s) => (
-          <li
-            key={s.href}
-            className="rounded-md bg-elevated px-3 py-3 shadow-[var(--shadow-border)]"
-          >
-            <a
-              href={s.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-medium text-gold"
-            >
-              {s.name}
-            </a>
-            <p className="mt-1 text-base text-muted">{s.note}</p>
-          </li>
-        ))}
-      </ul>
-      <p className="mt-5 text-sm leading-relaxed text-subtle">
-        Artwork is the sole exception to the approved-source list:
-        well-known public-domain historical works, attributed via
-        Wikimedia Commons. Catholib is not an official publication of the
-        Holy See or the USCCB.
-      </p>
     </>
   );
+}
+
+function AboutDisclaimer() {
+  return (
+    <p className="text-sm leading-relaxed text-subtle">
+      Artwork is the sole exception to the approved-source list:
+      well-known public-domain historical works, attributed via
+      Wikimedia Commons. Catholib is not an official publication of the
+      Holy See or the USCCB.
+    </p>
+  );
+}
+
+function SourceCard({ name, href, note }: (typeof SOURCES)[number]) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={cn(
+        "group block w-full overflow-hidden rounded-lg border border-line bg-elevated text-left no-underline",
+        "md:transition-[border-color,box-shadow,transform] md:duration-200 md:ease-out",
+        "md:hover:border-line-strong md:hover:shadow-[0_10px_28px_#00000050]",
+      )}
+    >
+      <span className="flex flex-col gap-1 px-3 py-2.5 md:transition-transform md:duration-200 md:ease-out md:group-hover:-translate-y-0.5">
+        <span className="block w-full font-serif text-lg font-semibold leading-snug text-fg">
+          {name}
+        </span>
+        <span className="block w-full text-sm leading-snug text-muted">{note}</span>
+        <span className="mt-1 flex items-end justify-between gap-2">
+          <span className="shrink-0 rounded-full border border-line px-2 py-0.5 text-xs font-medium uppercase tracking-wider text-gold-dim">
+            Source
+          </span>
+        </span>
+      </span>
+    </a>
+  );
+}
+
+function SourceList() {
+  return (
+    <ul className="flex flex-col gap-2">
+      {SOURCES.map((source) => (
+        <li key={source.href}>
+          <SourceCard {...source} />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function AboutTabSwitcher({
+  tab,
+  onChange,
+}: {
+  tab: AboutTab;
+  onChange: (tab: AboutTab) => void;
+}) {
+  return (
+    <div
+      role="tablist"
+      aria-label="About and sources"
+      className="grid grid-cols-2 rounded-md bg-elevated p-0.5"
+      style={{
+        boxShadow: "0 0 0 1px color-mix(in oklab, var(--color-gold) 30%, transparent)",
+      }}
+    >
+      {(
+        [
+          { id: "about", label: "About" },
+          { id: "sources", label: "Sources" },
+        ] as const
+      ).map(({ id, label }) => (
+        <button
+          key={id}
+          type="button"
+          role="tab"
+          aria-selected={tab === id}
+          onClick={() => onChange(id)}
+          className={cn(
+            "flex h-10 items-center justify-center rounded-sm font-medium transition-colors duration-150",
+            tab === id ? "bg-gold text-bg" : "text-muted",
+          )}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+export function AboutView() {
+  return (
+    <div className="relative pb-[40vh]">
+      <div
+        className="absolute top-2 bottom-8 left-[var(--rail-x)] w-px timeline-rail"
+        aria-hidden
+      />
+      <div className={DUAL_COLUMN_GRID_CLASS}>
+        <section className="min-w-0 dual:col-start-1">
+          <StickyGroupHeader className="pl-[var(--rail-pad)]">About</StickyGroupHeader>
+          <div className="px-2 pt-3 pl-[calc(var(--rail-pad)+0.5rem)]">
+            <AboutCopy />
+            <div className="mt-5">
+              <AboutDisclaimer />
+            </div>
+          </div>
+        </section>
+        <section className="min-w-0 dual:col-start-2">
+          <StickyGroupHeader>Sources</StickyGroupHeader>
+          <div className="px-2 pt-3">
+            <SourceList />
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}
+
+function applySheetPull(sheet: HTMLElement, pullY: number, snapping = false) {
+  sheet.style.transform = pullY > 0 ? `translate3d(0, ${pullY}px, 0)` : "";
+  sheet.style.transition = snapping ? "transform 0.25s var(--ease-out)" : "none";
+}
+
+function clearSheetPull(sheet: HTMLElement) {
+  sheet.style.transform = "";
+  sheet.style.transition = "";
 }
 
 export function AboutPanel({
@@ -111,61 +224,137 @@ export function AboutPanel({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const desktop = useIsDesktop();
+  const [tab, setTab] = useState<AboutTab>("about");
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const pullRef = useRef<SheetScrollPull>(idleSheetScrollPull());
+  const gestureRef = useRef(false);
 
-  if (desktop) {
-    return (
-      <Dialog.Root open={open} onOpenChange={onOpenChange}>
-        <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 z-50 bg-bg/70" />
-          <Dialog.Content className="fixed top-1/2 left-1/2 z-50 flex max-h-[min(42rem,85dvh)] w-[min(32rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl bg-surface shadow-[var(--shadow-sheet)] outline-none">
-            <div className="flex shrink-0 items-center justify-between px-5 pt-4">
-              <Dialog.Title className="font-serif text-xl font-semibold text-fg">
-                About and sources
-              </Dialog.Title>
-              <Dialog.Description className="sr-only">
-                Editorial notes and approved sources for Catholib.
-              </Dialog.Description>
-              <Dialog.Close
-                className="flex size-11 items-center justify-center rounded-md text-muted hover:text-fg"
-                aria-label="Close"
-              >
-                <X className="size-5" />
-              </Dialog.Close>
-            </div>
-            <div className="overflow-y-auto overscroll-contain px-5 pt-2 pb-6 [max-height:calc(85dvh-4.5rem)]">
-              <AboutCopy />
-            </div>
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog.Root>
-    );
-  }
+  useEffect(() => {
+    if (open) setTab("about");
+  }, [open]);
+
+  useEffect(() => {
+    const scroll = scrollRef.current;
+    const sheet = contentRef.current;
+    if (!open || !scroll || !sheet) return;
+
+    const onStart = (clientY: number) => {
+      gestureRef.current = true;
+      pullRef.current = nextSheetScrollPull({
+        scrollTop: scroll.scrollTop,
+        clientY,
+        prev: pullRef.current,
+        start: true,
+      });
+    };
+
+    const onMove = (event: Event, clientY: number) => {
+      if (!gestureRef.current) return;
+      const next = nextSheetScrollPull({
+        scrollTop: scroll.scrollTop,
+        clientY,
+        prev: pullRef.current,
+      });
+      pullRef.current = next;
+      if (next.pulling) {
+        if ("cancelable" in event && event.cancelable) event.preventDefault();
+        applySheetPull(sheet, next.pullY);
+      }
+    };
+
+    const onEnd = () => {
+      if (!gestureRef.current) return;
+      gestureRef.current = false;
+      const { pulling, pullY } = pullRef.current;
+      pullRef.current = idleSheetScrollPull();
+      if (!pulling) return;
+      if (shouldDismissSheetPull(pullY)) {
+        clearSheetPull(sheet);
+        onOpenChange(false);
+        return;
+      }
+      applySheetPull(sheet, 0, true);
+      const done = () => {
+        sheet.removeEventListener("transitionend", done);
+        clearSheetPull(sheet);
+      };
+      sheet.addEventListener("transitionend", done);
+    };
+
+    const onPointerDown = (event: PointerEvent) => onStart(event.clientY);
+    const onPointerMove = (event: PointerEvent) => {
+      if (event.pointerType === "touch") return;
+      onMove(event, event.clientY);
+    };
+    const onTouchStart = (event: TouchEvent) => {
+      if (event.touches[0]) onStart(event.touches[0].clientY);
+    };
+    const onTouchMove = (event: TouchEvent) => {
+      if (event.touches[0]) onMove(event, event.touches[0].clientY);
+    };
+
+    scroll.addEventListener("pointerdown", onPointerDown);
+    scroll.addEventListener("pointermove", onPointerMove);
+    scroll.addEventListener("pointerup", onEnd);
+    scroll.addEventListener("pointercancel", onEnd);
+    scroll.addEventListener("touchstart", onTouchStart, { passive: true });
+    scroll.addEventListener("touchmove", onTouchMove, { passive: false });
+    scroll.addEventListener("touchend", onEnd);
+    scroll.addEventListener("touchcancel", onEnd);
+
+    return () => {
+      scroll.removeEventListener("pointerdown", onPointerDown);
+      scroll.removeEventListener("pointermove", onPointerMove);
+      scroll.removeEventListener("pointerup", onEnd);
+      scroll.removeEventListener("pointercancel", onEnd);
+      scroll.removeEventListener("touchstart", onTouchStart);
+      scroll.removeEventListener("touchmove", onTouchMove);
+      scroll.removeEventListener("touchend", onEnd);
+      scroll.removeEventListener("touchcancel", onEnd);
+      clearSheetPull(sheet);
+    };
+  }, [open, onOpenChange, tab]);
 
   return (
     <Drawer.Root open={open} onOpenChange={onOpenChange}>
       <Drawer.Portal>
         <Drawer.Overlay className="fixed inset-0 z-50 bg-bg/70" />
-        <Drawer.Content className="fixed inset-x-0 bottom-0 z-50 flex max-h-[88dvh] flex-col overflow-hidden rounded-t-xl bg-surface shadow-[var(--shadow-sheet)] outline-none">
+        <Drawer.Content
+          ref={contentRef}
+          className="fixed inset-x-0 bottom-0 z-50 flex max-h-[88dvh] flex-col overflow-hidden overscroll-none rounded-t-xl bg-surface shadow-[var(--shadow-sheet)] outline-none"
+        >
           <div className="mx-auto mt-3 h-1 w-10 shrink-0 rounded-full bg-line-strong" />
-          <div className="flex shrink-0 items-center justify-between px-[max(1.25rem,var(--safe-x))] pt-3">
-            <Drawer.Title className="font-serif text-xl font-semibold text-fg">
-              About and sources
+          <div className="shrink-0 px-[max(1.25rem,var(--safe-x))] pt-3 pb-2">
+            <Drawer.Title className="sr-only">
+              {tab === "about" ? "About" : "Sources"}
             </Drawer.Title>
             <Drawer.Description className="sr-only">
               Editorial notes and approved sources for Catholib.
             </Drawer.Description>
-            <button
-              type="button"
-              onClick={() => onOpenChange(false)}
-              className="flex size-11 items-center justify-center rounded-md text-muted"
-              aria-label="Close"
-            >
-              <X className="size-5" />
-            </button>
+            <AboutTabSwitcher
+              tab={tab}
+              onChange={(next) => {
+                setTab(next);
+                scrollRef.current?.scrollTo({ top: 0 });
+              }}
+            />
           </div>
-          <div className="overflow-y-auto overscroll-contain px-[max(1.25rem,var(--safe-x))] pt-2 pb-[max(1.5rem,env(safe-area-inset-bottom))] [max-height:calc(88dvh-4.75rem)]">
-            <AboutCopy />
+          <div
+            ref={scrollRef}
+            data-vaul-no-drag=""
+            className="min-h-0 flex-1 overflow-y-auto overscroll-none px-[max(1.25rem,var(--safe-x))] pt-1 pb-[max(1.5rem,env(safe-area-inset-bottom))] [overflow-anchor:none] [-webkit-overflow-scrolling:touch]"
+          >
+            {tab === "about" ? (
+              <>
+                <AboutCopy />
+                <div className="mt-5">
+                  <AboutDisclaimer />
+                </div>
+              </>
+            ) : (
+              <SourceList />
+            )}
           </div>
         </Drawer.Content>
       </Drawer.Portal>

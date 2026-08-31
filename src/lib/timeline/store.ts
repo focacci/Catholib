@@ -69,7 +69,7 @@ export const useTimeline = create<TimelineState>((set) => ({
   aboutOpen: false,
   expandedBooks: DEFAULT_EXPANDED,
   expandedEras: DEFAULT_EXPANDED_ERAS,
-  setView: (view) => set({ view, filter: "all" }),
+  setView: (view) => set({ view, filter: "all", aboutOpen: false }),
   setFilter: (filter) => set({ filter }),
   setQuery: (query) => set({ query }),
   openArtifact: (artifact) => set({ selected: artifact }),

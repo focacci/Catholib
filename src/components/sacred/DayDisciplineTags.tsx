@@ -9,12 +9,12 @@ const OBLIGATION: Record<
   obligation: {
     label: "Obligation",
     Icon: Lock,
-    className: "bg-discipline-obligation text-white",
+    className: "bg-discipline-obligation/25 text-discipline-obligation",
   },
   none: {
     label: "No Obligation",
     Icon: Unlock,
-    className: "bg-discipline-free text-white/90",
+    className: "bg-discipline-free/20 text-discipline-free",
   },
 };
 
@@ -25,12 +25,12 @@ const DIET: Record<
   abstain: {
     label: "Abstain",
     Icon: Fish,
-    className: "bg-discipline-abstain text-[#1a1406]",
+    className: "bg-discipline-abstain/25 text-discipline-abstain",
   },
   fast: {
     label: "Fast",
     Icon: Ban,
-    className: "bg-discipline-fast text-white",
+    className: "bg-discipline-fast/25 text-discipline-fast",
   },
 };
 
@@ -46,12 +46,12 @@ function DisciplineTag({
   return (
     <span
       className={cn(
-        "inline-flex h-[1.125rem] max-w-full items-center gap-0.5 rounded-sm px-1.5 font-sans text-[0.625rem] leading-none font-semibold tracking-wide whitespace-nowrap",
+        "inline-flex h-[1.125rem] max-w-full items-center gap-1 rounded-[3px] border border-current/20 px-1.5 font-sans text-[0.625rem] leading-none font-semibold tracking-wide whitespace-nowrap",
         className,
       )}
     >
-      <Icon className="size-2.5 shrink-0" strokeWidth={2.25} aria-hidden />
       {label}
+      <Icon className="size-2.5 shrink-0" strokeWidth={2.25} aria-hidden />
     </span>
   );
 }

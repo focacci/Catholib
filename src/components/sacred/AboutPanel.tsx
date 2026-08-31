@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Drawer } from "vaul";
 import { DUAL_COLUMN_GRID_CLASS } from "@/lib/timeline/columns";
 import {
@@ -226,6 +226,7 @@ export function AboutPanel({
   onOpenChange: (open: boolean) => void;
 }) {
   const [tab, setTab] = useState<AboutTab>("about");
+  const [sheetNodes, setSheetNodes] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const gestureRef = useRef<SheetScrollGesture>(startSheetScrollGesture(0));
@@ -234,16 +235,34 @@ export function AboutPanel({
   const activeRef = useRef(false);
   const suppressClickRef = useRef(false);
 
+  const setScrollNode = useCallback((node: HTMLDivElement | null) => {
+    scrollRef.current = node;
+    setSheetNodes((n) => n + 1);
+  }, []);
+  const setSheetNode = useCallback((node: HTMLDivElement | null) => {
+    contentRef.current = node;
+    setSheetNodes((n) => n + 1);
+  }, []);
+
   useEffect(() => {
     if (open) setTab("about");
   }, [open]);
 
-  useEffect(() => {
-    const scroll = scrollRef.current;
-    const sheet = contentRef.current;
-    if (!open || !scroll || !sheet) return;
+  useLayoutEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    let detach = () => {};
 
-    const unbindMove = { current: () => {} };
+    const tryAttach = () => {
+      if (cancelled) return;
+      const scroll = scrollRef.current;
+      const sheet = contentRef.current;
+      if (!scroll || !sheet) {
+        requestAnimationFrame(tryAttach);
+        return;
+      }
+
+      const unbindMove = { current: () => {} };
 
     const onMove = (event: Event, clientY: number) => {
       if (!activeRef.current) return;
@@ -342,21 +361,28 @@ export function AboutPanel({
     scroll.addEventListener("click", onClickCapture, true);
     scroll.addEventListener("touchstart", onTouchStart, { passive: true });
 
-    return () => {
+    detach = () => {
       unbindMove.current();
       scroll.removeEventListener("pointerdown", onPointerDown);
       scroll.removeEventListener("click", onClickCapture, true);
       scroll.removeEventListener("touchstart", onTouchStart);
       clearSheetPull(sheet);
     };
-  }, [open, onOpenChange, tab]);
+    };
+
+    tryAttach();
+    return () => {
+      cancelled = true;
+      detach();
+    };
+  }, [open, onOpenChange, sheetNodes]);
 
   return (
     <Drawer.Root handleOnly open={open} onOpenChange={onOpenChange}>
       <Drawer.Portal>
         <Drawer.Overlay className="fixed inset-0 z-50 bg-bg/70" />
         <Drawer.Content
-          ref={contentRef}
+          ref={setSheetNode}
           className="fixed inset-x-0 bottom-0 z-50 flex max-h-[88dvh] flex-col overflow-hidden overscroll-none rounded-t-xl bg-surface shadow-[var(--shadow-sheet)] outline-none"
         >
           <Drawer.Handle className="mx-auto mt-3 h-1 w-10 shrink-0 rounded-full bg-line-strong" />
@@ -376,7 +402,7 @@ export function AboutPanel({
             />
           </div>
           <div
-            ref={scrollRef}
+            ref={setScrollNode}
             data-vaul-no-drag=""
             className="min-h-0 flex-1 touch-none overflow-y-auto overscroll-none px-[max(1.25rem,var(--safe-x))] pt-1 pb-[max(1.5rem,env(safe-area-inset-bottom))] [overflow-anchor:none]"
           >

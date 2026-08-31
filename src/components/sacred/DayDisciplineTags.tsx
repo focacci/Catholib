@@ -1,10 +1,10 @@
-import { Ban, Fish, Lock, Unlock, type LucideIcon } from "lucide-react";
+import { Ban, Fish, Lock, type LucideIcon } from "lucide-react";
 import type { DietKind, LiturgicalDay, ObligationKind } from "@/lib/timeline/liturgical-day";
 import { cn } from "@/lib/utils";
 
 const OBLIGATION: Record<
   ObligationKind,
-  { label: string; Icon: LucideIcon; className: string }
+  { label: string; Icon?: LucideIcon; className: string }
 > = {
   obligation: {
     label: "Obligation",
@@ -13,7 +13,6 @@ const OBLIGATION: Record<
   },
   none: {
     label: "No Obligation",
-    Icon: Unlock,
     className: "bg-discipline-free/20 text-discipline-free",
   },
 };
@@ -41,7 +40,7 @@ function DisciplineTag({
   compact,
 }: {
   label: string;
-  Icon: LucideIcon;
+  Icon?: LucideIcon;
   className: string;
   compact?: boolean;
 }) {
@@ -56,11 +55,13 @@ function DisciplineTag({
       )}
     >
       {label}
-      <Icon
-        className={cn("shrink-0", compact ? "size-2" : "size-2.5")}
-        strokeWidth={2.25}
-        aria-hidden
-      />
+      {Icon ? (
+        <Icon
+          className={cn("shrink-0", compact ? "size-2" : "size-2.5")}
+          strokeWidth={2.25}
+          aria-hidden
+        />
+      ) : null}
     </span>
   );
 }

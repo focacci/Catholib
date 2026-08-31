@@ -38,20 +38,29 @@ function DisciplineTag({
   label,
   Icon,
   className,
+  compact,
 }: {
   label: string;
   Icon: LucideIcon;
   className: string;
+  compact?: boolean;
 }) {
   return (
     <span
       className={cn(
-        "inline-flex h-[1.125rem] max-w-full items-center gap-1 rounded-[3px] border border-current/20 px-1.5 font-sans text-[0.625rem] leading-none font-semibold tracking-wide whitespace-nowrap",
+        "inline-flex max-w-full items-center rounded-[3px] border border-current/20 font-sans leading-none font-semibold tracking-wide whitespace-nowrap",
+        compact
+          ? "h-3.5 gap-0.5 px-1 text-[0.5625rem]"
+          : "h-[1.125rem] gap-1 px-1.5 text-[0.625rem]",
         className,
       )}
     >
       {label}
-      <Icon className="size-2.5 shrink-0" strokeWidth={2.25} aria-hidden />
+      <Icon
+        className={cn("shrink-0", compact ? "size-2" : "size-2.5")}
+        strokeWidth={2.25}
+        aria-hidden
+      />
     </span>
   );
 }
@@ -79,7 +88,7 @@ export function DayDisciplineTags({
       aria-label={summary}
       title={summary}
     >
-      <DisciplineTag {...obligation} />
+      <DisciplineTag compact {...obligation} />
       {diet ? <DisciplineTag {...diet} /> : null}
     </div>
   );

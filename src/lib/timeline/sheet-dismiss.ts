@@ -1,62 +1,57 @@
 /** Pull-down distance that closes the About sheet after the content hits the top. */
 export const SHEET_DISMISS_PX = 72;
 
-export type SheetScrollGesture = {
+export type SheetOverscroll = {
   lastY: number;
+  lastScrollTop: number;
   pulling: boolean;
   pullY: number;
 };
 
-export function startSheetScrollGesture(clientY: number): SheetScrollGesture {
-  return { lastY: clientY, pulling: false, pullY: 0 };
+export function startSheetOverscroll(
+  clientY: number,
+  scrollTop = 0,
+): SheetOverscroll {
+  return { lastY: clientY, lastScrollTop: scrollTop, pulling: false, pullY: 0 };
 }
 
 /**
- * Owns both list scrolling and sheet dismiss so one downward swipe can
- * scroll to the top and, in the same motion, start pulling the sheet closed.
- * `scrollTop` is the value the caller should apply; leftover finger movement
- * after the list hits 0 becomes `pullY`.
+ * Native list scrolling stays with the browser (so flings still glide).
+ * While a swipe is active, leftover downward movement after the list hits
+ * the top becomes a sheet pull in the same motion.
  */
-export function nextSheetScrollGesture(args: {
-  prev: SheetScrollGesture;
+export function nextSheetOverscroll(args: {
+  prev: SheetOverscroll;
   clientY: number;
   scrollTop: number;
-  maxScrollTop: number;
-}): { gesture: SheetScrollGesture; scrollTop: number } {
+}): SheetOverscroll {
   const dy = args.clientY - args.prev.lastY;
-  const maxScrollTop = Math.max(0, args.maxScrollTop);
-  let { pulling, pullY } = args.prev;
-  let scrollTop = Math.min(maxScrollTop, Math.max(0, args.scrollTop));
+  const scrollTop = Math.max(0, args.scrollTop);
 
-  if (pulling) {
-    const nextPull = pullY + dy;
+  if (args.prev.pulling) {
+    const nextPull = args.prev.pullY + dy;
     if (nextPull > 0) {
-      pullY = nextPull;
-    } else {
-      pullY = 0;
-      pulling = false;
-      scrollTop = Math.min(maxScrollTop, scrollTop - nextPull);
+      return { lastY: args.clientY, lastScrollTop: 0, pulling: true, pullY: nextPull };
     }
-  } else if (dy > 0) {
-    if (scrollTop > 0) {
-      const nextScroll = Math.max(0, scrollTop - dy);
-      const leftover = dy - (scrollTop - nextScroll);
-      scrollTop = nextScroll;
-      if (leftover > 0) {
-        pulling = true;
-        pullY = leftover;
-      }
-    } else {
-      pulling = true;
-      pullY = dy;
-    }
-  } else if (dy < 0) {
-    scrollTop = Math.min(maxScrollTop, scrollTop - dy);
+    return { lastY: args.clientY, lastScrollTop: 0, pulling: false, pullY: 0 };
+  }
+
+  if (scrollTop <= 0 && dy > 0) {
+    const consumed = Math.max(0, args.prev.lastScrollTop - scrollTop);
+    const leftover = Math.max(0, dy - consumed);
+    return {
+      lastY: args.clientY,
+      lastScrollTop: 0,
+      pulling: leftover > 0 || args.prev.lastScrollTop <= 0,
+      pullY: leftover,
+    };
   }
 
   return {
-    gesture: { lastY: args.clientY, pulling, pullY },
-    scrollTop,
+    lastY: args.clientY,
+    lastScrollTop: scrollTop,
+    pulling: false,
+    pullY: 0,
   };
 }
 

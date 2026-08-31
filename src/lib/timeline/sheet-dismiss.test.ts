@@ -1,95 +1,93 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
-  nextSheetScrollGesture,
+  nextSheetOverscroll,
   shouldDismissSheetPull,
-  startSheetScrollGesture,
+  startSheetOverscroll,
 } from "./sheet-dismiss.ts";
 
-describe("nextSheetScrollGesture", () => {
-  it("scrolls toward the top without pulling while content remains", () => {
-    const start = startSheetScrollGesture(200);
-    const next = nextSheetScrollGesture({
+describe("nextSheetOverscroll", () => {
+  it("leaves mid-list movement to native scrolling", () => {
+    const start = startSheetOverscroll(200, 80);
+    const next = nextSheetOverscroll({
       prev: start,
       clientY: 230,
-      scrollTop: 80,
-      maxScrollTop: 400,
+      scrollTop: 50,
     });
     assert.deepEqual(next, {
-      gesture: { lastY: 230, pulling: false, pullY: 0 },
-      scrollTop: 50,
+      lastY: 230,
+      lastScrollTop: 50,
+      pulling: false,
+      pullY: 0,
     });
   });
 
   it("turns leftover movement into a sheet pull the moment the top is crossed", () => {
-    const start = startSheetScrollGesture(300);
-    const scrolling = nextSheetScrollGesture({
+    const start = startSheetOverscroll(300, 80);
+    const scrolling = nextSheetOverscroll({
       prev: start,
       clientY: 340,
-      scrollTop: 80,
-      maxScrollTop: 400,
+      scrollTop: 40,
     });
-    assert.equal(scrolling.scrollTop, 40);
-    assert.equal(scrolling.gesture.pulling, false);
+    assert.equal(scrolling.pulling, false);
 
-    const crossed = nextSheetScrollGesture({
-      prev: scrolling.gesture,
+    const crossed = nextSheetOverscroll({
+      prev: scrolling,
       clientY: 390,
-      scrollTop: scrolling.scrollTop,
-      maxScrollTop: 400,
+      scrollTop: 0,
     });
-    assert.equal(crossed.scrollTop, 0);
-    assert.deepEqual(crossed.gesture, { lastY: 390, pulling: true, pullY: 10 });
+    assert.deepEqual(crossed, {
+      lastY: 390,
+      lastScrollTop: 0,
+      pulling: true,
+      pullY: 10,
+    });
 
-    const continued = nextSheetScrollGesture({
-      prev: crossed.gesture,
+    const continued = nextSheetOverscroll({
+      prev: crossed,
       clientY: 430,
-      scrollTop: crossed.scrollTop,
-      maxScrollTop: 400,
+      scrollTop: 0,
     });
-    assert.equal(continued.scrollTop, 0);
-    assert.deepEqual(continued.gesture, { lastY: 430, pulling: true, pullY: 50 });
+    assert.deepEqual(continued, {
+      lastY: 430,
+      lastScrollTop: 0,
+      pulling: true,
+      pullY: 50,
+    });
   });
 
   it("pulls immediately when the gesture begins at the top", () => {
-    const start = startSheetScrollGesture(100);
-    const pull = nextSheetScrollGesture({
+    const start = startSheetOverscroll(100, 0);
+    const pull = nextSheetOverscroll({
       prev: start,
       clientY: 140,
       scrollTop: 0,
-      maxScrollTop: 400,
     });
     assert.deepEqual(pull, {
-      gesture: { lastY: 140, pulling: true, pullY: 40 },
-      scrollTop: 0,
+      lastY: 140,
+      lastScrollTop: 0,
+      pulling: true,
+      pullY: 40,
     });
   });
 
-  it("returns leftover reverse movement to scrolling", () => {
-    const pulling = { lastY: 200, pulling: true, pullY: 30 };
-    const reversed = nextSheetScrollGesture({
+  it("returns to native scrolling when the pull is released back to the top", () => {
+    const pulling = {
+      lastY: 200,
+      lastScrollTop: 0,
+      pulling: true,
+      pullY: 30,
+    };
+    const released = nextSheetOverscroll({
       prev: pulling,
       clientY: 160,
       scrollTop: 0,
-      maxScrollTop: 400,
     });
-    assert.deepEqual(reversed, {
-      gesture: { lastY: 160, pulling: false, pullY: 0 },
-      scrollTop: 10,
-    });
-  });
-
-  it("scrolls into the page when the finger moves up", () => {
-    const start = startSheetScrollGesture(250);
-    const down = nextSheetScrollGesture({
-      prev: start,
-      clientY: 220,
-      scrollTop: 60,
-      maxScrollTop: 400,
-    });
-    assert.deepEqual(down, {
-      gesture: { lastY: 220, pulling: false, pullY: 0 },
-      scrollTop: 90,
+    assert.deepEqual(released, {
+      lastY: 160,
+      lastScrollTop: 0,
+      pulling: false,
+      pullY: 0,
     });
   });
 });

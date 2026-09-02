@@ -90,6 +90,30 @@ function mysteryIdFromRosary(artifact: TimelineArtifact): string | undefined {
   return undefined;
 }
 
+function refreshNodeArtifact(id: string, artifact: TimelineArtifact): void {
+  const node = graph().nodes.get(id);
+  if (!node) {
+    upsertNode({
+      id,
+      kind: "proper",
+      title: artifact.title,
+      subtitle: artifact.subtitle,
+      sourceUrl: artifact.sourceUrl,
+      year: artifact.year,
+      artifact,
+      aliases: [artifact.id],
+      lens: "missal",
+    });
+    return;
+  }
+  node.artifact = artifact;
+  node.title = artifact.title;
+  node.subtitle = artifact.subtitle;
+  node.sourceUrl = artifact.sourceUrl;
+  node.year = artifact.year;
+  graph().byAlias.set(artifact.id, id);
+}
+
 function attachTodayCluster(now: Date, cards: TimelineArtifact[]): void {
   const day = liturgicalDay(now);
   const id = dayId(day.date);
@@ -111,7 +135,12 @@ function attachTodayCluster(now: Date, cards: TimelineArtifact[]): void {
   const rosary = cards.find((card) => card.type === "rosary");
   const rosaryId = rosary ? mysteryIdFromRosary(rosary) : undefined;
   if (rosaryId) upsertEdge(id, rosaryId, "observes");
-  if (graph().nodes.has("proper:today")) upsertEdge(id, "proper:today", "observes");
+
+  const proper = cards.find((card) => card.id === "missal-today");
+  if (proper) {
+    refreshNodeArtifact("proper:today", proper);
+    upsertEdge(id, "proper:today", "observes");
+  }
   if (graph().nodes.has("ordo:missae")) upsertEdge(id, "ordo:missae", "observes");
 
   const mapped = OFFICE_PERSON.find((row) => row.pattern.test(day.title));

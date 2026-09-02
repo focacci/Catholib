@@ -108,6 +108,8 @@ describe("Today board", () => {
   it("reuses the Augustine person node on 28 August", () => {
     const day = todayBoard(new Date(2026, 7, 28, 12));
     assert.ok(day.some((card) => /Augustine/i.test(card.title) && card.id.startsWith("ch-")));
+    const proper = getNode("proper:today");
+    assert.match(proper?.subtitle ?? "", /August 28/);
   });
 });
 

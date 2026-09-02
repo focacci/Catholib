@@ -8,6 +8,7 @@ import { children, getNode, neighborhood, parents, rankedRails, resolveQuery, ro
 import { isChurchDefaultEntry } from "./church-spine.ts";
 import { todayBoard } from "./today.ts";
 import { REQUIRED_PATHS } from "./seeds.ts";
+import { CORE_NODES, CORE_WALKS } from "./seeds-cores.ts";
 import { CHURCH_ENTRIES } from "../timeline/church.ts";
 
 describe("graph compile", () => {
@@ -69,6 +70,57 @@ describe("graph compile", () => {
         assert.ok(getNode(id), `missing ${id}`);
         assert.ok(ids.includes(id), `${path[0]} → ${path.at(-1)} missing ${id} in ${ids.join(" → ")}`);
       }
+    }
+  });
+
+  it("walks each remaining core to Scripture in three or four cards", () => {
+    for (const walk of CORE_WALKS) {
+      for (const id of [walk.core, walk.to, walk.magisterium, ...walk.via]) {
+        const node = getNode(id);
+        assert.ok(node, `missing ${id}`);
+        assert.match(node.sourceUrl, /^https:\/\//, `${id} needs a confirmed sourceUrl`);
+      }
+      const walked = route(walk.core, walk.to, { maxHops: 4 });
+      const ids = walked.map((node) => node.id);
+      assert.ok(
+        walked.length >= 3 && walked.length <= 4,
+        `${walk.core} → ${walk.to} is ${walked.length} cards: ${ids.join(" → ")}`,
+      );
+      for (const id of walk.via) {
+        assert.ok(ids.includes(id), `${walk.core} → ${walk.to} missing ${id} in ${ids.join(" → ")}`);
+      }
+      assert.ok(walked.some((node) => node.kind === "ccc"), `${walk.core} path should include a CCC paragraph`);
+      const magisterium = route(walk.core, walk.magisterium, { maxHops: 4 });
+      assert.ok(
+        magisterium.length >= 2 && magisterium.length <= 4,
+        `${walk.core} → ${walk.magisterium} is ${magisterium.length} cards: ${magisterium.map((n) => n.id).join(" → ")}`,
+      );
+    }
+  });
+
+  it("teaches extra ecclesiam as CCC 846–848 and Lumen Gentium 14–16", () => {
+    assert.ok(getNode("ccc:846"));
+    assert.ok(getNode("ccc:847"));
+    assert.ok(getNode("ccc:848"));
+    assert.ok(getNode("constitution:lumen-gentium.14"));
+    assert.ok(getNode("constitution:lumen-gentium.16"));
+    const toSixteen = route("ccc:847", "constitution:lumen-gentium.16", { maxHops: 4 });
+    assert.ok(toSixteen.some((node) => node.id === "constitution:lumen-gentium.16"));
+    const evangelize = route("ccc:848", "scripture:heb.11.6", { maxHops: 4 });
+    assert.ok(evangelize.some((node) => node.id === "scripture:heb.11.6"));
+  });
+
+  it("gives every core locator a working vatican.va URL", () => {
+    for (const seed of CORE_NODES) {
+      const node = getNode(seed.id);
+      assert.ok(node, `missing ${seed.id}`);
+      assert.equal(node.sourceUrl, seed.sourceUrl);
+      assert.match(node.sourceUrl, /^https:\/\/www\.vatican\.va\//);
+    }
+    for (const n of [232, 296, 848, 2174]) {
+      const node = getNode(`ccc:${n}`);
+      assert.ok(node, `missing ccc:${n}`);
+      assert.match(node.sourceUrl, /^https:\/\/www\.vatican\.va\/archive\/ENG0015\/__P/);
     }
   });
 

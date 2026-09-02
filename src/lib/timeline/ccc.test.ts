@@ -71,6 +71,9 @@ describe("Catechism cards", () => {
     assert.equal(CCC_PAGE[32], "PA");
     assert.equal(CCC_PAGE[201], "P16");
     assert.equal(CCC_PAGE[245], "P17");
+    assert.equal(CCC_PAGE[232], "P17");
+    assert.equal(CCC_PAGE[296], "P19");
+    assert.equal(CCC_PAGE[848], "P29");
     assert.equal(CCC_PAGE[424], "P1D");
     assert.equal(CCC_PAGE[447], "P1H");
     assert.equal(CCC_PAGE[465], "P1J");
@@ -80,6 +83,7 @@ describe("Catechism cards", () => {
     assert.equal(CCC_PAGE[1334], "P3Z");
     assert.equal(CCC_PAGE[1376], "P41");
     assert.equal(CCC_PAGE[1439], "P4B");
+    assert.equal(CCC_PAGE[2174], "P7O");
     assert.equal(CCC_PAGE[1826], "P66");
     assert.equal(CCC_PAGE[2084], "P7C");
     assert.equal(cccUrl(2084), "https://www.vatican.va/archive/ENG0015/__P7C.HTM");

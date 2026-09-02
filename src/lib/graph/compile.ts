@@ -7,6 +7,7 @@ import type { ArtifactType, TimelineArtifact } from "../timeline/types.ts";
 import { canonicalIdForArtifact, commentarySource, kindFromId } from "./canon.ts";
 import { bookToken, parseRef, parseRefs, scriptureIdFromRef, chapterIdFromRef, bookIdFromRef, type ParsedRef } from "./parse-ref.ts";
 import { rosaryDecadeArtifact, ROSARY_DECADES } from "./rosary-mysteries.ts";
+import { CORE_EDGES, CORE_LOCATOR_REFS, CORE_NODES } from "./seeds-cores.ts";
 import {
   CONSTITUTION_NODES,
   COUNCIL_NODES,
@@ -223,7 +224,7 @@ export function compileGraph(): GraphIndex {
     b.addArtifact(cccArtifact(n), `ccc:${n}`, "ccc");
   }
 
-  for (const seed of [...COUNCIL_NODES, ...CONSTITUTION_NODES]) {
+  for (const seed of [...COUNCIL_NODES, ...CONSTITUTION_NODES, ...CORE_NODES]) {
     b.addArtifact(artifactFromSeed(seed), seed.id, kindFromId(seed.id), "church");
     for (const raw of seed.bibleRefs ?? []) b.ensureScriptureRef(raw);
   }
@@ -268,7 +269,7 @@ export function compileGraph(): GraphIndex {
     for (const target of core.cites) b.addEdge(core.id, target, "cites");
   }
 
-  for (const raw of LOCATOR_REFS) b.ensureScriptureRef(raw);
+  for (const raw of [...LOCATOR_REFS, ...CORE_LOCATOR_REFS]) b.ensureScriptureRef(raw);
 
   for (const { artifact, entryId, lens } of collectArtifacts()) {
     const id = canonicalIdForArtifact(artifact, entryId);
@@ -285,7 +286,7 @@ export function compileGraph(): GraphIndex {
     }
   }
 
-  for (const edge of HIGH_VALUE_EDGES) {
+  for (const edge of [...HIGH_VALUE_EDGES, ...CORE_EDGES]) {
     b.cite(edge.from, edge.to, edge.kind);
   }
 

@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import { BIBLE_BOOKS } from "./bible.ts";
 import { CCC_PAGE, CCC_PARAGRAPH, cccParagraphFor, cccParagraphNumber, cccUrl } from "./ccc.ts";
 import { CHURCH_ENTRIES } from "./church.ts";
+import { graph } from "../graph/compile.ts";
 import type { TimelineArtifact } from "./types.ts";
 
 function allArtifacts(): TimelineArtifact[] {
@@ -23,6 +24,11 @@ describe("Catechism cards", () => {
 
   it("copies an official paragraph for every CCC title and links to that page", () => {
     const used = new Set<number>();
+    const graphCcc = new Set(
+      [...graph().nodes.values()]
+        .filter((node) => node.kind === "ccc")
+        .map((node) => Number(node.id.slice(4))),
+    );
     for (const artifact of cards) {
       const num = cccParagraphNumber(artifact.title);
       assert.ok(num, `${artifact.id} title should be CCC <number>`);
@@ -41,7 +47,7 @@ describe("Catechism cards", () => {
     }
     const unused = Object.keys(CCC_PARAGRAPH)
       .map(Number)
-      .filter((n) => !used.has(n));
+      .filter((n) => !used.has(n) && !graphCcc.has(n));
     assert.deepEqual(unused, [], "CCC_PARAGRAPH should only hold paragraphs the cards display");
     const unpaged = [...used].filter((n) => !CCC_PAGE[n]);
     assert.deepEqual(unpaged, [], "every displayed paragraph needs a Vatican page id");

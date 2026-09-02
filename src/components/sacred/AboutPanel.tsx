@@ -54,12 +54,12 @@ const SOURCES = [
   {
     name: "Missale Meum",
     href: "https://www.missalemeum.com/en",
-    note: "1962 Roman Missal. Catalog cards link to confirmed Missale Meum pages; proper texts remain there. This app does not calculate the liturgical year.",
+    note: "1962 Roman Missal. The app computes the 1962 liturgical day; proper texts remain on confirmed Missale Meum pages.",
   },
   {
     name: "Rosary Center & Confraternity",
     href: "https://www.rosarycenter.org/how-to-pray-the-rosary/",
-    note: "Scripturally based rosary, including the Luminous Mysteries. Today's rosary in the Missal view links to the mysteries assigned to the civil weekday.",
+    note: "Scripturally based rosary, including the Luminous Mysteries. Today's rosary links to the mysteries assigned to the civil weekday.",
   },
 ];
 
@@ -69,16 +69,22 @@ function AboutCopy() {
   return (
     <>
       <p className="text-base leading-relaxed text-muted">
-        Catholib has three views. Bible follows the canon, with chapter
-        text in NABRE, RSV-CE, and the Douay-Rheims (Challoner), and
-        commentary from Haydock, the Catena Aurea, and Cornelius a
-        Lapide. Church follows the history of the Church, with
-        encyclopedia articles for events, popes, and saints, and
-        magisterial texts from the Holy See. Missal is a static catalog
-        of the 1962 Roman Missal: Today, the Ordo Missae, the Temporale,
-        the Sanctorale, the Commons, and Votive Masses. Missal cards open
-        confirmed pages on Missale Meum. Today also includes the day's
-        scripturally based rosary from the Rosary Center.
+        Catholib is the daily companion OCIA cannot be: each morning it
+        shows what the Church asks today, and every card opens onto a
+        closed map of Scripture, Catechism, councils, commentary, and art
+        that cite each other.
+      </p>
+      <p className="mt-3 text-base leading-relaxed text-muted">
+        Today computes the 1962 liturgical day — season, rank, color,
+        obligation, and Friday abstinence or fast — then shows the missal
+        proper, the Ordo Missae, and the day’s rosary. Bible follows the
+        canon, with chapter text in NABRE, RSV-CE, and the Douay-Rheims
+        (Challoner), and commentary from Haydock, the Catena Aurea, and
+        Cornelius a Lapide. Church opens on a spine of apostolic
+        witnesses, councils, constitutions, and doctors; buildings and
+        the rest of the timeline stay in search. Practice holds the 1962
+        catalog: Temporale, Sanctorale, Commons, and Votive Masses, each
+        card a confirmed Missale Meum page.
       </p>
       <p className="mt-3 text-base leading-relaxed text-muted">
         The dataset stays limited to approved sources. No paraphrase of

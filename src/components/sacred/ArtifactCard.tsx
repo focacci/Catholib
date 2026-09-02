@@ -1,6 +1,5 @@
 import { memo } from "react";
 import { ARTIFACT_LABEL, type TimelineArtifact } from "@/lib/timeline/types";
-import { isDesktopViewport } from "@/lib/media";
 import { showModernPlace } from "@/lib/timeline/place";
 import { cn } from "@/lib/utils";
 import { ArtworkFrame } from "./ArtworkFrame";
@@ -22,7 +21,7 @@ export const ArtifactCard = memo(function ArtifactCard({
       target="_blank"
       rel="noopener noreferrer"
       onClick={(e) => {
-        if (isDesktopViewport()) return;
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button === 1) return;
         e.preventDefault();
         onOpen(artifact);
       }}

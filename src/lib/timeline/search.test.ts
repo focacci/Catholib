@@ -33,7 +33,7 @@ describe("countHitsByView", () => {
 });
 
 describe("searchHitStripItems", () => {
-  it("always lists Bible, Church, then Missal so counts line up with the view switcher", () => {
+  it("always lists Bible, Church, then Today so counts line up with the view switcher", () => {
     const items = searchHitStripItems({ bible: 4, church: 0, missal: 2 });
     assert.deepEqual(
       items.map((item) => item.id),
@@ -41,7 +41,7 @@ describe("searchHitStripItems", () => {
     );
     assert.deepEqual(
       items.map((item) => `${item.count} in ${item.label}`),
-      ["4 in Bible", "0 in Church", "2 in Missal"],
+      ["4 in Bible", "0 in Church", "2 in Today"],
     );
   });
 });

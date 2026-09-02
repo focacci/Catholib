@@ -2,6 +2,7 @@ import { memo, useLayoutEffect, useMemo, useRef } from "react";
 import { ChevronDown } from "lucide-react";
 import { isBookHeaderStuck, pinSectionToScrollerTop } from "@/lib/timeline/book-collapse-scroll";
 import { useTimelineLayout } from "@/lib/timeline/card-width";
+import { isChurchDefaultEntry } from "@/lib/graph";
 import { CHURCH_ENTRIES } from "@/lib/timeline/church";
 import { isEraExpanded, yearRangeForEntries } from "@/lib/timeline/church-view";
 import { sectionArtifactsForQuery } from "@/lib/timeline/search";
@@ -167,6 +168,7 @@ export const ChurchView = memo(function ChurchView() {
   const sections = useMemo(
     () =>
       CHURCH_ENTRIES.map((entry) => {
+        if (!isChurchDefaultEntry(entry.id, q)) return null;
         const visible = sectionArtifactsForQuery(
           entry.artifacts,
           q,

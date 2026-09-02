@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { nodeForArtifact, getNode } from "../graph/index.ts";
 import { BIBLE_BOOKS } from "./bible.ts";
 import { CHURCH_ERA_NAMES } from "./church-view.ts";
 import type { FilterId, TimelineArtifact, ViewMode } from "./types.ts";
@@ -8,6 +9,9 @@ interface TimelineState {
   filter: FilterId;
   query: string;
   selected: TimelineArtifact | null;
+  focusId: string | null;
+  path: string[];
+  connectQuery: string;
   aboutOpen: boolean;
   expandedBooks: Record<string, boolean>;
   expandedEras: Record<string, boolean>;
@@ -15,7 +19,9 @@ interface TimelineState {
   setFilter: (filter: FilterId) => void;
   setQuery: (query: string) => void;
   openArtifact: (artifact: TimelineArtifact) => void;
+  openNode: (id: string) => void;
   closeArtifact: () => void;
+  setConnectQuery: (query: string) => void;
   setAboutOpen: (open: boolean) => void;
   toggleBook: (name: string) => void;
   expandBook: (name: string, open?: boolean) => void;
@@ -62,18 +68,40 @@ export function areAllBooksExpanded(
 const DEFAULT_EXPANDED_ERAS = mapAllBooks(CHURCH_ERA_NAMES, true);
 
 export const useTimeline = create<TimelineState>((set) => ({
-  view: "bible",
+  view: "missal",
   filter: "all",
   query: "",
   selected: null,
+  focusId: null,
+  path: [],
+  connectQuery: "",
   aboutOpen: false,
   expandedBooks: DEFAULT_EXPANDED,
   expandedEras: DEFAULT_EXPANDED_ERAS,
   setView: (view) => set({ view, filter: "all", aboutOpen: false }),
   setFilter: (filter) => set({ filter }),
   setQuery: (query) => set({ query }),
-  openArtifact: (artifact) => set({ selected: artifact }),
-  closeArtifact: () => set({ selected: null }),
+  openArtifact: (artifact) => {
+    const node = nodeForArtifact(artifact);
+    set({
+      selected: artifact,
+      focusId: node?.id ?? null,
+      path: node ? [node.id] : [],
+      connectQuery: "",
+    });
+  },
+  openNode: (id) => {
+    const node = getNode(id);
+    if (!node) return;
+    set((s) => ({
+      selected: node.artifact,
+      focusId: id,
+      path: s.focusId === id ? s.path : [...s.path, id].slice(-8),
+      connectQuery: "",
+    }));
+  },
+  closeArtifact: () => set({ selected: null, focusId: null, connectQuery: "" }),
+  setConnectQuery: (connectQuery) => set({ connectQuery }),
   setAboutOpen: (aboutOpen) => set({ aboutOpen }),
   toggleBook: (name) =>
     set((s) => ({

@@ -1,5 +1,6 @@
 import { memo, useLayoutEffect, useMemo, useRef } from "react";
 import { ChevronDown, ExternalLink } from "lucide-react";
+import { bookToken } from "@/lib/graph/parse-ref";
 import { BIBLE_BOOKS } from "@/lib/timeline/bible";
 import { bibleVersionLinks } from "@/lib/timeline/bible-versions";
 import {
@@ -70,6 +71,7 @@ const BookSection = memo(function BookSection({
   dualColumn,
   onToggle,
   onOpen,
+  onOpenNode,
 }: {
   book: BibleBook;
   query: string;
@@ -82,6 +84,7 @@ const BookSection = memo(function BookSection({
   dualColumn: boolean;
   onToggle: (name: string) => void;
   onOpen: (a: TimelineArtifact) => void;
+  onOpenNode: (id: string) => void;
 }) {
   const q = query.trim();
   const matchingChapters = useMemo(
@@ -184,12 +187,19 @@ const BookSection = memo(function BookSection({
             >
               <StickyLeafHeader className="px-2">
                 <div className="flex flex-col pl-[var(--rail-pad)] dual:flex-row dual:items-center dual:justify-between dual:gap-x-4">
-                  <p className="flex h-7 min-w-0 items-center font-serif text-base font-semibold leading-none text-fg dual:h-8 dual:flex-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const token = bookToken(book.name);
+                      if (token) onOpenNode(`scripture:${token}.${ch.chapter}`);
+                    }}
+                    className="flex h-7 min-w-0 items-center text-left font-serif text-base font-semibold leading-none text-fg dual:h-8 dual:flex-1"
+                  >
                     <span className="min-w-0 truncate">
                       Chapter {ch.chapter}
                       {ch.heading ? ` · ${ch.heading}` : ""}
                     </span>
-                  </p>
+                  </button>
                   <div className="flex flex-wrap items-center gap-x-4 dual:shrink-0 dual:justify-end">
                     {bibleVersionLinks(book.name, ch.chapter).map((version) => (
                       <a
@@ -243,6 +253,7 @@ export const BibleView = memo(function BibleView() {
   const expandedBooks = useTimeline((s) => s.expandedBooks);
   const toggleBook = useTimeline((s) => s.toggleBook);
   const openArtifact = useTimeline((s) => s.openArtifact);
+  const openNode = useTimeline((s) => s.openNode);
   const { dualColumn, cardWidth, artworkWidth } = useTimelineLayout();
 
   const matches = useMemo(() => matchBibleBooks(BIBLE_BOOKS, query, filter), [filter, query]);
@@ -272,6 +283,7 @@ export const BibleView = memo(function BibleView() {
             dualColumn={dualColumn}
             onToggle={toggleBook}
             onOpen={openArtifact}
+            onOpenNode={openNode}
           />
         ))}
       </div>

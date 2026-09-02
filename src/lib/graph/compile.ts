@@ -9,6 +9,7 @@ import { bookToken, parseRef, parseRefs, scriptureIdFromRef, chapterIdFromRef, b
 import { rosaryDecadeArtifact, ROSARY_DECADES } from "./rosary-mysteries.ts";
 import { CORE_EDGES, CORE_LOCATOR_REFS, CORE_NODES } from "./seeds-cores.ts";
 import { BAPTISM_DV4_EDGES, BAPTISM_DV4_LOCATOR_REFS, BAPTISM_DV4_NODES } from "./seeds-baptism-dv4.ts";
+import { GS_EDGES, GS_NODES } from "./seeds-gs.ts";
 import {
   CONSTITUTION_NODES,
   COUNCIL_NODES,
@@ -231,6 +232,11 @@ export function compileGraph(): GraphIndex {
     for (const raw of seed.bibleRefs ?? []) b.ensureScriptureRef(raw);
   }
 
+  for (const seed of GS_NODES) {
+    b.addArtifact(artifactFromSeed(seed), seed.id, kindFromId(seed.id), "church");
+    for (const raw of seed.bibleRefs ?? []) b.ensureScriptureRef(raw);
+  }
+
   for (const spec of ROSARY_DECADES) {
     const artifact = rosaryDecadeArtifact(spec);
     b.addArtifact(artifact, spec.id, "rosary", "missal");
@@ -289,6 +295,10 @@ export function compileGraph(): GraphIndex {
   }
 
   for (const edge of [...HIGH_VALUE_EDGES, ...CORE_EDGES]) {
+    b.cite(edge.from, edge.to, edge.kind);
+  }
+
+  for (const edge of GS_EDGES) {
     b.cite(edge.from, edge.to, edge.kind);
   }
 

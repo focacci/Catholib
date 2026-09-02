@@ -294,7 +294,6 @@ export const HIGH_VALUE_EDGES: SeedEdge[] = [
   { from: "person:leo-xiii", to: "ccc:32", kind: "cites" },
   { from: "person:aquinas", to: "ccc:1374", kind: "cites" },
   { from: "person:gregory-great", to: "ccc:881", kind: "cites" },
-  { from: "encyclical:humanae-vitae", to: "ccc:2041", kind: "cites" },
   { from: "encyclical:quas-primas", to: "ccc:447", kind: "cites" },
   { from: "encyclical:mystici-corporis", to: "ccc:779", kind: "cites" },
   { from: "encyclical:divino-afflante-spiritu", to: "constitution:dei-verbum", kind: "cites" },

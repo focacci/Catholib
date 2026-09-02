@@ -11,6 +11,7 @@ import { REQUIRED_PATHS } from "./seeds.ts";
 import { CORE_NODES, CORE_WALKS } from "./seeds-cores.ts";
 import { CCC_SCRIPTURE_EDGES } from "./seeds-ccc-scripture.ts";
 import { BAPTISM_DV4_NODES } from "./seeds-baptism-dv4.ts";
+import { GS_NODES, GS_WALKS } from "./seeds-gs.ts";
 import { CHURCH_ENTRIES } from "../timeline/church.ts";
 
 describe("graph compile", () => {
@@ -140,6 +141,35 @@ describe("graph compile", () => {
       assert.ok(node, `missing ccc:${n}`);
       assert.match(node.sourceUrl, /^https:\/\/www\.vatican\.va\/archive\/ENG0015\/__P/);
     }
+  });
+
+  it("walks Gaudium et Spes locators to CCC or Scripture in four hops or fewer", () => {
+    for (const seed of GS_NODES) {
+      const node = getNode(seed.id);
+      assert.ok(node, `missing ${seed.id}`);
+      assert.equal(node.sourceUrl, seed.sourceUrl);
+      assert.match(node.sourceUrl, /^https:\/\/www\.vatican\.va\/archive\/hist_councils\//);
+    }
+    for (const n of [356, 1603, 1701]) {
+      const node = getNode(`ccc:${n}`);
+      assert.ok(node, `missing ccc:${n}`);
+      assert.match(node.sourceUrl, /^https:\/\/www\.vatican\.va\/archive\/ENG0015\/__P/);
+    }
+    for (const walk of GS_WALKS) {
+      assert.ok(getNode(walk.from), `missing ${walk.from}`);
+      assert.ok(getNode(walk.to), `missing ${walk.to}`);
+      const walked = route(walk.from, walk.to, { maxHops: 4 });
+      const ids = walked.map((node) => node.id);
+      assert.ok(
+        walked.length >= 2 && walked.length - 1 <= 4,
+        `${walk.from} → ${walk.to} is ${walked.length} cards: ${ids.join(" → ")}`,
+      );
+      assert.ok(ids.includes(walk.to), `${walk.from} → ${walk.to} missing in ${ids.join(" → ")}`);
+    }
+    const hvEdges = graph().edges.filter((edge) => edge.from === "encyclical:humanae-vitae");
+    assert.ok(!hvEdges.some((edge) => edge.to === "ccc:2041"));
+    assert.ok(hvEdges.some((edge) => edge.to === "ccc:1603"));
+    assert.ok(hvEdges.some((edge) => edge.to === "constitution:gaudium-et-spes.50"));
   });
 
   it("resolves Mt 16:18 onto the Petrine locator", () => {

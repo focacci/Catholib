@@ -83,6 +83,9 @@ describe("Catechism cards", () => {
     assert.equal(CCC_PAGE[1334], "P3Z");
     assert.equal(CCC_PAGE[1376], "P41");
     assert.equal(CCC_PAGE[1439], "P4B");
+    assert.equal(CCC_PAGE[356], "P1B");
+    assert.equal(CCC_PAGE[1603], "P51");
+    assert.equal(CCC_PAGE[1701], "P5G");
     assert.equal(CCC_PAGE[2174], "P7O");
     assert.equal(CCC_PAGE[1213], "P3G");
     assert.equal(CCC_PAGE[1826], "P66");

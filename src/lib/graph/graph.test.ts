@@ -9,6 +9,7 @@ import { isChurchDefaultEntry } from "./church-spine.ts";
 import { todayBoard } from "./today.ts";
 import { REQUIRED_PATHS } from "./seeds.ts";
 import { CORE_NODES, CORE_WALKS } from "./seeds-cores.ts";
+import { CCC_SCRIPTURE_EDGES } from "./seeds-ccc-scripture.ts";
 import { CHURCH_ENTRIES } from "../timeline/church.ts";
 
 describe("graph compile", () => {
@@ -179,6 +180,27 @@ describe("Church spine", () => {
     const spine = CHURCH_ENTRIES.filter((entry) => isChurchDefaultEntry(entry.id));
     assert.ok(spine.length >= 20);
     assert.ok(spine.length <= 40);
+  });
+});
+
+describe("CCC prose scripture cites", () => {
+  it("emits cites from mined locators including verses not on the timeline card", () => {
+    assert.ok(CCC_SCRIPTURE_EDGES.length > 0);
+    const g = graph();
+    const cites = (from: string, to: string) =>
+      g.edges.some((edge) => edge.kind === "cites" && edge.from === from && edge.to === to);
+    assert.ok(cites("ccc:65", "scripture:heb.1.1-2"));
+    assert.ok(cites("ccc:146", "scripture:heb.11.1"));
+    assert.ok(cites("ccc:390", "scripture:gn.3"));
+    assert.ok(cites("ccc:447", "scripture:ps.110"));
+    assert.ok(cites("ccc:712", "scripture:is.11"));
+    assert.ok(cites("ccc:1060", "scripture:1cor.15.28"));
+    assert.ok(getNode("scripture:heb.11.1"));
+    assert.ok(getNode("scripture:1cor.15.28"));
+    const rails = rankedRails("ccc:1060");
+    assert.ok(
+      [...rails.citedBy, ...rails.drawsOn].some((hit) => hit.id === "scripture:1cor.15.28"),
+    );
   });
 });
 

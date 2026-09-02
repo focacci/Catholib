@@ -16,6 +16,7 @@ import {
   ONBOARDING_CORES,
   type SeedNode,
 } from "./seeds.ts";
+import { CCC_SCRIPTURE_EDGES } from "./seeds-ccc-scripture.ts";
 import type { DoctrineNode, EdgeKind, GraphEdge, GraphIndex, NodeKind } from "./types.ts";
 import { CITATION_KINDS } from "./types.ts";
 
@@ -288,6 +289,11 @@ export function compileGraph(): GraphIndex {
 
   for (const edge of [...HIGH_VALUE_EDGES, ...CORE_EDGES]) {
     b.cite(edge.from, edge.to, edge.kind);
+  }
+
+  for (const edge of CCC_SCRIPTURE_EDGES) {
+    const sid = b.ensureScriptureRef(edge.ref);
+    if (sid) b.cite(edge.from, sid, "cites");
   }
 
   const outgoing = new Map<string, GraphEdge[]>();

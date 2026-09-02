@@ -18,7 +18,7 @@ export const Route = createRootRoute({
       {
         name: "description",
         content:
-          "One Catholic library for Sacred Scripture, the living Magisterium, and the 1962 Roman Missal.",
+          "Catholib is the daily companion OCIA cannot be: each morning it shows what the Church asks today, and every card opens onto a closed map of Scripture, Catechism, councils, commentary, and art that cite each other.",
       },
       { name: "theme-color", content: "#0a0e14" },
       { name: "apple-mobile-web-app-title", content: APP_NAME },

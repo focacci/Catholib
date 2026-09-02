@@ -136,7 +136,7 @@ export const ARTIFACT_LABEL: Record<ArtifactType, string> = {
 export const VIEW_LABEL: Record<ViewMode, string> = {
   bible: "Bible",
   church: "Church",
-  missal: "Missal",
+  missal: "Today",
 };
 
 export const MISSAL_KIND_LABEL: Record<MissalSectionKind, string> = {

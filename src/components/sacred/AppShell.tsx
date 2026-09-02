@@ -35,7 +35,7 @@ import {
   type FilterId,
   type ViewMode,
 } from "@/lib/timeline/types";
-import { isSidebarViewport, useIsDesktop, useIsSidebarLayout } from "@/lib/media";
+import { isSidebarViewport, useIsSidebarLayout } from "@/lib/media";
 import {
   CHROME_SETTLE_IDLE_MS,
   CHROME_SETTLE_MS,
@@ -81,7 +81,7 @@ const MISSAL_JUMPS = missalJumpItems();
 const VIEWS: { id: ViewMode; label: string; Icon: typeof BookOpen }[] = [
   { id: "bible", label: "Bible", Icon: BookOpen },
   { id: "church", label: "Church", Icon: Church },
-  { id: "missal", label: "Missal", Icon: CalendarDays },
+  { id: "missal", label: "Today", Icon: CalendarDays },
 ];
 
 type VirtualKeyboardNav = Navigator & {
@@ -630,7 +630,7 @@ function LibrarySearchFields({
       <div className={cn("flex items-center gap-2", toolbar ? "px-5 py-2" : "px-3 pt-2")}>
         <div className="relative min-w-0 flex-1">
           <label className="block">
-            <span className="sr-only">Search Scripture, Magisterium, and Missal</span>
+            <span className="sr-only">Search Scripture, Magisterium, and Today</span>
             <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-subtle" />
             <input
               ref={searchInputRef}
@@ -696,7 +696,6 @@ export function AppShell({ now }: { now?: Date }) {
   const query = useTimeline((s) => s.query);
   const selected = useTimeline((s) => s.selected);
   const closeArtifact = useTimeline((s) => s.closeArtifact);
-  const isDesktop = useIsDesktop();
   const isSidebar = useIsSidebarLayout();
   const aboutOpen = useTimeline((s) => s.aboutOpen);
   const setAboutOpen = useTimeline((s) => s.setAboutOpen);
@@ -1213,10 +1212,6 @@ export function AppShell({ now }: { now?: Date }) {
   }, [query]);
 
   useEffect(() => {
-    if (isDesktop) closeArtifact();
-  }, [isDesktop, closeArtifact]);
-
-  useEffect(() => {
     const el = scrollRef.current;
     const footer = footerRef.current;
     const onScrollEnd = () => {
@@ -1439,7 +1434,7 @@ export function AppShell({ now }: { now?: Date }) {
       ? "Jump to a book"
       : view === "church"
         ? "Jump to an era"
-        : "Jump in the Missal";
+        : "Jump in Today";
 
   return (
     <div
@@ -1534,7 +1529,7 @@ export function AppShell({ now }: { now?: Date }) {
                 ) : view === "church" ? (
                   <ChurchView />
                 ) : (
-                  <MissalView />
+                  <MissalView now={now} />
                 )}
               </div>
             </main>
@@ -1628,7 +1623,7 @@ export function AppShell({ now }: { now?: Date }) {
         </div>
       </div>
 
-      {!isDesktop && <ArtifactSheet artifact={selected} onClose={closeArtifact} />}
+      <ArtifactSheet artifact={selected} onClose={closeArtifact} />
       {!isSidebar && <AboutPanel open={aboutOpen} onOpenChange={setAboutOpen} />}
     </div>
   );

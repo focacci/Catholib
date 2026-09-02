@@ -1,4 +1,6 @@
 import { BIBLE_BOOKS } from "./bible.ts";
+import { getNode } from "../graph/api.ts";
+import { parseRef, scriptureIdFromRef } from "../graph/parse-ref.ts";
 import { cccParagraphFor } from "./ccc.ts";
 import { CHURCH_ENTRIES } from "./church.ts";
 import { missalSections } from "./missal.ts";
@@ -80,6 +82,22 @@ export function collectHits(query: string, filter: FilterId): SearchHit[] {
   const hits: SearchHit[] = [];
   if (!q && filter === "all") return hits;
 
+  const ref = parseRef(query.trim());
+  if (ref && (filter === "all" || filter === "event")) {
+    const id = scriptureIdFromRef(ref);
+    const node = getNode(id) ?? getNode(`scripture:${ref.token}.${ref.chapter}`);
+    if (node) {
+      hits.push({
+        id: node.id,
+        view: "bible",
+        artifact: node.artifact,
+        context: node.title,
+        bookName: ref.bookName,
+        chapter: ref.chapter,
+      });
+    }
+  }
+
   for (const book of BIBLE_BOOKS) {
     const bookHit = Boolean(q) && matchesQuery(`${book.name} ${book.abbreviation}`, q);
     for (const ch of book.populatedChapters) {
@@ -138,6 +156,13 @@ export function countHitsByView(query: string, filter: FilterId): Record<ViewMod
   const counts: Record<ViewMode, number> = { bible: 0, church: 0, missal: 0 };
   const q = query.trim().toLowerCase();
   if (!q && filter === "all") return counts;
+
+  const ref = parseRef(query.trim());
+  if (ref && (filter === "all" || filter === "event")) {
+    const id = scriptureIdFromRef(ref);
+    const node = getNode(id) ?? getNode(`scripture:${ref.token}.${ref.chapter}`);
+    if (node) counts.bible += 1;
+  }
 
   for (const book of BIBLE_BOOKS) {
     const bookHit = Boolean(q) && matchesQuery(`${book.name} ${book.abbreviation}`, q);

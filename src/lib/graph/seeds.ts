@@ -234,6 +234,7 @@ export const OFFICE_PERSON: { pattern: RegExp; entryId: string }[] = [
 ];
 
 export const DOCUMENT_TITLE_ID: { pattern: RegExp; id: string }[] = [
+  { pattern: /^Dei Verbum 4\b/i, id: "constitution:dei-verbum.4" },
   { pattern: /^Dei Verbum/i, id: "constitution:dei-verbum" },
   { pattern: /^Lumen Gentium/i, id: "constitution:lumen-gentium" },
   { pattern: /^Sacrosanctum Concilium/i, id: "constitution:sacrosanctum-concilium" },
@@ -340,7 +341,7 @@ export const ONBOARDING_CORES: OnboardingCore[] = [
   { id: "core:sunday", title: "Sunday and holy-day obligation", subtitle: "The precepts of the Church", ccc: 2177, cites: ["ccc:2177", "ccc:2041", "ccc:2042"] },
   { id: "core:eens", title: "Outside the Church there is no salvation", subtitle: "As the Church actually teaches it", ccc: 846, cites: ["ccc:846", "ccc:847", "ccc:848", "constitution:lumen-gentium"] },
   { id: "core:communion-saints", title: "Communion of saints", subtitle: "Intercession of the saints", ccc: 2642, cites: ["ccc:2642", "ccc:966"] },
-  { id: "core:baptism", title: "Baptism", subtitle: "The door of the Church", ccc: 849, cites: ["ccc:849", "ccc:846"] },
+  { id: "core:baptism", title: "Baptism", subtitle: "The door of the Church", ccc: 1213, cites: ["ccc:1213"] },
   { id: "core:resurrection", title: "The Resurrection", subtitle: "Christ, the first fruits", ccc: 655, cites: ["ccc:655", "ccc:640"] },
   { id: "core:creation", title: "Creation and the image of God", subtitle: "Genesis in the living Tradition", ccc: 289, cites: ["ccc:289", "ccc:290", "scripture:gn.1"] },
 ];

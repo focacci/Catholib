@@ -10,6 +10,7 @@ import { todayBoard } from "./today.ts";
 import { REQUIRED_PATHS } from "./seeds.ts";
 import { CORE_NODES, CORE_WALKS } from "./seeds-cores.ts";
 import { CCC_SCRIPTURE_EDGES } from "./seeds-ccc-scripture.ts";
+import { BAPTISM_DV4_NODES } from "./seeds-baptism-dv4.ts";
 import { CHURCH_ENTRIES } from "../timeline/church.ts";
 
 describe("graph compile", () => {
@@ -41,25 +42,26 @@ describe("graph compile", () => {
     assert.ok(ch.includes("scripture:jn.1"));
   });
 
-  it("puts CCC 241 and Dei Verbum on the John 1 rails", () => {
+  it("puts CCC 241 and Dei Verbum 4 on the John 1 rails", () => {
     const hits = neighborhood("scripture:jn.1", 1);
-    const titles = hits.map((hit) => hit.artifact.title);
-    assert.ok(titles.some((title) => title.includes("CCC 241") || hitCcc(hits, 241)));
-    assert.ok(
-      titles.some((title) => /Dei Verbum/i.test(title)) ||
-        hits.some((hit) => hit.id === "constitution:dei-verbum"),
-    );
+    assert.ok(hitCcc(hits, 241));
+    assert.ok(hits.some((hit) => hit.id === "constitution:dei-verbum.4"));
     const rails = rankedRails("scripture:jn.1");
     assert.ok(rails.citedBy.length + rails.drawsOn.length > 0);
     assert.ok(rails.citedBy.length <= 6);
     assert.ok(
-      [...rails.citedBy, ...rails.drawsOn].some((hit) => /Dei Verbum/i.test(hit.artifact.title)),
+      [...rails.citedBy, ...rails.drawsOn].some((hit) => hit.id === "constitution:dei-verbum.4"),
     );
   });
 
   it("walks Dei Verbum to Nicaea in three or four cards", () => {
     const nodes = route("constitution:dei-verbum", "council:nicaea-i", { maxHops: 4 });
     assert.ok(nodes.length >= 3 && nodes.length <= 4, nodes.map((n) => n.id).join(" → "));
+    const fromFour = route("constitution:dei-verbum.4", "council:nicaea-i", { maxHops: 4 });
+    assert.ok(
+      fromFour.length >= 3 && fromFour.length <= 4,
+      fromFour.map((n) => n.id).join(" → "),
+    );
     assert.equal(resolveQuery("Nicaea")[0]?.id, "council:nicaea-i");
   });
 
@@ -99,6 +101,21 @@ describe("graph compile", () => {
     }
   });
 
+  it("points baptism at CCC 1213 and keeps 849 on the mission neighborhood", () => {
+    const core = getNode("core:baptism");
+    assert.ok(core);
+    assert.match(core.sourceUrl, /__P3G\.HTM$/);
+    assert.ok(getNode("ccc:1213"));
+    const walked = route("core:baptism", "scripture:rom.6.3-4", { maxHops: 4 });
+    assert.ok(walked.some((node) => node.id === "ccc:1213"));
+    assert.ok(!walked.some((node) => node.id === "ccc:849"));
+    assert.ok(getNode("ccc:849"));
+    const mission = route("ccc:849", "scripture:mt.28.19-20", { maxHops: 4 });
+    assert.ok(mission.some((node) => node.id === "ccc:849"));
+    const toEens = route("ccc:849", "ccc:846", { maxHops: 4 });
+    assert.ok(toEens.some((node) => node.id === "ccc:846"));
+  });
+
   it("teaches extra ecclesiam as CCC 846–848 and Lumen Gentium 14–16", () => {
     assert.ok(getNode("ccc:846"));
     assert.ok(getNode("ccc:847"));
@@ -112,13 +129,13 @@ describe("graph compile", () => {
   });
 
   it("gives every core locator a working vatican.va URL", () => {
-    for (const seed of CORE_NODES) {
+    for (const seed of [...CORE_NODES, ...BAPTISM_DV4_NODES]) {
       const node = getNode(seed.id);
       assert.ok(node, `missing ${seed.id}`);
       assert.equal(node.sourceUrl, seed.sourceUrl);
       assert.match(node.sourceUrl, /^https:\/\/www\.vatican\.va\//);
     }
-    for (const n of [232, 296, 848, 2174]) {
+    for (const n of [232, 296, 848, 2174, 1213]) {
       const node = getNode(`ccc:${n}`);
       assert.ok(node, `missing ccc:${n}`);
       assert.match(node.sourceUrl, /^https:\/\/www\.vatican\.va\/archive\/ENG0015\/__P/);

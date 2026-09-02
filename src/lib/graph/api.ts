@@ -36,13 +36,6 @@ export function children(id: string): DoctrineNode[] {
     .filter((node): node is DoctrineNode => Boolean(node));
 }
 
-function displayArtifact(node: DoctrineNode, focusId?: string): TimelineArtifact {
-  if (node.kind === "constitution" && node.id === "constitution:dei-verbum" && focusId?.includes("jn.1")) {
-    return { ...node.artifact, title: "Dei Verbum 4", subtitle: "Second Vatican Council — the eternal Word" };
-  }
-  return node.artifact;
-}
-
 function rankNeighbor(hit: NeighborHit): number {
   return NODE_RANK[hit.node.kind] ?? 99;
 }
@@ -72,7 +65,7 @@ export function neighborhood(id: string, depth = 1): NeighborHit[] {
         hits.push({
           id: other,
           node,
-          artifact: displayArtifact(node, id),
+          artifact: node.artifact,
           edge,
           rail,
         });

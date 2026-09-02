@@ -202,9 +202,9 @@ export const CORE_WALKS: CoreWalk[] = [
   },
   {
     core: "core:baptism",
-    to: "scripture:mt.28.19-20",
-    via: ["ccc:849"],
-    magisterium: "constitution:lumen-gentium",
+    to: "scripture:rom.6.3-4",
+    via: ["ccc:1213"],
+    magisterium: "constitution:lumen-gentium.11",
   },
   {
     core: "core:resurrection",

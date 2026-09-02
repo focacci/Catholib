@@ -12,6 +12,10 @@ import { CORE_NODES, CORE_WALKS } from "./seeds-cores.ts";
 import { CCC_SCRIPTURE_EDGES } from "./seeds-ccc-scripture.ts";
 import { BAPTISM_DV4_NODES } from "./seeds-baptism-dv4.ts";
 import { GS_NODES, GS_WALKS } from "./seeds-gs.ts";
+import {
+  MARIAN_CONSTITUTION_NODES,
+  MARIAN_CONSTITUTION_WALKS,
+} from "./seeds-marian-constitutions.ts";
 import { CHURCH_ENTRIES } from "../timeline/church.ts";
 
 describe("graph compile", () => {
@@ -170,6 +174,58 @@ describe("graph compile", () => {
     assert.ok(!hvEdges.some((edge) => edge.to === "ccc:2041"));
     assert.ok(hvEdges.some((edge) => edge.to === "ccc:1603"));
     assert.ok(hvEdges.some((edge) => edge.to === "constitution:gaudium-et-spes.50"));
+  });
+
+  it("walks Immaculate Conception and Assumption through their defining constitutions", () => {
+    for (const seed of MARIAN_CONSTITUTION_NODES) {
+      const node = getNode(seed.id);
+      assert.ok(node, `missing ${seed.id}`);
+      assert.equal(node.sourceUrl, seed.sourceUrl);
+      assert.match(node.sourceUrl, /^https:\/\/www\.vatican\.va\//);
+      assert.doesNotMatch(node.sourceUrl, /newadvent/);
+    }
+    const ineffabilis = getNode("constitution:ineffabilis-deus");
+    const munificentissimus = getNode("constitution:munificentissimus-deus");
+    assert.ok(ineffabilis?.aliases.includes("ch-ic-event"));
+    assert.ok(munificentissimus?.aliases.includes("ch-assump-event"));
+    assert.ok(munificentissimus?.aliases.includes("ch-assump-papal"));
+    for (const walk of MARIAN_CONSTITUTION_WALKS) {
+      for (const id of [walk.from, walk.to, walk.constitution, walk.issuer, ...walk.via]) {
+        const node = getNode(id);
+        assert.ok(node, `missing ${id}`);
+        assert.match(node.sourceUrl, /^https:\/\//, `${id} needs a confirmed sourceUrl`);
+      }
+      const walked = route(walk.from, walk.to, { maxHops: 4 });
+      const ids = walked.map((node) => node.id);
+      assert.ok(
+        walked.length >= 3 && walked.length <= 4,
+        `${walk.from} → ${walk.to} is ${walked.length} cards: ${ids.join(" → ")}`,
+      );
+      for (const id of walk.via) {
+        assert.ok(ids.includes(id), `${walk.from} → ${walk.to} missing ${id} in ${ids.join(" → ")}`);
+      }
+      assert.ok(walked.some((node) => node.kind === "ccc"), `${walk.from} path should include a CCC paragraph`);
+      const issuer = route(walk.issuer, walk.constitution, { maxHops: 4 });
+      assert.ok(
+        issuer.some((node) => node.id === walk.constitution),
+        `${walk.issuer} should reach ${walk.constitution}`,
+      );
+      const councilDefines = g.edges.filter(
+        (edge) =>
+          edge.kind === "defines" &&
+          edge.to === walk.constitution &&
+          edge.from.startsWith("council:"),
+      );
+      assert.equal(
+        councilDefines.length,
+        0,
+        `${walk.constitution} must be issued by the pope, not a council: ${councilDefines.map((e) => e.id).join(", ")}`,
+      );
+      const papalDefines = g.edges.filter(
+        (edge) => edge.kind === "defines" && edge.from === walk.issuer && edge.to === walk.constitution,
+      );
+      assert.equal(papalDefines.length, 1, `${walk.issuer} should define ${walk.constitution}`);
+    }
   });
 
   it("resolves Mt 16:18 onto the Petrine locator", () => {
